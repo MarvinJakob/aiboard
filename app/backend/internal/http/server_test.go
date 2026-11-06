@@ -14,6 +14,7 @@ import (
 	"testing/fstest"
 
 	"ki-web/backend/internal/api"
+	"ki-web/backend/internal/audit"
 	httpserver "ki-web/backend/internal/http"
 	"ki-web/backend/internal/service"
 	"ki-web/backend/internal/store"
@@ -36,6 +37,10 @@ func newServer(t *testing.T, devSeed bool) (*httptest.Server, *sql.DB) {
 	if err := store.Migrate(context.Background(), db, devSeed, log); err != nil {
 		t.Fatal(err)
 	}
+	catalog, err := audit.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
 	public := service.NewPublic(store.New(db))
 	files := fstest.MapFS{
 		"index.html":        {Data: []byte(testIndex)},
@@ -50,8 +55,9 @@ func newServer(t *testing.T, devSeed bool) (*httptest.Server, *sql.DB) {
 	}
 	h := httpserver.New(httpserver.Config{
 		Public:        public,
+		Audit:         catalog,
 		Accounts:      accounts,
-		Site:          web.New(public, "https://example.test", files, log),
+		Site:          web.New(public, catalog, "https://example.test", files, log),
 		Editorial:     service.NewEditorial(db),
 		EditorialSite: web.NewEditorial(accounts, editorialFiles, log),
 		Log:           log,
@@ -331,5 +337,86 @@ func TestSitemap(t *testing.T) {
 	}
 	if strings.Contains(body, "<loc>https://example.test/en/blog/was-ki-kostet</loc>") {
 		t.Error("nicht übersetzter Beitrag mit englischer URL in der Sitemap")
+	}
+}
+
+// Anforderung 8: Audit-Übersicht mit allen freigegebenen Dimensionen.
+func TestAuditOverview(t *testing.T) {
+	srv, _ := newServer(t, false)
+	o := getJSON[api.AuditOverview](t, srv, "/api/audit", 200)
+	if o.Lang != "de" || len(o.Intro) == 0 || len(o.Dimensions) != 8 {
+		t.Fatalf("übersicht: lang=%s intro=%d dimensionen=%d", o.Lang, len(o.Intro), len(o.Dimensions))
+	}
+	if d := o.Dimensions[0]; d.Slug != "strategie-und-wirtschaftlichkeit" || d.Title != "Strategie und Wirtschaftlichkeit" || d.Category != "organizational" {
+		t.Fatalf("erste dimension: %+v", d)
+	}
+	names := []string{}
+	for _, l := range o.Levels {
+		names = append(names, l.Name)
+	}
+	if strings.Join(names, ",") != "Einfach,Strukturiert,Intelligent" {
+		t.Fatalf("reifegrade: %v", names)
+	}
+	// Ohne englische Fassung liefert das Backend Deutsch und nennt die Sprache.
+	if en := getJSON[api.AuditOverview](t, srv, "/api/audit?lang=en", 200); en.Lang != "de" || len(en.Translations) != 1 {
+		t.Fatalf("rückfall: lang=%s translations=%v", en.Lang, en.Translations)
+	}
+	getJSON[api.Error](t, srv, "/api/audit?lang=fr", 400)
+}
+
+// Anforderungen 9 und 10: Dimension mit Vorteilen, drei Reifegraden und Prüffragen.
+func TestAuditDimension(t *testing.T) {
+	srv, _ := newServer(t, false)
+	d := getJSON[api.AuditDimension](t, srv, "/api/audit/dimensions/strategie-und-wirtschaftlichkeit", 200)
+	if d.Title != "Strategie und Wirtschaftlichkeit" || len(d.Benefits) < 2 || len(d.Intro) == 0 {
+		t.Fatalf("dimension: %+v", d)
+	}
+	if len(d.Levels) != 3 || d.Levels[0].Name != "Einfach" || d.Levels[2].Name != "Intelligent" || d.NotApplied.Level != 0 {
+		t.Fatalf("reifegrade: %+v", d.Levels)
+	}
+	if q := d.Levels[0].Questions[0]; q.Id != "1.1" || q.Text == "" || q.Conditional {
+		t.Fatalf("erste frage: %+v", q)
+	}
+	b := getJSON[api.AuditDimension](t, srv, "/api/audit/dimensions/betrieb", 200)
+	if !b.Levels[0].Questions[2].Conditional {
+		t.Fatal("bedingte frage nicht gekennzeichnet")
+	}
+	getJSON[api.Error](t, srv, "/api/audit/dimensions/gibt-es-nicht", 404)
+	getJSON[api.Error](t, srv, "/api/audit/dimensions/betrieb?lang=xx", 400)
+}
+
+func TestAuditPages(t *testing.T) {
+	srv, _ := newServer(t, false)
+	for path, want := range map[string]int{
+		"/de/themen/ai-audit/strategie-und-wirtschaftlichkeit": 200,
+		"/en/themen/ai-audit/sicherheit-und-zuverlaessigkeit":  200,
+		"/de/themen/ai-audit/gibt-es-nicht":                    404,
+		"/de/themen/softwareentwicklung/betrieb":               404,
+		"/de/themen/ai-audit/betrieb/mehr":                     404,
+	} {
+		if resp, _ := get(t, srv, path); resp.StatusCode != want {
+			t.Errorf("%s: %d, erwartet %d", path, resp.StatusCode, want)
+		}
+	}
+	_, body := get(t, srv, "/en/themen/ai-audit/daten-und-wissen")
+	for _, want := range []string{
+		`<html lang="de"`,
+		`<title>Daten und Wissen · KI Perspektiven</title>`,
+		`<link rel="canonical" href="https://example.test/de/themen/ai-audit/daten-und-wissen">`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("fehlt: %s", want)
+		}
+	}
+	if strings.Contains(body, `hreflang="en"`) {
+		t.Error("englisches hreflang ohne englische Fassung")
+	}
+
+	_, sitemap := get(t, srv, "/sitemap.xml")
+	if !strings.Contains(sitemap, "<loc>https://example.test/de/themen/ai-audit/betrieb</loc>") {
+		t.Error("dimensionsseite fehlt in der sitemap")
+	}
+	if strings.Contains(sitemap, "<loc>https://example.test/en/themen/ai-audit/betrieb</loc>") {
+		t.Error("nicht übersetzte dimensionsseite mit englischer URL in der sitemap")
 	}
 }

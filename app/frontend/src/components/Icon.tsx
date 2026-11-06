@@ -3,6 +3,7 @@ const PATHS = {
   chevLeft: <path d="M15 6l-6 6 6 6" />,
   chevRight: <path d="M9 6l6 6-6 6" />,
   arrowRight: <path d="M5 12h14M13 6l6 6-6 6" />,
+  check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
   code: <path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16" />,
   shield: (
     <>

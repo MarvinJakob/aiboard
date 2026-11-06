@@ -17,6 +17,27 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+// Defines values for AuditCategory.
+const (
+	Business       AuditCategory = "business"
+	Organizational AuditCategory = "organizational"
+	Technical      AuditCategory = "technical"
+)
+
+// Valid indicates whether the value is a known member of the AuditCategory enum.
+func (e AuditCategory) Valid() bool {
+	switch e {
+	case Business:
+		return true
+	case Organizational:
+		return true
+	case Technical:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for HealthDatabase.
 const (
 	HealthDatabaseOk          HealthDatabase = "ok"
@@ -105,6 +126,89 @@ func (e Role) Valid() bool {
 	default:
 		return false
 	}
+}
+
+// AuditCategory Einordnung der Dimension (organisatorisch, fachlich, technisch)
+type AuditCategory string
+
+// AuditDimension defines model for AuditDimension.
+type AuditDimension struct {
+	// Benefits Mindestens zwei konkrete Vorteile
+	Benefits []string `json:"benefits"`
+
+	// Category Einordnung der Dimension (organisatorisch, fachlich, technisch)
+	Category AuditCategory `json:"category"`
+
+	// Intro Absätze der Einführung
+	Intro []string `json:"intro"`
+	Lang  Lang     `json:"lang"`
+
+	// Levels Reifegrade 1 bis 3. Ein Reifegrad ist erreicht, wenn alle seine Prüffragen und die aller
+	// darunterliegenden Reifegrade erfüllt sind. Ist Reifegrad 1 nicht erfüllt, gilt Reifegrad 0.
+	Levels       []AuditLevel `json:"levels"`
+	NotApplied   AuditLevel   `json:"notApplied"`
+	Slug         string       `json:"slug"`
+	Summary      string       `json:"summary"`
+	Title        string       `json:"title"`
+	Translations []Lang       `json:"translations"`
+}
+
+// AuditDimensionSummary defines model for AuditDimensionSummary.
+type AuditDimensionSummary struct {
+	// Category Einordnung der Dimension (organisatorisch, fachlich, technisch)
+	Category AuditCategory `json:"category"`
+	Lang     Lang          `json:"lang"`
+	Slug     string        `json:"slug"`
+
+	// Summary Eine Zeile Beschreibung für die Übersicht
+	Summary string `json:"summary"`
+	Title   string `json:"title"`
+}
+
+// AuditLevel defines model for AuditLevel.
+type AuditLevel struct {
+	// Description Bedeutung des Reifegrads in dieser Dimension
+	Description string `json:"description"`
+	Level       int    `json:"level"`
+	Name        string `json:"name"`
+
+	// Questions Prüffragen (Ja/Nein). Reifegrad 0 hat keine.
+	Questions []AuditQuestion `json:"questions"`
+}
+
+// AuditLevelInfo Allgemeine Beschreibung eines Reifegrads
+type AuditLevelInfo struct {
+	Level int `json:"level"`
+
+	// Motto Leitsatz des Reifegrads
+	Motto string `json:"motto"`
+
+	// Name Einfach, Strukturiert oder Intelligent
+	Name string `json:"name"`
+}
+
+// AuditOverview defines model for AuditOverview.
+type AuditOverview struct {
+	Dimensions []AuditDimensionSummary `json:"dimensions"`
+
+	// Intro Absätze der Einführung
+	Intro []string `json:"intro"`
+	Lang  Lang     `json:"lang"`
+
+	// Levels Die Reifegrade 1 bis 3
+	Levels       []AuditLevelInfo `json:"levels"`
+	Translations []Lang           `json:"translations"`
+}
+
+// AuditQuestion defines model for AuditQuestion.
+type AuditQuestion struct {
+	// Conditional Gilt nur unter einer Voraussetzung (z. B. „Bei Agenten: …“). Darf mit „Trifft nicht zu“
+	// beantwortet werden und zählt dann als erfüllt.
+	Conditional bool `json:"conditional"`
+
+	// Id Reifegrad und laufende Nummer, z. B. `2.3`
+	Id   string `json:"id"`
+	Text string `json:"text"`
 }
 
 // EditorPost defines model for EditorPost.
@@ -370,6 +474,18 @@ type Unauthorized = Error
 // Unprocessable defines model for Unprocessable.
 type Unprocessable = Error
 
+// GetAuditParams defines parameters for GetAudit.
+type GetAuditParams struct {
+	// Lang Gewünschte Sprache
+	Lang *Lang `form:"lang,omitempty" json:"lang,omitempty"`
+}
+
+// GetAuditDimensionParams defines parameters for GetAuditDimension.
+type GetAuditDimensionParams struct {
+	// Lang Gewünschte Sprache
+	Lang *Lang `form:"lang,omitempty" json:"lang,omitempty"`
+}
+
 // ListPostsParams defines parameters for ListPosts.
 type ListPostsParams struct {
 	// Lang Gewünschte Sprache
@@ -443,6 +559,12 @@ type ServerInterface interface {
 	// AdminUpdateUser Konto deaktivieren oder reaktivieren
 	// (PATCH /api/admin/users/{id})
 	AdminUpdateUser(w http.ResponseWriter, r *http.Request, id Id)
+	// GetAudit Einstieg in das KI-Audit mit allen freigegebenen Dimensionen
+	// (GET /api/audit)
+	GetAudit(w http.ResponseWriter, r *http.Request, params GetAuditParams)
+	// GetAuditDimension Eine Audit-Dimension mit Vorteilen, Reifegraden und Prüffragen
+	// (GET /api/audit/dimensions/{slug})
+	GetAuditDimension(w http.ResponseWriter, r *http.Request, slug Slug, params GetAuditDimensionParams)
 	// Login Anmelden, setzt das Sitzungscookie
 	// (POST /api/auth/login)
 	Login(w http.ResponseWriter, r *http.Request)
@@ -655,6 +777,81 @@ func (siw *ServerInterfaceWrapper) AdminUpdateUser(w http.ResponseWriter, r *htt
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AdminUpdateUser(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAudit operation middleware
+func (siw *ServerInterfaceWrapper) GetAudit(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAuditParams
+
+	// ------------- Optional query parameter "lang" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "lang", r.URL.Query(), &params.Lang, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "lang"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "lang", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAudit(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAuditDimension operation middleware
+func (siw *ServerInterfaceWrapper) GetAuditDimension(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "slug" -------------
+	var slug Slug
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", r.PathValue("slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAuditDimensionParams
+
+	// ------------- Optional query parameter "lang" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "lang", r.URL.Query(), &params.Lang, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "lang"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "lang", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAuditDimension(w, r, slug, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1007,6 +1204,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/topics/{slug}", wrapper.GetTopic)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/posts", wrapper.ListPosts)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/posts/{slug}", wrapper.GetPost)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/audit", wrapper.GetAudit)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/audit/dimensions/{slug}", wrapper.GetAuditDimension)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/health", wrapper.GetHealth)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/auth/login", wrapper.Login)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/auth/logout", wrapper.Logout)
@@ -1724,6 +1923,93 @@ func (response AdminUpdateUser422JSONResponse) VisitAdminUpdateUserResponse(w ht
 	return err
 }
 
+type GetAuditRequestObject struct {
+	Params GetAuditParams
+}
+
+type GetAuditResponseObject interface {
+	VisitGetAuditResponse(w http.ResponseWriter) error
+}
+
+type GetAudit200JSONResponse AuditOverview
+
+func (response GetAudit200JSONResponse) VisitGetAuditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAudit400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response GetAudit400JSONResponse) VisitGetAuditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditDimensionRequestObject struct {
+	Slug   Slug `json:"slug"`
+	Params GetAuditDimensionParams
+}
+
+type GetAuditDimensionResponseObject interface {
+	VisitGetAuditDimensionResponse(w http.ResponseWriter) error
+}
+
+type GetAuditDimension200JSONResponse AuditDimension
+
+func (response GetAuditDimension200JSONResponse) VisitGetAuditDimensionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditDimension400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response GetAuditDimension400JSONResponse) VisitGetAuditDimensionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditDimension404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetAuditDimension404JSONResponse) VisitGetAuditDimensionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type LoginRequestObject struct {
 	Body *LoginJSONRequestBody
 }
@@ -2122,6 +2408,12 @@ type StrictServerInterface interface {
 	// AdminUpdateUser Konto deaktivieren oder reaktivieren
 	// (PATCH /api/admin/users/{id})
 	AdminUpdateUser(ctx context.Context, request AdminUpdateUserRequestObject) (AdminUpdateUserResponseObject, error)
+	// GetAudit Einstieg in das KI-Audit mit allen freigegebenen Dimensionen
+	// (GET /api/audit)
+	GetAudit(ctx context.Context, request GetAuditRequestObject) (GetAuditResponseObject, error)
+	// GetAuditDimension Eine Audit-Dimension mit Vorteilen, Reifegraden und Prüffragen
+	// (GET /api/audit/dimensions/{slug})
+	GetAuditDimension(ctx context.Context, request GetAuditDimensionRequestObject) (GetAuditDimensionResponseObject, error)
 	// Login Anmelden, setzt das Sitzungscookie
 	// (POST /api/auth/login)
 	Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error)
@@ -2434,6 +2726,59 @@ func (sh *strictHandler) AdminUpdateUser(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(AdminUpdateUserResponseObject); ok {
 		if err := validResponse.VisitAdminUpdateUserResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAudit operation middleware
+func (sh *strictHandler) GetAudit(w http.ResponseWriter, r *http.Request, params GetAuditParams) {
+	var request GetAuditRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAudit(ctx, request.(GetAuditRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAudit")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAuditResponseObject); ok {
+		if err := validResponse.VisitGetAuditResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAuditDimension operation middleware
+func (sh *strictHandler) GetAuditDimension(w http.ResponseWriter, r *http.Request, slug Slug, params GetAuditDimensionParams) {
+	var request GetAuditDimensionRequestObject
+
+	request.Slug = slug
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAuditDimension(ctx, request.(GetAuditDimensionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAuditDimension")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAuditDimensionResponseObject); ok {
+		if err := validResponse.VisitGetAuditDimensionResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

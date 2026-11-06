@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"ki-web/backend/internal/audit"
 	"ki-web/backend/internal/auth"
 	"ki-web/backend/internal/service"
 	"ki-web/backend/internal/web"
@@ -16,6 +17,7 @@ import (
 // Config enthält alles, was der Router braucht.
 type Config struct {
 	Public        *service.Public
+	Audit         *audit.Catalog
 	Accounts      *service.Accounts
 	Editorial     *service.Editorial
 	Site          *web.Site
@@ -33,6 +35,7 @@ func New(cfg Config) http.Handler {
 	mux := http.NewServeMux()
 	registerAPI(mux, &apiServer{
 		svc:           cfg.Public,
+		audit:         cfg.Audit,
 		accounts:      cfg.Accounts,
 		editorial:     cfg.Editorial,
 		limiter:       auth.NewLimiter(loginMaxFailures, loginWindow),

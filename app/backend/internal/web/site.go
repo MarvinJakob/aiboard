@@ -11,6 +11,7 @@ import (
 	"path"
 	"strings"
 
+	"ki-web/backend/internal/audit"
 	"ki-web/backend/internal/service"
 )
 
@@ -23,6 +24,7 @@ var dist embed.FS
 // Site liefert die öffentliche Webseite aus.
 type Site struct {
 	svc     *service.Public
+	audit   *audit.Catalog
 	baseURL string
 	files   fs.FS
 	index   []byte
@@ -30,7 +32,7 @@ type Site struct {
 }
 
 // New erzeugt die Auslieferung. files ist optional (Tests); ohne Angabe gilt der eingebettete Build.
-func New(svc *service.Public, baseURL string, files fs.FS, log *slog.Logger) *Site {
+func New(svc *service.Public, catalog *audit.Catalog, baseURL string, files fs.FS, log *slog.Logger) *Site {
 	if files == nil {
 		files, _ = fs.Sub(dist, "dist/public")
 	}
@@ -39,7 +41,7 @@ func New(svc *service.Public, baseURL string, files fs.FS, log *slog.Logger) *Si
 		log.Warn("frontend-build fehlt, es wird eine Platzhalterseite ausgeliefert", "fehler", err)
 		index = []byte(fallbackIndex)
 	}
-	return &Site{svc: svc, baseURL: strings.TrimRight(baseURL, "/"), files: files, index: index, log: log}
+	return &Site{svc: svc, audit: catalog, baseURL: strings.TrimRight(baseURL, "/"), files: files, index: index, log: log}
 }
 
 const fallbackIndex = `<!doctype html><html lang="de"><head><meta charset="utf-8"><!--app-head--><title>KI Perspektiven</title><!--/app-head--></head>
@@ -137,8 +139,28 @@ func (s *Site) resolve(r *http.Request, parts []string) (int, Meta, error) {
 			return 0, Meta{}, err
 		}
 		return http.StatusOK, s.topicMeta(lang, topic), nil
+	case len(rest) == 3 && rest[0] == "themen" && rest[1] == audit.TopicSlug:
+		// Dimensionsseite des KI-Audits (Anforderung 9)
+		d, err := s.audit.Dimension(rest[2], lang)
+		if errors.Is(err, service.ErrNotFound) {
+			return http.StatusNotFound, s.notFoundMeta(lang), nil
+		}
+		if err != nil {
+			return 0, Meta{}, err
+		}
+		return http.StatusOK, s.dimensionMeta(d), nil
 	}
 	return http.StatusNotFound, s.notFoundMeta(lang), nil
+}
+
+func dimensionPath(slug string) string { return "/themen/" + audit.TopicSlug + "/" + slug }
+
+func (s *Site) dimensionMeta(d audit.Dimension) Meta {
+	suffix := dimensionPath(d.Slug)
+	return Meta{
+		Lang: d.Lang, Title: pageTitle(d.Title), Description: excerpt(d.Summary+" "+strings.Join(d.Intro, " "), 160),
+		OGType: "website", Canonical: s.url(d.Lang, suffix), Alternates: s.alternates(d.Translations, suffix),
+	}
 }
 
 func (s *Site) url(lang service.Lang, suffix string) string {

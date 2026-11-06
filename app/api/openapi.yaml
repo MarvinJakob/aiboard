@@ -4,7 +4,8 @@ info:
   version: 0.1.0
   description: |
     Verbindlicher Vertrag zwischen Frontend und Backend (siehe requirements/ARCHITECTURE.md, Abschnitt 5).
-    Öffentliche Endpunkte liefern ausschließlich veröffentlichte Beiträge.
+    Öffentliche Endpunkte liefern ausschließlich veröffentlichte Beiträge und fachlich freigegebene
+    Audit-Dimensionen.
 
     Redaktion (ab Sprint 3): Die Anmeldung setzt ein HttpOnly-Sitzungscookie (`ki_session`). Alle Pfade
     unter `/api/admin` verlangen eine gültige Sitzung (sonst `401`) und die passende Rolle (sonst `403`).
@@ -90,6 +91,44 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Post'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/audit:
+    get:
+      operationId: getAudit
+      summary: Einstieg in das KI-Audit mit allen freigegebenen Dimensionen
+      description: Erscheint auf der Themenseite `ai-audit` (Anforderung 8).
+      parameters:
+        - $ref: '#/components/parameters/Lang'
+      responses:
+        '200':
+          description: Einführung, Reifegrade und Dimensionen in fester Reihenfolge
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditOverview'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/audit/dimensions/{slug}:
+    get:
+      operationId: getAuditDimension
+      summary: Eine Audit-Dimension mit Vorteilen, Reifegraden und Prüffragen
+      description: |
+        Inhalte der Dimensionsseite und des Quiz (Anforderungen 9 und 10). Für unbekannte und
+        fachlich nicht freigegebene Dimensionen antwortet das Backend mit `404`. Das Quiz wertet
+        die Antworten im Browser aus; sie werden nicht an das Backend gesendet.
+      parameters:
+        - $ref: '#/components/parameters/Slug'
+        - $ref: '#/components/parameters/Lang'
+      responses:
+        '200':
+          description: Dimension
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditDimension'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -796,3 +835,130 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EditorPostSummary'
+    AuditCategory:
+      type: string
+      description: Einordnung der Dimension (organisatorisch, fachlich, technisch)
+      enum: [organizational, business, technical]
+    AuditLevelInfo:
+      type: object
+      description: Allgemeine Beschreibung eines Reifegrads
+      required: [level, name, motto]
+      properties:
+        level:
+          type: integer
+          minimum: 1
+          maximum: 3
+        name:
+          type: string
+          description: Einfach, Strukturiert oder Intelligent
+        motto:
+          type: string
+          description: Leitsatz des Reifegrads
+    AuditDimensionSummary:
+      type: object
+      required: [slug, lang, title, summary, category]
+      properties:
+        slug:
+          type: string
+        lang:
+          $ref: '#/components/schemas/Lang'
+        title:
+          type: string
+        summary:
+          type: string
+          description: Eine Zeile Beschreibung für die Übersicht
+        category:
+          $ref: '#/components/schemas/AuditCategory'
+    AuditOverview:
+      type: object
+      required: [lang, translations, intro, levels, dimensions]
+      properties:
+        lang:
+          $ref: '#/components/schemas/Lang'
+        translations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lang'
+        intro:
+          type: array
+          description: Absätze der Einführung
+          items:
+            type: string
+        levels:
+          type: array
+          description: Die Reifegrade 1 bis 3
+          items:
+            $ref: '#/components/schemas/AuditLevelInfo'
+        dimensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditDimensionSummary'
+    AuditQuestion:
+      type: object
+      required: [id, text, conditional]
+      properties:
+        id:
+          type: string
+          description: Reifegrad und laufende Nummer, z. B. `2.3`
+        text:
+          type: string
+        conditional:
+          type: boolean
+          description: |
+            Gilt nur unter einer Voraussetzung (z. B. „Bei Agenten: …“). Darf mit „Trifft nicht zu“
+            beantwortet werden und zählt dann als erfüllt.
+    AuditLevel:
+      type: object
+      required: [level, name, description, questions]
+      properties:
+        level:
+          type: integer
+          minimum: 0
+          maximum: 3
+        name:
+          type: string
+        description:
+          type: string
+          description: Bedeutung des Reifegrads in dieser Dimension
+        questions:
+          type: array
+          description: Prüffragen (Ja/Nein). Reifegrad 0 hat keine.
+          items:
+            $ref: '#/components/schemas/AuditQuestion'
+    AuditDimension:
+      type: object
+      required: [slug, lang, title, summary, category, translations, intro, benefits, notApplied, levels]
+      properties:
+        slug:
+          type: string
+        lang:
+          $ref: '#/components/schemas/Lang'
+        title:
+          type: string
+        summary:
+          type: string
+        category:
+          $ref: '#/components/schemas/AuditCategory'
+        translations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lang'
+        intro:
+          type: array
+          description: Absätze der Einführung
+          items:
+            type: string
+        benefits:
+          type: array
+          description: Mindestens zwei konkrete Vorteile
+          items:
+            type: string
+        notApplied:
+          $ref: '#/components/schemas/AuditLevel'
+        levels:
+          type: array
+          description: |
+            Reifegrade 1 bis 3. Ein Reifegrad ist erreicht, wenn alle seine Prüffragen und die aller
+            darunterliegenden Reifegrade erfüllt sind. Ist Reifegrad 1 nicht erfüllt, gilt Reifegrad 0.
+          items:
+            $ref: '#/components/schemas/AuditLevel'

@@ -23,6 +23,7 @@ import (
 	"syscall"
 	"time"
 
+	"ki-web/backend/internal/audit"
 	httpserver "ki-web/backend/internal/http"
 	"ki-web/backend/internal/service"
 	"ki-web/backend/internal/store"
@@ -110,13 +111,19 @@ func runServer(cfg config, log *slog.Logger) error {
 		return err
 	}
 
+	catalog, err := audit.Load()
+	if err != nil {
+		return err
+	}
+
 	public := service.NewPublic(store.New(db))
 	accounts := service.NewAccounts(db)
 	go cleanupSessions(ctx, accounts, log)
 	hcfg := httpserver.Config{
 		Public:        public,
+		Audit:         catalog,
 		Accounts:      accounts,
-		Site:          web.New(public, cfg.baseURL, nil, log),
+		Site:          web.New(public, catalog, cfg.baseURL, nil, log),
 		Editorial:     service.NewEditorial(db),
 		EditorialSite: web.NewEditorial(accounts, nil, log),
 		SecureCookies: strings.HasPrefix(cfg.baseURL, "https://"),

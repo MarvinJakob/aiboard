@@ -75,6 +75,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Einstieg in das KI-Audit mit allen freigegebenen Dimensionen
+         * @description Erscheint auf der Themenseite `ai-audit` (Anforderung 8).
+         */
+        get: operations["getAudit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/audit/dimensions/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Eine Audit-Dimension mit Vorteilen, Reifegraden und Prüffragen
+         * @description Inhalte der Dimensionsseite und des Quiz (Anforderungen 9 und 10). Für unbekannte und
+         *     fachlich nicht freigegebene Dimensionen antwortet das Backend mit `404`. Das Quiz wertet
+         *     die Antworten im Browser aus; sie werden nicht an das Backend gesendet.
+         */
+        get: operations["getAuditDimension"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -447,6 +489,72 @@ export interface components {
         EditorPostList: {
             items: components["schemas"]["EditorPostSummary"][];
         };
+        /**
+         * @description Einordnung der Dimension (organisatorisch, fachlich, technisch)
+         * @enum {string}
+         */
+        AuditCategory: "organizational" | "business" | "technical";
+        /** @description Allgemeine Beschreibung eines Reifegrads */
+        AuditLevelInfo: {
+            level: number;
+            /** @description Einfach, Strukturiert oder Intelligent */
+            name: string;
+            /** @description Leitsatz des Reifegrads */
+            motto: string;
+        };
+        AuditDimensionSummary: {
+            slug: string;
+            lang: components["schemas"]["Lang"];
+            title: string;
+            /** @description Eine Zeile Beschreibung für die Übersicht */
+            summary: string;
+            category: components["schemas"]["AuditCategory"];
+        };
+        AuditOverview: {
+            lang: components["schemas"]["Lang"];
+            translations: components["schemas"]["Lang"][];
+            /** @description Absätze der Einführung */
+            intro: string[];
+            /** @description Die Reifegrade 1 bis 3 */
+            levels: components["schemas"]["AuditLevelInfo"][];
+            dimensions: components["schemas"]["AuditDimensionSummary"][];
+        };
+        AuditQuestion: {
+            /** @description Reifegrad und laufende Nummer, z. B. `2.3` */
+            id: string;
+            text: string;
+            /**
+             * @description Gilt nur unter einer Voraussetzung (z. B. „Bei Agenten: …“). Darf mit „Trifft nicht zu“
+             *     beantwortet werden und zählt dann als erfüllt.
+             */
+            conditional: boolean;
+        };
+        AuditLevel: {
+            level: number;
+            name: string;
+            /** @description Bedeutung des Reifegrads in dieser Dimension */
+            description: string;
+            /** @description Prüffragen (Ja/Nein). Reifegrad 0 hat keine. */
+            questions: components["schemas"]["AuditQuestion"][];
+        };
+        AuditDimension: {
+            slug: string;
+            lang: components["schemas"]["Lang"];
+            title: string;
+            summary: string;
+            category: components["schemas"]["AuditCategory"];
+            translations: components["schemas"]["Lang"][];
+            /** @description Absätze der Einführung */
+            intro: string[];
+            /** @description Mindestens zwei konkrete Vorteile */
+            benefits: string[];
+            notApplied: components["schemas"]["AuditLevel"];
+            /**
+             * @description Reifegrade 1 bis 3. Ein Reifegrad ist erreicht, wenn alle seine Prüffragen und die aller
+             *     darunterliegenden Reifegrade erfüllt sind. Ist Reifegrad 1 nicht erfüllt, gilt Reifegrad 0.
+             */
+            levels: components["schemas"]["AuditLevel"][];
+        };
     };
     responses: {
         /** @description Ungültige Anfrage */
@@ -618,6 +726,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Post"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getAudit: {
+        parameters: {
+            query?: {
+                /** @description Gewünschte Sprache */
+                lang?: components["parameters"]["Lang"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Einführung, Reifegrade und Dimensionen in fester Reihenfolge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditOverview"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+        };
+    };
+    getAuditDimension: {
+        parameters: {
+            query?: {
+                /** @description Gewünschte Sprache */
+                lang?: components["parameters"]["Lang"];
+            };
+            header?: never;
+            path: {
+                slug: components["parameters"]["Slug"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dimension */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditDimension"];
                 };
             };
             400: components["responses"]["BadRequest"];

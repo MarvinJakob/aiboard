@@ -74,6 +74,15 @@ func (s *Site) sitemap(w http.ResponseWriter, r *http.Request) {
 	for _, p := range posts {
 		add(p.Translations, "/blog/"+p.Slug, p.UpdatedAt)
 	}
+	// Dimensionsseiten des KI-Audits: Inhalte aus dem Repository, daher ohne lastmod
+	for _, slug := range s.audit.Slugs() {
+		d, err := s.audit.Dimension(slug, service.DE)
+		if err != nil {
+			s.fail(w, err)
+			return
+		}
+		add(d.Translations, dimensionPath(slug), time.Time{})
+	}
 
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	w.Header().Set("Cache-Control", "public, max-age=3600")

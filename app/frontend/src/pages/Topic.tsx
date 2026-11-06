@@ -1,13 +1,18 @@
 import { Link, useParams } from 'react-router';
 import { isNotFound, useTopic } from '../api/client';
 import { Art } from '../components/Art';
+import { AuditOverview } from '../components/AuditOverview';
+import { AUDIT_TOPIC } from '../lib/audit';
 import { PostList } from '../components/PostRow';
 import { EmptyPosts, LoadError, Loading, TranslationNotice } from '../components/Status';
 import { href, useLang } from '../lib/lang';
 import { useHead, usePageFocus } from '../lib/page';
 import { NotFound } from './NotFound';
 
-/** Themenseite mit Titel, Einführung und zugeordneten veröffentlichten Beiträgen (Anforderung 3). */
+/**
+ * Themenseite mit Titel, Einführung und zugeordneten veröffentlichten Beiträgen (Anforderung 3).
+ * Das Thema „AI Audit für Unternehmen“ zeigt zusätzlich die Audit-Übersicht (Anforderung 8).
+ */
 export function TopicPage() {
   const { slug = '' } = useParams();
   const { lang, t } = useLang();
@@ -43,6 +48,7 @@ export function TopicPage() {
         </div>
         <Art topic={tp.slug} seed={1} />
       </section>
+      {tp.slug === AUDIT_TOPIC && <AuditOverview />}
       <section className="section" aria-labelledby="topicPosts">
         <div className="section-head">
           <h2 className="section-title" id="topicPosts">
