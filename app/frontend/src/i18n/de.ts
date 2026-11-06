@@ -10,6 +10,7 @@ export const de = {
     audit: 'AI Audit',
     lang: 'Sprache',
     account: 'Anmeldung für die Redaktion',
+    theme: 'Dunkle Darstellung',
   },
   langName: { de: 'Deutsch', en: 'Englisch' },
   crumbs: 'Pfadnavigation',

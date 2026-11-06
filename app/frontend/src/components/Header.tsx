@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import { useTopics } from '../api/client';
 import { AUDIT_TOPIC, auditPath } from '../lib/audit';
 import { LANGS, href, storeLang, switchLangPath, useLang, type Lang } from '../lib/lang';
+import { useTheme } from '../lib/theme';
 import type { NavState } from '../lib/page';
 import { artBackground, topicStyle } from '../lib/topicStyle';
 import { Icon } from './Icon';
@@ -41,6 +42,7 @@ export function Header() {
         </div>
         <div className="nav-actions">
           <LangSwitch />
+          <ThemeToggle />
           {/* Kontoeinstieg (Anforderung 6): führt zur Anmeldung im eigenständigen Redaktionsfrontend,
               daher ein normaler Link statt einer Route dieser App. */}
           <a className="icon-btn press" href="/redaktion/anmelden" aria-label={t('nav.account')} title={t('nav.account')}>
@@ -172,5 +174,27 @@ function LangSwitch() {
         </button>
       ))}
     </div>
+  );
+}
+
+/**
+ * Schalter für die dunkle Darstellung (Ticket #20). Ein Toggle-Button: aria-pressed nennt den Zustand,
+ * das Symbol zeigt die aktive Darstellung (Sonne hell, Mond dunkel).
+ */
+function ThemeToggle() {
+  const { t } = useLang();
+  const [theme, setTheme] = useTheme();
+  const dark = theme === 'dark';
+  return (
+    <button
+      className="icon-btn theme-toggle press"
+      type="button"
+      aria-pressed={dark}
+      aria-label={t('nav.theme')}
+      title={t('nav.theme')}
+      onClick={() => setTheme(dark ? 'light' : 'dark')}
+    >
+      <Icon name={dark ? 'moon' : 'sun'} />
+    </button>
   );
 }
