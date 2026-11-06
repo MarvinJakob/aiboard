@@ -170,7 +170,7 @@
             {
               "description": "Betriebserfahrungen verändern die Betreuung und Steuerung der Automatisierungen. Das Team überprüft regelmäßig alle Betriebseigenschaften und verbessert die Verfahren anhand von Auftragsverläufen, Störungen und Änderungen. Die Wirkung einer Verbesserung wird am laufenden Betrieb nachgewiesen, etwa durch weniger festhängende Aufträge oder kürzere Klärungszeiten vor einer Wiederaufnahme.",
               "questions": [
-                { "text": "Gibt es einen festen Rhythmus, in dem alle Betriebseigenschaften einschließlich Zuständigkeiten, Überwachung, Verbrauchsgrenzen, Übergaben, Wiederaufnahme und Änderungsverfahren anhand dokumentierter Betriebsergebnisse überprüft werden?" },
+                { "text": "Gibt es einen festen Rhythmus, in dem alle Betriebseigenschaften aus Level 2 einschließlich Zuständigkeiten, Überwachung, Verbrauchsgrenzen, Übergaben, Wiederaufnahme und Änderungsverfahren anhand dokumentierter Betriebsergebnisse überprüft werden?" },
                 { "text": "Werden sich entwickelnder Rückstau, ausbleibender Fortschritt, ungewöhnlicher Verbrauch oder steigender Eingriffsbedarf frühzeitig erkannt und führen diese Signale zu dokumentierten vorbeugenden Betriebsmaßnahmen?" },
                 { "text": "Werden wiederkehrende oder schwerwiegende Betriebsvorfälle einschließlich festhängender Aufträge, mehrfach ausgeführter Aktionen, unklarer Ausführungsstände und Fehlerketten auf ihre Ursachen untersucht und daraus Maßnahmen für die Betriebsverfahren abgeleitet?" },
                 { "text": "Ist mindestens eine daraus abgeleitete Verbesserung an Überwachung, Unterbrechung, Übergabe, Wiederaufnahme oder Änderungsverfahren umgesetzt worden?" },

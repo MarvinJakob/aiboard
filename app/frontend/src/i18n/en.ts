@@ -89,7 +89,7 @@ export const en: Messages = {
       yes: 'Yes',
       no: 'No',
       na: 'Not applicable',
-      naHint: 'This question only applies under the stated condition. If it does not apply, choose “Not applicable”.',
+      naHint: 'This question only applies under the stated condition. If it does not apply, choose “Not applicable” only if you have documented why it does not apply.',
       resultTitle: 'Your result',
       missing_one: '{{count}} question left. Once all {{total}} questions are answered, your maturity level appears here.',
       missing_other: '{{count}} questions left. Once all {{total}} questions are answered, your maturity level appears here.',

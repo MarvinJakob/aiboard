@@ -87,7 +87,7 @@ export const de = {
       yes: 'Ja',
       no: 'Nein',
       na: 'Trifft nicht zu',
-      naHint: 'Diese Frage gilt nur unter der genannten Voraussetzung. Liegt sie nicht vor, wählen Sie „Trifft nicht zu“.',
+      naHint: 'Diese Frage gilt nur unter der genannten Voraussetzung. Liegt sie nicht vor, wählen Sie „Trifft nicht zu“, sofern Sie die Nichtanwendbarkeit begründet dokumentiert haben.',
       resultTitle: 'Ihr Ergebnis',
       missing_one: 'Noch {{count}} Frage offen. Sobald alle {{total}} Fragen beantwortet sind, erscheint hier Ihr Reifegrad.',
       missing_other: 'Noch {{count}} Fragen offen. Sobald alle {{total}} Fragen beantwortet sind, erscheint hier Ihr Reifegrad.',
