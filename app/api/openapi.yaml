@@ -363,6 +363,62 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+  /api/admin/posts/{id}/schedule:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    put:
+      operationId: adminSchedulePost
+      summary: Automatische Veröffentlichung planen oder ändern
+      description: |
+        Nur für Beiträge „In Arbeit“ (Ticket #23). Der Zeitpunkt muss in der Zukunft liegen, und der Beitrag
+        braucht Titel, Kurztext und Beitragstext in jeder vorhandenen Sprache (sonst `422`). Das Backend
+        veröffentlicht fällige Beiträge mit höchstens einer Minute Verzögerung.
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleInput'
+      responses:
+        200:
+          description: Geplant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorPost'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+    delete:
+      operationId: adminUnschedulePost
+      summary: Geplanten Zeitpunkt entfernen
+      description: Der Beitrag bleibt „In Arbeit“.
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      responses:
+        200:
+          description: Zeitpunkt entfernt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorPost'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
   /api/admin/posts/{id}/unpublish:
     parameters:
       - $ref: '#/components/parameters/Id'
@@ -710,6 +766,7 @@ components:
           description: Für den Header `X-CSRF-Token` bei schreibenden Aufrufen
     PostStatus:
       type: string
+      description: "`draft` erscheint in der Redaktion als „In Arbeit“, `published` als „Veröffentlicht“"
       enum: [draft, published]
     PostText:
       type: object
@@ -770,6 +827,10 @@ components:
           type: string
           format: date-time
           description: Erste Veröffentlichung
+        scheduledAt:
+          type: string
+          format: date-time
+          description: Geplante automatische Veröffentlichung in UTC, nur bei Beiträgen „In Arbeit“
         updatedAt:
           type: string
           format: date-time
@@ -800,9 +861,21 @@ components:
         publishedAt:
           type: string
           format: date-time
+        scheduledAt:
+          type: string
+          format: date-time
+          description: Geplante automatische Veröffentlichung in UTC
         updatedAt:
           type: string
           format: date-time
+    ScheduleInput:
+      type: object
+      required: [publishAt]
+      properties:
+        publishAt:
+          type: string
+          format: date-time
+          description: Zeitpunkt der automatischen Veröffentlichung, mit Zeitzone (wird in UTC gespeichert)
     User:
       type: object
       description: Redaktionskonto ohne Passwortdaten

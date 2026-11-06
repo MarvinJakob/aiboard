@@ -25,7 +25,8 @@ func (s *apiServer) AdminListPosts(ctx context.Context, _ api.AdminListPostsRequ
 	for _, p := range posts {
 		out = append(out, api.EditorPostSummary{
 			Id: p.ID, Slug: p.Slug, Status: api.PostStatus(p.Status), Title: p.Title, Featured: p.Featured,
-			Topics: p.Topics, Translations: toLangs(p.Translations), PublishedAt: p.PublishedAt, UpdatedAt: p.UpdatedAt,
+			Topics: p.Topics, Translations: toLangs(p.Translations), PublishedAt: p.PublishedAt, ScheduledAt: p.ScheduledAt,
+			UpdatedAt: p.UpdatedAt,
 		})
 	}
 	return api.AdminListPosts200JSONResponse{Items: out}, nil
@@ -103,6 +104,36 @@ func (s *apiServer) AdminUnpublishPost(ctx context.Context, req api.AdminUnpubli
 	return api.AdminUnpublishPost200JSONResponse(toEditorPost(p)), nil
 }
 
+// AdminSchedulePost plant die automatische Veröffentlichung (Ticket #23).
+func (s *apiServer) AdminSchedulePost(ctx context.Context, req api.AdminSchedulePostRequestObject) (api.AdminSchedulePostResponseObject, error) {
+	if req.Body == nil {
+		return api.AdminSchedulePost400JSONResponse{BadRequestJSONResponse: api.BadRequestJSONResponse{Message: msgNoBody}}, nil
+	}
+	p, err := s.editorial.Schedule(ctx, req.Id, req.Body.PublishAt)
+	var verr *service.ValidationError
+	switch {
+	case errors.Is(err, service.ErrNotFound):
+		return api.AdminSchedulePost404JSONResponse{NotFoundJSONResponse: api.NotFoundJSONResponse{Message: msgPostNotFound}}, nil
+	case errors.As(err, &verr):
+		return api.AdminSchedulePost422JSONResponse{UnprocessableJSONResponse: api.UnprocessableJSONResponse{Message: verr.Msg}}, nil
+	case err != nil:
+		return nil, err
+	}
+	return api.AdminSchedulePost200JSONResponse(toEditorPost(p)), nil
+}
+
+// AdminUnschedulePost entfernt den geplanten Zeitpunkt.
+func (s *apiServer) AdminUnschedulePost(ctx context.Context, req api.AdminUnschedulePostRequestObject) (api.AdminUnschedulePostResponseObject, error) {
+	p, err := s.editorial.Unschedule(ctx, req.Id)
+	if errors.Is(err, service.ErrNotFound) {
+		return api.AdminUnschedulePost404JSONResponse{NotFoundJSONResponse: api.NotFoundJSONResponse{Message: msgPostNotFound}}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return api.AdminUnschedulePost200JSONResponse(toEditorPost(p)), nil
+}
+
 // AdminDeletePost löscht einen Beitrag (Ticket #24).
 func (s *apiServer) AdminDeletePost(ctx context.Context, req api.AdminDeletePostRequestObject) (api.AdminDeletePostResponseObject, error) {
 	err := s.editorial.Delete(ctx, req.Id)
@@ -135,6 +166,6 @@ func toEditorPost(p service.EditorPost) api.EditorPost {
 	}
 	return api.EditorPost{
 		Id: p.ID, Slug: p.Slug, Status: api.PostStatus(p.Status), Featured: p.Featured,
-		Topics: p.Topics, Texts: texts, PublishedAt: p.PublishedAt, UpdatedAt: p.UpdatedAt,
+		Topics: p.Topics, Texts: texts, PublishedAt: p.PublishedAt, ScheduledAt: p.ScheduledAt, UpdatedAt: p.UpdatedAt,
 	}
 }

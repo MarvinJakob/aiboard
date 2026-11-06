@@ -6,6 +6,7 @@ package store
 
 import (
 	"context"
+	"database/sql"
 )
 
 type Querier interface {
@@ -36,6 +37,7 @@ type Querier interface {
 	// Redaktion: Beitraege verwalten (Anforderung 5)
 	// ---------------------------------------------------------------------------
 	ListAllPosts(ctx context.Context) ([]Post, error)
+	ListDuePosts(ctx context.Context, scheduledAt sql.NullString) ([]ListDuePostsRow, error)
 	ListMedia(ctx context.Context, mediaIds []int64) ([]ListMediaRow, error)
 	ListMediaTranslations(ctx context.Context, mediaIds []int64) ([]MediaTranslation, error)
 	ListPostTopics(ctx context.Context, postIds []int64) ([]PostTopic, error)
@@ -48,8 +50,13 @@ type Querier interface {
 	ListUsers(ctx context.Context) ([]User, error)
 	Ping(ctx context.Context) (int64, error)
 	PublishPost(ctx context.Context, arg PublishPostParams) (int64, error)
+	PublishScheduledPost(ctx context.Context, arg PublishScheduledPostParams) (int64, error)
+	// Geplante Veroeffentlichung (Ticket #23). Zeitpunkte in UTC, RFC 3339 ohne Sekundenbruchteile,
+	// damit der Textvergleich der zeitlichen Reihenfolge entspricht.
+	SchedulePost(ctx context.Context, arg SchedulePostParams) (int64, error)
 	SetUserActive(ctx context.Context, arg SetUserActiveParams) (int64, error)
 	UnpublishPost(ctx context.Context, arg UnpublishPostParams) (int64, error)
+	UnschedulePost(ctx context.Context, arg UnschedulePostParams) (int64, error)
 	UpdatePost(ctx context.Context, arg UpdatePostParams) (int64, error)
 }
 

@@ -65,6 +65,7 @@ type EditorPost struct {
 	Topics      []string
 	Texts       []PostText
 	PublishedAt *time.Time
+	ScheduledAt *time.Time // geplante Veröffentlichung (Ticket #23), nur bei Entwürfen
 	UpdatedAt   time.Time
 }
 
@@ -78,6 +79,7 @@ type EditorPostSummary struct {
 	Topics       []string
 	Translations []Lang
 	PublishedAt  *time.Time
+	ScheduledAt  *time.Time
 	UpdatedAt    time.Time
 }
 
@@ -123,7 +125,7 @@ func (e *Editorial) Posts(ctx context.Context) ([]EditorPostSummary, error) {
 		out = append(out, EditorPostSummary{
 			ID: r.ID, Slug: r.Slug, Status: Status(r.Status), Title: title, Featured: r.Featured,
 			Topics: orEmpty(topics[r.ID]), Translations: langsOf(titles[r.ID]),
-			PublishedAt: optTime(r.PublishedAt), UpdatedAt: parseTime(r.UpdatedAt),
+			PublishedAt: optTime(r.PublishedAt), ScheduledAt: optTime(r.ScheduledAt), UpdatedAt: parseTime(r.UpdatedAt),
 		})
 	}
 	return out, nil
@@ -161,7 +163,7 @@ func (e *Editorial) load(ctx context.Context, q *store.Queries, id int64) (Edito
 	return EditorPost{
 		ID: row.ID, Slug: row.Slug, Status: Status(row.Status), Featured: row.Featured,
 		Topics: orEmpty(topics[id]), Texts: texts,
-		PublishedAt: optTime(row.PublishedAt), UpdatedAt: parseTime(row.UpdatedAt),
+		PublishedAt: optTime(row.PublishedAt), ScheduledAt: optTime(row.ScheduledAt), UpdatedAt: parseTime(row.UpdatedAt),
 	}, nil
 }
 
@@ -221,6 +223,13 @@ func (e *Editorial) write(ctx context.Context, id int64, in PostInput) (EditorPo
 		if Status(cur.Status) == StatusPublished {
 			if err := publishable(texts); err != nil {
 				return EditorPost{}, err
+			}
+		}
+		// Ein geplanter Beitrag muss vollständig bleiben, sonst könnte er nicht erscheinen (Ticket #23).
+		if cur.ScheduledAt.Valid {
+			var verr *ValidationError
+			if err := publishable(texts); errors.As(err, &verr) {
+				return EditorPost{}, invalid("Der Beitrag ist zur Veröffentlichung geplant. %s Entfernen Sie sonst zuerst den Zeitpunkt.", verr.Msg)
 			}
 		}
 	}
@@ -301,6 +310,83 @@ func (e *Editorial) Unpublish(ctx context.Context, id int64) (EditorPost, error)
 		return EditorPost{}, ErrNotFound
 	}
 	return e.Post(ctx, id)
+}
+
+// Schedule plant die automatische Veröffentlichung eines Beitrags „In Arbeit“ (Ticket #23). Der Zeitpunkt
+// muss in der Zukunft liegen, und der Beitrag braucht wie beim Veröffentlichen Titel, Kurztext und
+// Beitragstext in jeder vorhandenen Sprache. Ein vorhandener Zeitpunkt wird ersetzt.
+func (e *Editorial) Schedule(ctx context.Context, id int64, at time.Time) (EditorPost, error) {
+	p, err := e.Post(ctx, id)
+	if err != nil {
+		return EditorPost{}, err
+	}
+	if p.Status == StatusPublished {
+		return EditorPost{}, invalid("Der Beitrag ist bereits veröffentlicht. Ein Zeitpunkt ist nur für Beiträge „In Arbeit“ möglich.")
+	}
+	at = at.UTC().Truncate(time.Second)
+	if !at.After(e.now()) {
+		return EditorPost{}, invalid("Der Zeitpunkt liegt in der Vergangenheit. Bitte wählen Sie einen Zeitpunkt in der Zukunft.")
+	}
+	if err := publishable(p.Texts); err != nil {
+		return EditorPost{}, err
+	}
+	n, err := e.q.SchedulePost(ctx, store.SchedulePostParams{
+		ScheduledAt: sql.NullString{String: formatTime(at), Valid: true}, UpdatedAt: formatTime(e.now()), ID: id,
+	})
+	if err != nil {
+		return EditorPost{}, err
+	}
+	if n == 0 { // inzwischen veröffentlicht
+		return EditorPost{}, invalid("Der Beitrag ist bereits veröffentlicht. Ein Zeitpunkt ist nur für Beiträge „In Arbeit“ möglich.")
+	}
+	return e.Post(ctx, id)
+}
+
+// Unschedule entfernt den geplanten Zeitpunkt. Der Beitrag bleibt „In Arbeit“.
+func (e *Editorial) Unschedule(ctx context.Context, id int64) (EditorPost, error) {
+	n, err := e.q.UnschedulePost(ctx, store.UnschedulePostParams{UpdatedAt: formatTime(e.now()), ID: id})
+	if err != nil {
+		return EditorPost{}, err
+	}
+	if n == 0 {
+		return EditorPost{}, ErrNotFound
+	}
+	return e.Post(ctx, id)
+}
+
+// PublishDue veröffentlicht alle Beiträge, deren geplanter Zeitpunkt erreicht ist, und liefert ihre IDs.
+// Als Veröffentlichungsdatum gilt der geplante Zeitpunkt. Ist ein Beitrag wider Erwarten unvollständig,
+// verliert er nur seinen Zeitpunkt und bleibt „In Arbeit“.
+func (e *Editorial) PublishDue(ctx context.Context) (published, skipped []int64, err error) {
+	now := e.now()
+	due, err := e.q.ListDuePosts(ctx, sql.NullString{String: formatTime(now), Valid: true})
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, d := range due {
+		p, err := e.Post(ctx, d.ID)
+		if errors.Is(err, ErrNotFound) {
+			continue
+		}
+		if err != nil {
+			return published, skipped, err
+		}
+		if publishable(p.Texts) != nil {
+			if _, err := e.q.UnschedulePost(ctx, store.UnschedulePostParams{UpdatedAt: formatTime(now), ID: d.ID}); err != nil {
+				return published, skipped, err
+			}
+			skipped = append(skipped, d.ID)
+			continue
+		}
+		n, err := e.q.PublishScheduledPost(ctx, store.PublishScheduledPostParams{UpdatedAt: formatTime(now), ID: d.ID})
+		if err != nil {
+			return published, skipped, err
+		}
+		if n > 0 {
+			published = append(published, d.ID)
+		}
+	}
+	return published, skipped, nil
 }
 
 // Delete löscht einen Beitrag endgültig mit allen Sprachfassungen und Themenzuordnungen (Ticket #24).
