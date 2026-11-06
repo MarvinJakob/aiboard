@@ -434,7 +434,12 @@ svg { display: block; }
   .footer-grid > :first-child { grid-column: 1 / -1; }
 }
 @media (max-width: 600px) {
-  .bar { gap: 2px; }
+  /* Zwei Zeilen: oben Marke und Einstellungen, unten die Navigation. In einer Zeile ist auf
+     375 px nicht genug Platz für alle Einträge, so bleiben sie ohne Umweg erreichbar. */
+  :root { --header-h: 104px; }
+  .bar { gap: 2px; flex-wrap: wrap; align-content: center; border-radius: var(--radius-l); }
+  .nav-main { order: 3; flex: 1 0 100%; justify-content: center; margin-inline: 0; }
+  .nav-actions { margin-left: auto; }
   .brand { height: 44px; padding: 0 4px; }
   .brand-mark { width: 32px; height: 32px; }
   .nav-btn { height: 44px; padding: 0 12px; }

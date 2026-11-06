@@ -25,6 +25,12 @@
 
 Noch nicht enthalten: Medienverwaltung mit Bild-Upload und Titelbildern (`/redaktion/medien`, nicht Teil der Akzeptanzkriterien von Anforderung 5). Eine Entwicklungs-Migration legt Testbeiträge und Testkonten an (`DEV_SEED=true`), darunter ein Entwurf und Beiträge ohne englische Fassung.
 
+## Stand: Sprint 4
+
+| Ticket | Umgesetzt |
+|---|---|
+| [21 AI Audit als eigener Navigationseintrag](https://github.com/MarvinJakob/aiboard/issues/21) | Eintrag „AI Audit“ in der Hauptnavigation neben „Themen“ und „Blog“, führt zur Audit-Übersicht in der aktuellen Sprache. Das Themenmenü zeigt das Audit nicht mehr. Auf der Übersicht und allen Dimensionsseiten ist „AI Audit“ aktiv, „Themen“ nicht. Die URLs unter `/{lang}/themen/ai-audit` bleiben unverändert. |
+
 ## Aufbau
 
 ```
@@ -162,6 +168,8 @@ Das Sitzungscookie erhält das Attribut `Secure`, wenn `PUBLIC_BASE_URL` mit `ht
 - **Beiträge:** Leere Sprachfassungen werden nicht gespeichert. Zum Speichern eines Entwurfs reicht ein Titel. Ein veröffentlichter Beitrag lässt sich nur vollständig speichern, damit die öffentliche Seite nie leer ist. Erneutes Veröffentlichen nach dem Zurücknehmen behält das erste Veröffentlichungsdatum. Fehlt das URL-Kürzel, entsteht es aus dem Titel (Umlaute werden umschrieben, bei Dopplungen folgt eine Nummer).
 - **Benutzerverwaltung:** Über die Oberfläche entstehen nur Konten mit der Rolle `editor`. Weitere Admin-Konten legt `server user create --role admin` an. Das eigene Konto lässt sich nicht deaktivieren, damit sich ein Admin nicht versehentlich aussperrt. Startpasswörter brauchen mindestens 10 Zeichen. Eine Pflicht zum Ändern des Startpassworts gibt es noch nicht.
 - **Anmeldeversuche:** Nach 10 Fehlversuchen von einer IP-Adresse sperrt das Backend weitere Versuche für 15 Minuten (`429`).
+- **Kopfzeile auf schmalen Bildschirmen:** Bis 600 px Breite hat die Kopfzeile zwei Zeilen: oben Marke, Sprache und Konto, darunter die Navigation. Mit dem Eintrag „AI Audit“ passt die Navigation auf 375 px nicht mehr in eine Zeile.
+- **AI Audit in Themenkarten und Pfadnavigation:** Die Themenkarten der Startseite und die Pfadnavigation („Start / Themen / AI Audit für Unternehmen“) führen das Audit weiter als Thema. Ticket #21 verlangt die Änderung nur für das Themenmenü.
 - **Schriften:** Es werden keine WOFF2-Dateien ausgeliefert, weil das Design-Konzept System-Schriften vorsieht.
 - **Impressum und Datenschutz** sind Platzhalter in `frontend/src/content/legal` und müssen vor dem Livegang ersetzt werden.
 - **KI-Audit-Inhalte:** Die Inhalte stehen nicht in der Datenbank, sondern in `backend/internal/audit/content.json` (ADR 0009). Eine Dimension erscheint nur mit `"released": true`. Die Texte folgen `content/KI Audit.docx`. Daraus abgeleitet sind die Kurzbeschreibungen und die Vorteile je Dimension, die das Dokument nicht ausdrücklich nennt. Sie müssen fachlich bestätigt werden.

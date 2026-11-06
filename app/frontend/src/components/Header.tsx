@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { useTopics } from '../api/client';
+import { AUDIT_TOPIC, auditPath } from '../lib/audit';
 import { LANGS, href, storeLang, switchLangPath, useLang, type Lang } from '../lib/lang';
 import type { NavState } from '../lib/page';
 import { artBackground, topicStyle } from '../lib/topicStyle';
@@ -11,7 +12,10 @@ export function Header() {
   const { lang, t } = useLang();
   const { pathname } = useLocation();
   const inBlog = pathname.startsWith(`/${lang}/blog`);
-  const inTopic = pathname.startsWith(`/${lang}/themen/`);
+  // Das AI Audit ist ein eigener Navigationsbereich (Ticket #21), seine Seiten bleiben unter /themen/ai-audit.
+  const auditRoot = auditPath(lang);
+  const inAudit = pathname === auditRoot || pathname.startsWith(`${auditRoot}/`);
+  const inTopic = pathname.startsWith(`/${lang}/themen/`) && !inAudit;
 
   return (
     <header className="site-header">
@@ -26,6 +30,13 @@ export function Header() {
           <TopicsMenu active={inTopic} />
           <Link className="nav-btn press" to={href(lang, '/blog')} aria-current={inBlog ? 'page' : undefined}>
             {t('nav.blog')}
+          </Link>
+          <Link
+            className={`nav-btn press${inAudit ? ' is-active' : ''}`}
+            to={auditRoot}
+            aria-current={pathname === auditRoot ? 'page' : inAudit ? 'true' : undefined}
+          >
+            {t('nav.audit')}
           </Link>
         </div>
         <div className="nav-actions">
@@ -102,7 +113,7 @@ function TopicsMenu({ active }: { active: boolean }) {
       </button>
       <div className={`popover glass${open ? ' is-open' : ''}`} id={menuId}>
         <ul className="menu-list" ref={listRef}>
-          {topics?.map((tp) => {
+          {topics?.filter((tp) => tp.slug !== AUDIT_TOPIC).map((tp) => {
             const to = href(lang, `/themen/${tp.slug}`);
             return (
               <li key={tp.slug}>

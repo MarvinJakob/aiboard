@@ -297,3 +297,84 @@ describe('Anforderung 10: Quiz zur Selbsteinschätzung', () => {
     expect(screen.queryByRole('radio', { checked: true })).not.toBeInTheDocument();
   });
 });
+
+describe('Ticket #21: AI Audit als eigener Navigationseintrag', () => {
+  const mainNav = async (name = 'Hauptnavigation') => screen.findByRole('navigation', { name });
+
+  it.each(['/de', '/de/blog', '/de/blog/neu', '/de/themen/softwareentwicklung', '/de/impressum', '/de/gibt-es-nicht'])(
+    'zeigt auf %s den Eintrag „AI Audit“ neben Themen und Blog',
+    async (path) => {
+      renderApp(path);
+      const nav = await mainNav();
+      const audit = within(nav).getByRole('link', { name: 'AI Audit' });
+      expect(audit).toHaveAttribute('href', '/de/themen/ai-audit');
+      expect(within(nav).getByRole('button', { name: 'Themen' })).toBeInTheDocument();
+      expect(within(nav).getByRole('link', { name: 'Blog' })).toBeInTheDocument();
+    },
+  );
+
+  it.each([
+    ['/de/blog', 'Hauptnavigation', '/de/themen/ai-audit', 'AI Audit für Unternehmen'],
+    ['/en/blog', 'Main navigation', '/en/themen/ai-audit', 'AI Audit for Companies'],
+  ])('öffnet von %s die Audit-Übersicht in der gewählten Sprache', async (path, navName, target, heading) => {
+    const user = userEvent.setup();
+    const { router } = renderApp(path);
+    await user.click(within(await mainNav(navName)).getByRole('link', { name: 'AI Audit' }));
+    expect(router.state.location.pathname).toBe(target);
+    expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+    const dimension = await screen.findByRole('link', { name: /Strategie und Wirtschaftlichkeit/ });
+    expect(dimension).toHaveAttribute('href', `${target}/strategie-und-wirtschaftlichkeit`);
+  });
+
+  it('führt im Themenmenü keinen Audit-Eintrag mehr, die übrigen Themen bleiben erreichbar', async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de');
+    await user.click(await screen.findByRole('button', { name: 'Themen' }));
+    const menu = document.querySelector('.popover') as HTMLElement;
+    const links = await within(menu).findAllByRole('link');
+    expect(links.map((l) => l.getAttribute('href'))).toEqual(['/de/themen/softwareentwicklung', '/de/themen/data-analytics']);
+    expect(within(menu).queryByRole('link', { name: /AI Audit/ })).not.toBeInTheDocument();
+    await user.click(within(menu).getByRole('link', { name: /AI in Data Analytics/ }));
+    expect(router.state.location.pathname).toBe('/de/themen/data-analytics');
+  });
+
+  it.each([
+    ['/de/themen/ai-audit', 'page'],
+    ['/de/themen/ai-audit/strategie-und-wirtschaftlichkeit', 'true'],
+    ['/en/themen/ai-audit/betrieb', 'true'],
+  ])('markiert auf %s „AI Audit“ als aktiv und „Themen“ nicht', async (path, current) => {
+    renderApp(path);
+    const nav = await mainNav(path.startsWith('/en') ? 'Main navigation' : 'Hauptnavigation');
+    const audit = within(nav).getByRole('link', { name: 'AI Audit' });
+    expect(audit).toHaveAttribute('aria-current', current);
+    expect(audit).toHaveClass('is-active');
+    expect(within(nav).getByRole('button', { name: path.startsWith('/en') ? 'Topics' : 'Themen' })).not.toHaveClass('is-active');
+  });
+
+  it('markiert auf anderen Themenseiten weiterhin „Themen“ und nicht „AI Audit“', async () => {
+    renderApp('/de/themen/softwareentwicklung');
+    const nav = await mainNav();
+    expect(within(nav).getByRole('button', { name: 'Themen' })).toHaveClass('is-active');
+    expect(within(nav).getByRole('link', { name: 'AI Audit' })).not.toHaveAttribute('aria-current');
+  });
+
+  it('erhält direkte Links und den Weg zu Dimensionen und Quiz', async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de');
+    await user.click(within(await mainNav()).getByRole('link', { name: 'AI Audit' }));
+    await user.click(await screen.findByRole('link', { name: /Strategie und Wirtschaftlichkeit/ }));
+    expect(router.state.location.pathname).toBe('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    expect(await screen.findByRole('heading', { name: /Selbsteinschätzung|Quiz/ })).toBeInTheDocument();
+  });
+
+  it('ist per Tastatur erreichbar und bedienbar', async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de/blog');
+    const nav = await mainNav();
+    within(nav).getByRole('link', { name: 'Blog' }).focus();
+    await user.tab();
+    expect(within(nav).getByRole('link', { name: 'AI Audit' })).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(router.state.location.pathname).toBe('/de/themen/ai-audit');
+  });
+});
