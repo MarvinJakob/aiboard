@@ -11,6 +11,7 @@ export const en: Messages = {
     blog: 'Blog',
     lang: 'Language',
     account: 'Sign in for editors',
+    theme: 'Dark mode',
   },
   langName: { de: 'German', en: 'English' },
   crumbs: 'Breadcrumb',

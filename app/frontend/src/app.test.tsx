@@ -1,7 +1,8 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { switchLangPath } from './lib/lang';
+import themeScript from '../public/theme.js?raw';
 import { installFakeApi, renderApp } from './test/fakeApi';
 
 beforeEach(() => {
@@ -295,5 +296,107 @@ describe('Anforderung 10: Quiz zur Selbsteinschätzung', () => {
     await screen.findByRole('heading', { level: 1, name: 'Strategie und Wirtschaftlichkeit' });
     expect(screen.getByRole('status')).toHaveTextContent('Noch 5 Fragen offen.');
     expect(screen.queryByRole('radio', { checked: true })).not.toBeInTheDocument();
+  });
+});
+
+describe('Ticket #20: Helle und dunkle Darstellung', () => {
+  const theme = () => document.documentElement.getAttribute('data-theme');
+  const realMatchMedia = window.matchMedia;
+  const systemDark = (dark: boolean) => {
+    window.matchMedia = ((query: string) => ({
+      ...realMatchMedia(query),
+      matches: dark && query === '(prefers-color-scheme: dark)',
+    })) as typeof window.matchMedia;
+  };
+
+  beforeEach(() => document.documentElement.removeAttribute('data-theme'));
+  afterEach(() => {
+    window.matchMedia = realMatchMedia;
+    document.documentElement.removeAttribute('data-theme');
+  });
+
+  it.each(['/de', '/de/blog/neu', '/de/themen/ai-audit', '/de/themen/ai-audit/strategie-und-wirtschaftlichkeit', '/de/impressum'])(
+    'schaltet auf %s sofort um, ohne die Seite zu verlassen',
+    async (path) => {
+      const user = userEvent.setup();
+      const { router } = renderApp(path);
+      const toggle = await screen.findByRole('button', { name: 'Dunkle Darstellung' });
+      expect(toggle).toHaveAttribute('aria-pressed', 'false');
+      await user.click(toggle);
+      expect(toggle).toHaveAttribute('aria-pressed', 'true');
+      expect(theme()).toBe('dark');
+      expect(router.state.location.pathname).toBe(path);
+      await user.click(toggle);
+      expect(toggle).toHaveAttribute('aria-pressed', 'false');
+      expect(theme()).toBe('light');
+    },
+  );
+
+  it('behält die Wahl beim Seiten- und Sprachwechsel und speichert sie lokal', async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de');
+    await user.click(await screen.findByRole('button', { name: 'Dunkle Darstellung' }));
+    expect(localStorage.getItem('ki-perspektiven.theme')).toBe('dark');
+
+    const nav = screen.getByRole('navigation', { name: 'Hauptnavigation' });
+    await user.click(within(nav).getByRole('link', { name: 'Blog' }));
+    expect(router.state.location.pathname).toBe('/de/blog');
+    expect(theme()).toBe('dark');
+
+    await user.click(screen.getByRole('button', { name: 'English' }));
+    expect(router.state.location.pathname).toBe('/en/blog');
+    const toggle = await screen.findByRole('button', { name: 'Dark mode' });
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    expect(theme()).toBe('dark');
+  });
+
+  it('übernimmt beim erneuten Öffnen die gespeicherte Wahl, auch gegen die Systemeinstellung', async () => {
+    systemDark(true);
+    localStorage.setItem('ki-perspektiven.theme', 'light');
+    renderApp('/de');
+    expect(await screen.findByRole('button', { name: 'Dunkle Darstellung' })).toHaveAttribute('aria-pressed', 'false');
+    expect(theme()).toBe('light');
+  });
+
+  it('folgt ohne gespeicherte Wahl der Systemeinstellung', async () => {
+    systemDark(true);
+    renderApp('/de');
+    expect(await screen.findByRole('button', { name: 'Dunkle Darstellung' })).toHaveAttribute('aria-pressed', 'true');
+    expect(theme()).toBe('dark');
+  });
+
+  it('ist per Tastatur bedienbar', async () => {
+    const user = userEvent.setup();
+    renderApp('/de');
+    const toggle = await screen.findByRole('button', { name: 'Dunkle Darstellung' });
+    toggle.focus();
+    await user.keyboard('{Enter}');
+    expect(theme()).toBe('dark');
+    await user.keyboard(' ');
+    expect(theme()).toBe('light');
+  });
+
+  describe('Startskript public/theme.js', () => {
+    const run = () => new Function(themeScript)();
+
+    it('setzt die gespeicherte Wahl', () => {
+      systemDark(true);
+      localStorage.setItem('ki-perspektiven.theme', 'light');
+      run();
+      expect(theme()).toBe('light');
+    });
+
+    it('übernimmt ohne gespeicherte Wahl die Systemeinstellung', () => {
+      systemDark(true);
+      run();
+      expect(theme()).toBe('dark');
+    });
+
+    it('verwendet hell, wenn die Systemeinstellung nicht ermittelbar ist', () => {
+      // @ts-expect-error: Browser ohne matchMedia
+      window.matchMedia = undefined;
+      run();
+      expect(theme()).toBe('light');
+    });
   });
 });
