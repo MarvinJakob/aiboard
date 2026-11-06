@@ -99,6 +99,21 @@ function Editor({ post }: { post?: EditorPost }) {
   const dirty = JSON.stringify(toInput(form)) !== baseline;
   const published = post?.status === 'published';
   const busy = action.isPending;
+
+  // Ticket #33: Veröffentlicht der Hintergrundjob den geöffneten Beitrag, darauf hinweisen.
+  // Das Formular bleibt unverändert, ungespeicherte Eingaben gehen nicht verloren.
+  // Eigene Aktionen (Veröffentlichen, Rückgängig) melden sich selbst. ownUpdate merkt sich den Stand,
+  // den die letzte eigene Aktion geliefert hat; nur andere Stände stammen vom Hintergrundjob.
+  const lastStatus = useRef(post?.status);
+  const ownUpdate = useRef<string | null>(null);
+  useEffect(() => {
+    const before = lastStatus.current;
+    lastStatus.current = post?.status;
+    if (before === 'draft' && post?.status === 'published' && post.updatedAt !== ownUpdate.current) {
+      setError('');
+      setNotice({ text: 'Der geplante Zeitpunkt ist erreicht: Der Beitrag ist jetzt veröffentlicht.' });
+    }
+  }, [post?.status]);
   const text = form.texts[lang];
 
   // Ungespeicherte Änderungen nicht stillschweigend verlieren.
@@ -120,6 +135,7 @@ function Editor({ post }: { post?: EditorPost }) {
     setNotice(null);
     try {
       const saved = await steps();
+      ownUpdate.current = saved.updatedAt;
       if (!post) {
         navigate(`/beitraege/${saved.id}`, { replace: true, state: { notice: success } });
         return;
