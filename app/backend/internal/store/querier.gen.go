@@ -21,6 +21,8 @@ type Querier interface {
 	DeleteExpiredSessions(ctx context.Context, expiresAt string) (int64, error)
 	DeleteMedia(ctx context.Context, id int64) error
 	DeleteMediaTranslations(ctx context.Context, mediaID int64) error
+	// Loeschen eines Beitrags (Ticket #24). Sprachfassungen und Themenzuordnungen entfernt ON DELETE CASCADE.
+	DeletePost(ctx context.Context, id int64) (int64, error)
 	DeletePostTopics(ctx context.Context, postID int64) error
 	DeletePostTranslations(ctx context.Context, postID int64) error
 	DeleteSession(ctx context.Context, id string) error

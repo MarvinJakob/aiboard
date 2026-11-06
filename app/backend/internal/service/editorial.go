@@ -547,6 +547,35 @@ func saveCoverAlts(ctx context.Context, q *store.Queries, mediaID int64, texts [
 	return nil
 }
 
+// Delete löscht einen Beitrag endgültig mit allen Sprachfassungen und Themenzuordnungen (Ticket #24).
+// Danach ist er öffentlich nicht mehr erreichbar und fehlt in der Sitemap. Ein Titelbild wird mit
+// gelöscht (Ticket #25); zurück kommt es, damit der Aufrufer die Dateien entfernen kann.
+func (e *Editorial) Delete(ctx context.Context, id int64) (*MediaFile, error) {
+	tx, err := e.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+	q := e.q.WithTx(tx)
+	cur, err := q.GetPostByID(ctx, id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	if _, err := q.DeletePost(ctx, id); err != nil {
+		return nil, err
+	}
+	var old *MediaFile
+	if cur.CoverMediaID.Valid {
+		if old, err = e.dropMedia(ctx, q, cur.CoverMediaID.Int64, 0); err != nil {
+			return nil, err
+		}
+	}
+	return old, tx.Commit()
+}
+
 // ---------------------------------------------------------------------------
 // Prüfungen
 // ---------------------------------------------------------------------------

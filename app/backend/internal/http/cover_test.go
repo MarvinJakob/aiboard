@@ -403,6 +403,31 @@ func TestCoverReplaceAndRemove(t *testing.T) {
 	wantStatus(t, resp, body, http.StatusNotFound)
 }
 
+// Zusammenspiel mit Ticket #24: Ein gelöschter Beitrag hinterlässt kein Titelbild.
+func TestDeletePostRemovesCover(t *testing.T) {
+	srv, db := newServerWithAccounts(t)
+	b := newBrowser(t, srv)
+	b.mustLogin(editorEmail)
+	p := b.createPost(withAlt(draftInput("Mit Bild gelöscht"), "Ein Bild"))
+	got := b.mustUploadCover(p.Id, "bild.jpg", jpegBytes(t, 300, 200))
+	resp, body := b.do(http.MethodDelete, fmt.Sprintf("/api/admin/posts/%d", p.Id), nil)
+	wantStatus(t, resp, body, http.StatusNoContent)
+	if entries, _ := os.ReadDir(mediaDirOf(srv)); len(entries) != 0 {
+		t.Errorf("%d Bilddateien übrig", len(entries))
+	}
+	for _, table := range []string{"media", "media_translations"} {
+		var n int
+		if err := db.QueryRow("SELECT COUNT(*) FROM " + table).Scan(&n); err != nil {
+			t.Fatal(err)
+		}
+		if n != 0 {
+			t.Errorf("%s: %d Zeilen übrig", table, n)
+		}
+	}
+	resp, body = newBrowser(t, srv).do(http.MethodGet, got.Cover.Src, nil)
+	wantStatus(t, resp, body, http.StatusNotFound)
+}
+
 func TestCoverRequiresEditorSessionAndCSRF(t *testing.T) {
 	srv, _ := newServerWithAccounts(t)
 	editor := newBrowser(t, srv)

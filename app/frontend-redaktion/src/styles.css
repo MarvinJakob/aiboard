@@ -343,3 +343,11 @@ fieldset.field { margin: 0; padding: 0; border: 0; }
 @media (forced-colors: active) {
   .glass { background: Canvas; border: 1px solid CanvasText; -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
+
+/* Beitragsaktionen in der Übersicht (Ticket #24) */
+.table td.actions { white-space: normal; }
+.row-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.row-actions .confirm-text { flex-basis: 100%; text-align: right; }
+.list-notice { margin-top: 16px; }
+.list-notice:empty { display: none; }
+.list-notice:focus { outline: none; }

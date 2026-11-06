@@ -142,6 +142,10 @@ INSERT INTO posts (slug, status, featured, updated_at) VALUES (?, 'draft', ?, ?)
 -- name: UpdatePost :execrows
 UPDATE posts SET slug = ?, featured = ?, updated_at = ? WHERE id = ?;
 
+-- Loeschen eines Beitrags (Ticket #24). Sprachfassungen und Themenzuordnungen entfernt ON DELETE CASCADE.
+-- name: DeletePost :execrows
+DELETE FROM posts WHERE id = ?;
+
 -- name: DeletePostTranslations :exec
 DELETE FROM post_translations WHERE post_id = ?;
 
