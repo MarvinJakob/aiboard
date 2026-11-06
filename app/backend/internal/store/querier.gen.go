@@ -18,6 +18,8 @@ type Querier interface {
 	// ---------------------------------------------------------------------------
 	CreateUser(ctx context.Context, arg CreateUserParams) (int64, error)
 	DeleteExpiredSessions(ctx context.Context, expiresAt string) (int64, error)
+	// Loeschen eines Beitrags (Ticket #24). Sprachfassungen und Themenzuordnungen entfernt ON DELETE CASCADE.
+	DeletePost(ctx context.Context, id int64) (int64, error)
 	DeletePostTopics(ctx context.Context, postID int64) error
 	DeletePostTranslations(ctx context.Context, postID int64) error
 	DeleteSession(ctx context.Context, id string) error

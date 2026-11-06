@@ -557,6 +557,9 @@ type ServerInterface interface {
 	// AdminCreatePost Neuen Entwurf anlegen
 	// (POST /api/admin/posts)
 	AdminCreatePost(w http.ResponseWriter, r *http.Request)
+	// AdminDeletePost Beitrag löschen
+	// (DELETE /api/admin/posts/{id})
+	AdminDeletePost(w http.ResponseWriter, r *http.Request, id Id)
 	// AdminGetPost Beitrag mit allen Sprachfassungen zum Bearbeiten laden
 	// (GET /api/admin/posts/{id})
 	AdminGetPost(w http.ResponseWriter, r *http.Request, id Id)
@@ -644,6 +647,32 @@ func (siw *ServerInterfaceWrapper) AdminCreatePost(w http.ResponseWriter, r *htt
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AdminCreatePost(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminDeletePost operation middleware
+func (siw *ServerInterfaceWrapper) AdminDeletePost(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminDeletePost(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1289,6 +1318,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/auth/me", wrapper.GetMe)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/admin/posts", wrapper.AdminListPosts)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/admin/posts", wrapper.AdminCreatePost)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/admin/posts/{id}", wrapper.AdminDeletePost)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/admin/posts/{id}", wrapper.AdminGetPost)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/admin/posts/{id}", wrapper.AdminUpdatePost)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/admin/posts/{id}/publish", wrapper.AdminPublishPost)
@@ -1451,6 +1481,64 @@ func (response AdminCreatePost422JSONResponse) VisitAdminCreatePostResponse(w ht
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminDeletePostRequestObject struct {
+	Id Id `json:"id"`
+}
+
+type AdminDeletePostResponseObject interface {
+	VisitAdminDeletePostResponse(w http.ResponseWriter) error
+}
+
+type AdminDeletePost204Response struct {
+}
+
+func (response AdminDeletePost204Response) VisitAdminDeletePostResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type AdminDeletePost401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AdminDeletePost401JSONResponse) VisitAdminDeletePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminDeletePost403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AdminDeletePost403JSONResponse) VisitAdminDeletePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminDeletePost404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AdminDeletePost404JSONResponse) VisitAdminDeletePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -2623,6 +2711,9 @@ type StrictServerInterface interface {
 	// AdminCreatePost Neuen Entwurf anlegen
 	// (POST /api/admin/posts)
 	AdminCreatePost(ctx context.Context, request AdminCreatePostRequestObject) (AdminCreatePostResponseObject, error)
+	// AdminDeletePost Beitrag löschen
+	// (DELETE /api/admin/posts/{id})
+	AdminDeletePost(ctx context.Context, request AdminDeletePostRequestObject) (AdminDeletePostResponseObject, error)
 	// AdminGetPost Beitrag mit allen Sprachfassungen zum Bearbeiten laden
 	// (GET /api/admin/posts/{id})
 	AdminGetPost(ctx context.Context, request AdminGetPostRequestObject) (AdminGetPostResponseObject, error)
@@ -2769,6 +2860,32 @@ func (sh *strictHandler) AdminCreatePost(w http.ResponseWriter, r *http.Request)
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(AdminCreatePostResponseObject); ok {
 		if err := validResponse.VisitAdminCreatePostResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminDeletePost operation middleware
+func (sh *strictHandler) AdminDeletePost(w http.ResponseWriter, r *http.Request, id Id) {
+	var request AdminDeletePostRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminDeletePost(ctx, request.(AdminDeletePostRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminDeletePost")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminDeletePostResponseObject); ok {
+		if err := validResponse.VisitAdminDeletePostResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

@@ -44,6 +44,10 @@ function postsBackend(initial: EditorPost[] = []) {
     const p = posts.get(Number(m[1]));
     if (!p) return json(404, { message: 'Beitrag nicht gefunden.' });
     if (r.method === 'GET') return json(200, p);
+    if (r.method === 'DELETE' && !m[2]) {
+      posts.delete(p.id);
+      return new Response(null, { status: 204 });
+    }
     if (m[2] === 'schedule' && r.method === 'DELETE') {
       delete p.scheduledAt;
       return json(200, p);
@@ -331,5 +335,93 @@ describe('Ticket #23: Beitragsstatus und geplante Veröffentlichung', () => {
     renderAt('/beitraege/neu');
     expect(await screen.findByText(/Speichern Sie den Beitrag zuerst/)).toBeInTheDocument();
     expect(screen.queryByLabelText('Datum und Uhrzeit')).not.toBeInTheDocument();
+  });
+});
+
+describe('Ticket #24: Beitragsaktionen in der Beitragsübersicht', () => {
+  const INCOMPLETE: EditorPost = {
+    ...DRAFT,
+    id: 9,
+    slug: 'unvollstaendig',
+    texts: [{ lang: 'de', title: 'Noch ohne Text', summary: 'Kurz', bodyMarkdown: '' }],
+  };
+  const rowOf = (title: string) => screen.getByRole('link', { name: title }).closest('tr') as HTMLElement;
+
+  it('bietet je Zeile eindeutig beschriftete Aktionen, „Veröffentlichen“ nur für Entwürfe', async () => {
+    const { handler } = postsBackend([DRAFT, PUBLISHED]);
+    fakeBackend(EDITOR, handler);
+    renderAt('/');
+    await screen.findByRole('table');
+    expect(screen.getByRole('columnheader', { name: 'Aktionen' })).toBeInTheDocument();
+    const draft = rowOf('Erster Entwurf');
+    expect(within(draft).getByRole('button', { name: '„Erster Entwurf“ veröffentlichen' })).toHaveTextContent('Veröffentlichen');
+    expect(within(draft).getByRole('button', { name: '„Erster Entwurf“ löschen' })).toHaveTextContent('Löschen');
+    const published = rowOf('Schon online');
+    expect(within(published).queryByRole('button', { name: /veröffentlichen/ })).not.toBeInTheDocument();
+    expect(within(published).getByRole('button', { name: '„Schon online“ löschen' })).toBeInTheDocument();
+  });
+
+  it('veröffentlicht einen Entwurf direkt aus der Übersicht, auch per Tastatur', async () => {
+    const { posts, handler } = postsBackend([DRAFT]);
+    fakeBackend(EDITOR, handler);
+    const user = userEvent.setup();
+    renderAt('/');
+    const button = await screen.findByRole('button', { name: '„Erster Entwurf“ veröffentlichen' });
+    button.focus();
+    await user.keyboard('{Enter}');
+    expect(await screen.findByRole('status')).toHaveTextContent('„Erster Entwurf“ ist veröffentlicht');
+    await waitFor(() => expect(within(rowOf('Erster Entwurf')).getByText('Veröffentlicht', { selector: '.badge' })).toBeInTheDocument());
+    expect(posts.get(7)?.status).toBe('published');
+    expect(within(rowOf('Erster Entwurf')).queryByRole('button', { name: /veröffentlichen/ })).not.toBeInTheDocument();
+  });
+
+  it('lässt einen unvollständigen Beitrag unverändert und nennt den Grund', async () => {
+    const { posts, handler } = postsBackend([INCOMPLETE]);
+    fakeBackend(EDITOR, handler);
+    const user = userEvent.setup();
+    renderAt('/');
+    await user.click(await screen.findByRole('button', { name: '„Noch ohne Text“ veröffentlichen' }));
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('„Noch ohne Text“ wurde nicht veröffentlicht.');
+    expect(alert).toHaveTextContent('Beitragstext');
+    expect(posts.get(9)?.status).toBe('draft');
+    expect(within(rowOf('Noch ohne Text')).getByText('In Arbeit', { selector: '.badge' })).toBeInTheDocument();
+  });
+
+  it('löscht erst nach Bestätigung und entfernt den Beitrag aus der Übersicht', async () => {
+    const { posts, handler } = postsBackend([DRAFT, PUBLISHED]);
+    fakeBackend(EDITOR, handler);
+    const user = userEvent.setup();
+    renderAt('/');
+    await user.click(await screen.findByRole('button', { name: '„Schon online“ löschen' }));
+
+    // Abbrechen lässt alles unverändert und gibt den Fokus zurück.
+    const confirm = within(rowOf('Schon online')).getByRole('group', { name: 'Löschen von „Schon online“ bestätigen' });
+    expect(within(confirm).getByRole('button', { name: 'Abbrechen' })).toHaveFocus();
+    await user.click(within(confirm).getByRole('button', { name: 'Abbrechen' }));
+    expect(posts.has(8)).toBe(true);
+    await waitFor(() => expect(screen.getByRole('button', { name: '„Schon online“ löschen' })).toHaveFocus());
+
+    await user.click(screen.getByRole('button', { name: '„Schon online“ löschen' }));
+    await user.click(screen.getByRole('button', { name: '„Schon online“ endgültig löschen' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('„Schon online“ wurde gelöscht.');
+    expect(posts.has(8)).toBe(false);
+    expect(screen.queryByRole('link', { name: 'Schon online' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Erster Entwurf' })).toBeInTheDocument();
+  });
+
+  it('sendet bei beiden Aktionen das CSRF-Token', async () => {
+    const { handler } = postsBackend([DRAFT, PUBLISHED]);
+    const state = fakeBackend(EDITOR, handler);
+    const user = userEvent.setup();
+    renderAt('/');
+    await user.click(await screen.findByRole('button', { name: '„Erster Entwurf“ veröffentlichen' }));
+    await screen.findByRole('status');
+    await user.click(screen.getByRole('button', { name: '„Schon online“ löschen' }));
+    await user.click(screen.getByRole('button', { name: '„Schon online“ endgültig löschen' }));
+    await waitFor(() => expect(screen.queryByRole('link', { name: 'Schon online' })).not.toBeInTheDocument());
+    const writes = state.requests.filter((r) => r.method !== 'GET');
+    expect(writes.map((r) => `${r.method} ${r.path}`)).toEqual(['POST /api/admin/posts/7/publish', 'DELETE /api/admin/posts/8']);
+    expect(writes.every((r) => r.csrf === EDITOR.csrfToken)).toBe(true);
   });
 });

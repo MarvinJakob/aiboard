@@ -69,3 +69,19 @@ export const usePostAction = () => {
     },
   });
 };
+
+/**
+ * Löscht einen Beitrag endgültig (Ticket #24). Danach verschwindet er aus der Liste;
+ * sein Eintrag im Cache wird verworfen, damit der Editor ihn nicht mehr anzeigt.
+ */
+export const useDeletePost = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => unwrap(client.DELETE('/api/admin/posts/{id}', { params: { path: { id } } })),
+    onSuccess: (_data, id) => {
+      qc.setQueryData<EditorPostSummary[]>(POSTS_KEY, (list) => list?.filter((p) => p.id !== id));
+      qc.removeQueries({ queryKey: postKey(id) });
+      void qc.invalidateQueries({ queryKey: POSTS_KEY });
+    },
+  });
+};

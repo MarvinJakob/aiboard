@@ -389,6 +389,19 @@ func (e *Editorial) PublishDue(ctx context.Context) (published, skipped []int64,
 	return published, skipped, nil
 }
 
+// Delete löscht einen Beitrag endgültig mit allen Sprachfassungen und Themenzuordnungen (Ticket #24).
+// Danach ist er öffentlich nicht mehr erreichbar und fehlt in der Sitemap.
+func (e *Editorial) Delete(ctx context.Context, id int64) error {
+	n, err := e.q.DeletePost(ctx, id)
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // ---------------------------------------------------------------------------
 // Prüfungen
 // ---------------------------------------------------------------------------
