@@ -20,6 +20,7 @@ import (
 	"syscall"
 	"time"
 
+	"ki-web/backend/internal/audit"
 	httpserver "ki-web/backend/internal/http"
 	"ki-web/backend/internal/service"
 	"ki-web/backend/internal/store"
@@ -103,10 +104,16 @@ func runServer(cfg config, log *slog.Logger) error {
 		return err
 	}
 
+	catalog, err := audit.Load()
+	if err != nil {
+		return err
+	}
+
 	public := service.NewPublic(store.New(db))
 	hcfg := httpserver.Config{
 		Public: public,
-		Site:   web.New(public, cfg.baseURL, nil, log),
+		Audit:  catalog,
+		Site:   web.New(public, catalog, cfg.baseURL, nil, log),
 		Log:    log,
 	}
 	if cfg.serveMedia {

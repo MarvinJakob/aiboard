@@ -1,0 +1,454 @@
+{
+  "overview": {
+    "de": {
+      "intro": [
+        "Das KI-Audit zeigt, welche Fähigkeiten ein Unternehmen für den Einsatz von künstlicher Intelligenz mitbringt. Es betrachtet die Dimensionen, auf die es dabei ankommt: von Strategie und Wirtschaftlichkeit über Betrieb, Governance und Prozesse bis zu Technologie, Daten und Sicherheit.",
+        "Für jede Dimension gibt es eine Selbsteinschätzung mit Ja/Nein-Fragen. Daraus ergibt sich ein Reifegrad. Ein Reifegrad gilt nur, wenn alle darunterliegenden erfüllt sind. So sehen Sie, wo Ihr Unternehmen steht, wo blinde Flecken liegen und welcher Schritt als Nächstes ansteht: Die Fragen des nächsthöheren Reifegrads sind Ihre To-do-Liste."
+      ],
+      "levels": [
+        { "name": "Nicht angewendet", "motto": "Die Fähigkeit ist im betrachteten Bereich nicht vorhanden." },
+        { "name": "Einfach", "motto": "Es passiert etwas, aber jeder macht es anders. Der Erfolg hängt stark vom Zufall ab." },
+        { "name": "Strukturiert", "motto": "Es gibt ein definiertes Vorgehen, das gelebt wird. Der Erfolg hängt nicht mehr an einzelnen Personen." },
+        { "name": "Intelligent", "motto": "Wir lernen aus Fehlern und verbessern das Vorgehen. Die Prozesse passen sich der Wirklichkeit an." }
+      ]
+    }
+  },
+  "dimensions": [
+    {
+      "slug": "strategie-und-wirtschaftlichkeit",
+      "category": "organizational",
+      "released": true,
+      "texts": {
+        "de": {
+          "title": "Strategie und Wirtschaftlichkeit",
+          "summary": "Welchen Nutzen KI bringen soll und unter welchen Bedingungen sich der Einsatz lohnt.",
+          "intro": [
+            "Die Dimension Strategie und Wirtschaftlichkeit beschreibt, welchen konkreten Nutzen ein Unternehmen mit künstlicher Intelligenz erreichen will und unter welchen Bedingungen sich der Einsatz lohnt. Erwartete Verbesserungen sind höhere Qualität, kürzere Bearbeitungszeiten, zusätzlicher Gewinn und geringere Risiken. Für jeden Anwendungsfall wird geklärt, wie dieser Nutzen entstehen soll und welche Einführungs- und Betriebskosten sowie Risiken damit verbunden sind.",
+            "Die Steuerung erfolgt über eine nachvollziehbare Priorisierung der KI-Vorhaben. Ihr erwarteter Wertbeitrag, die Umsetzbarkeit, der Ressourcenbedarf und die Risiken bestimmen, welche Vorhaben zuerst umgesetzt, fortgeführt oder beendet werden.",
+            "Überprüfbare Ziele machen den Erfolg messbar. Dazu werden je Vorhaben Ausgangswerte, Kennzahlen, Zielwerte, ein Termin und Verantwortlichkeiten festgelegt. Regelmäßige Vergleiche mit diesen Zielen zeigen, ob der erwartete Nutzen eintritt und die Kosten vertretbar bleiben."
+          ],
+          "benefits": [
+            "Zeit und Budget fließen gezielt in KI-Vorhaben, die zu den Geschäftszielen beitragen und wirtschaftlich tragfähig sind.",
+            "Eine nachvollziehbare Priorisierung entscheidet, welche Vorhaben gestartet, fortgeführt oder beendet werden – statt des nächsten Piloten aus dem Bauch heraus.",
+            "Messbare Ziele und regelmäßige Soll-Ist-Vergleiche zeigen früh, ob der erwartete Nutzen eintritt und die Kosten vertretbar bleiben."
+          ],
+          "notApplied": "Eine strategische Beschäftigung mit KI ist im betrachteten Bereich noch nicht vorhanden.",
+          "levels": [
+            {
+              "description": "Erste Ziele, eine verantwortliche Person und praktische Anwendungen bestehen. Das Vorgehen ist noch wenig abgestimmt und hängt stark von Einzelpersonen ab. Es gibt KI-Aktivität, aber keine Absicht dahinter: Warum gerade dieser Anwendungsfall und nicht ein anderer, kann niemand begründen.",
+              "questions": [
+                { "text": "Gibt es mindestens eine schriftliche Aussage dazu, was das Unternehmen mit KI erreichen will?" },
+                { "text": "Kann eine Person benannt werden, die sich faktisch um das Thema KI-Strategie kümmert?" },
+                { "text": "Gibt es mindestens einen KI-Anwendungsfall, der im Regelbetrieb läuft und nicht nur im Versuch?" }
+              ]
+            },
+            {
+              "description": "KI-Vorhaben werden nach festgelegten Kriterien ausgewählt und gesteuert. Ziele, Entscheidungsrollen, Kosten und Risiken sind nachvollziehbar festgelegt. Vorhaben entstehen nicht mehr, weil jemand Lust hatte, sondern weil sie ausgewählt wurden.",
+              "questions": [
+                { "text": "Hat jedes Vorhaben im Portfolio ein messbares Zielergebnis (KPI) mit Zielwert, Erhebungsrhythmus und Verantwortlichem?" },
+                { "text": "Ist die Entscheidung über Aufnahme, Fortführung und Stopp eines Vorhabens eindeutig einer Rolle zugeordnet?" },
+                { "text": "Existiert ein dokumentiertes Priorisierungsverfahren mit den Kriterien Wertbeitrag, Machbarkeit, Fehlertoleranz, Betriebskosten und Risiko, und ist es auf alle laufenden Vorhaben angewendet worden?" },
+                { "text": "Sind Nicht-Ziele und Leitplanken schriftlich festgelegt und den Beteiligten bekannt?" },
+                { "text": "Liegt je Vorhaben eine Kalkulation der Betriebskosten vor, inklusive einer Annahme für steigende Kosten durch Preisanpassungen der Anbieter?" },
+                { "text": "Ist festgelegt, wer das Arbeitsergebnis der KI fachlich bewerten kann, und wie diese Kompetenz erhalten bleibt, wenn die zugrunde liegende Aufgabe automatisiert wird?" },
+                { "text": "Liegt eine Risikoanalyse mit Maßnahme und Verantwortlichkeit je Risiko vor, die mindestens Nicht-Determinismus, Nachvollziehbarkeit von KI-Entscheidungen und Anbieterabhängigkeit abdeckt?" }
+              ]
+            },
+            {
+              "description": "Der tatsächliche Nutzen wird nachgewiesen. Das Unternehmen überprüft regelmäßig sein Portfolio und verbessert Strategie und Auswahlkriterien anhand von Erfahrungen und Marktveränderungen. Das Portfolio wird gegen die Realität geprüft und kontinuierlich optimiert.",
+              "questions": [
+                { "text": "Gibt es einen festen Rhythmus, in dem nicht nur der Status der Vorhaben, sondern auch das Portfolio und die Auswahllogik selbst überprüft werden?" },
+                { "text": "Wird der versprochene Effekt nachgewiesen statt angenommen?" },
+                { "text": "Werden die KPIs selbst hinterfragt und ersetzt, wenn sie das Falsche messen?" },
+                { "text": "Wird die Risikoanalyse aktiv weitergepflegt, das heißt, kommen eingetretene Ereignisse als Risiko hinzu, wird die Wirksamkeit der Maßnahmen geprüft und verschwinden erledigte Risiken?" },
+                { "text": "Werden Veränderungen im Markt beobachtet (Kundenerwartung, Wertschöpfungskette, Kostenposition der Wettbewerber) und fließen sie belegbar in Portfolio-Entscheidungen ein?" }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "slug": "ressourcenplanung-und-kompetenzen",
+      "category": "organizational",
+      "released": true,
+      "texts": {
+        "de": {
+          "title": "Ressourcenplanung und Kompetenzen",
+          "summary": "Ob ausreichend Menschen, Zeit und passende Fähigkeiten für die Arbeit mit KI verfügbar sind.",
+          "intro": [
+            "Die Dimension Ressourcenplanung und Kompetenzen beschreibt, ob für die Arbeit mit KI ausreichend Menschen, Zeit und passende Fähigkeiten verfügbar sind. Sie verbindet den Bedarf der Anwendungen mit der Personalplanung und einer gezielten Qualifizierung. Mitarbeitende müssen ihre Aufgaben mit KI ausführen können. Führungskräfte müssen den dafür nötigen Arbeitsaufwand und Lernbedarf einschätzen können.",
+            "Im Mittelpunkt stehen der tatsächliche Kompetenzstand und die Frage, wie Wissen im Unternehmen entsteht, weitergegeben und bei einem Wechsel von Personen erhalten wird. Eine besuchte Schulung allein belegt noch keine Fähigkeit. Entscheidend ist, ob das Gelernte an einer konkreten Aufgabe angewendet werden kann."
+          ],
+          "benefits": [
+            "Die Umsetzung hängt weniger von einzelnen Beschäftigten ab, weil Wissen geteilt und bei einem Wechsel erhalten bleibt.",
+            "Engpässe bei Personal und Kompetenzen werden sichtbar, bevor sie Vorhaben aufhalten.",
+            "Lernzeit wird eingeplant und benötigte Fähigkeiten werden rechtzeitig aufgebaut."
+          ],
+          "notApplied": "Eine gezielte Ressourcenplanung oder Qualifizierung für KI ist im betrachteten Bereich noch nicht vorhanden. Es gibt kein vorzeigbares Ergebnis aus einer Lernaktivität oder einer Planung des Personalbedarfs.",
+          "levels": [
+            {
+              "description": "Einzelne Mitarbeitende lernen den Umgang mit KI oder planen die dafür benötigte Arbeitszeit. Erste Ergebnisse sind sichtbar, das Vorgehen hängt jedoch an persönlichem Interesse und Eigeninitiative. Ob das Wissen weitergegeben wird und bei einem Ausfall verfügbar bleibt, ist noch nicht geregelt.",
+              "questions": [
+                { "text": "Gibt es mindestens ein vorzeigbares Ergebnis einer KI-bezogenen Lernaktivität oder Personalplanung, etwa eine praktisch gelöste Übungsaufgabe oder einen umgesetzten Kapazitätsplan?" },
+                { "text": "Kann eine Person benannt werden, die sich faktisch um den Aufbau von KI-Kompetenzen oder die dafür benötigte Arbeitszeit kümmert?" }
+              ]
+            },
+            {
+              "description": "Personalbedarf und Qualifizierung werden nach einem dokumentierten Vorgehen geplant. Benötigte Fähigkeiten, verfügbare Kapazitäten und Lücken sind für die beteiligten Rollen bekannt. Lernen findet innerhalb eingeplanter Arbeitszeit statt, und Wissen wird so übergeben, dass neue Mitarbeitende und Vertretungen auf derselben Grundlage arbeiten können.",
+              "questions": [
+                { "text": "Gibt es für alle an KI-Anwendungen beteiligten Rollen ein dokumentiertes Kompetenzprofil und einen belegten Abgleich mit den vorhandenen Fähigkeiten?" },
+                { "text": "Sind Personalbedarf und verfügbare Arbeitszeit für die vorgesehenen KI-Aufgaben einschließlich Lernzeit in einer aktuellen Kapazitätsplanung gegenübergestellt?" },
+                { "text": "Sind für festgestellte Kompetenz- und Kapazitätslücken konkrete Maßnahmen mit Verantwortlichkeit und Termin festgelegt, etwa Qualifizierung, Einstellung oder externe Unterstützung?" },
+                { "text": "Werden rollenspezifische Lernangebote genutzt und wird die Anwendung des Gelernten mit praktischen Aufgaben überprüft?" },
+                { "text": "Gibt es eine gemeinsam zugängliche Ablage für Lern- und Übergabewissen, die bei Einarbeitung und Vertretung nachweislich verwendet wird?" },
+                { "text": "Sind für kritische personelle Engpässe Vertretung oder Übergabe festgelegt und anhand eines tatsächlichen Wechsels oder einer Übung erprobt?" },
+                { "text": "Werden Kompetenzlücken und verfügbare Kapazitäten in einem festgelegten Rhythmus durch eine benannte Rolle ausgewertet und führen Abweichungen zu dokumentierten Maßnahmen?" }
+              ]
+            },
+            {
+              "description": "Das Unternehmen überprüft regelmäßig, ob seine Personalplanung und Lernangebote die benötigten Fähigkeiten tatsächlich hervorbringen. Erfahrungen aus der Umsetzung verändern Qualifizierung, Wissensübergabe und Kapazitätsplanung. Wiederkehrende Engpässe werden auf ihre Ursachen untersucht, Angebote ohne belegbaren Lerneffekt angepasst oder eingestellt.",
+              "questions": [
+                { "text": "Gibt es einen festen Rhythmus, in dem Lernangebote, Wissensübergabe und die Planung des Personalbedarfs anhand dokumentierter Ergebnisse überprüft werden?" },
+                { "text": "Werden wiederkehrende Kompetenz- und Kapazitätslücken auf ihre Ursachen untersucht und fließen die Erkenntnisse in die Planung ein?" },
+                { "text": "Ist mindestens eine Änderung an Qualifizierung oder Wissensübergabe umgesetzt worden, die aus einer solchen Auswertung entstanden ist?" },
+                { "text": "Ist die Wirkung einer umgesetzten Verbesserung belegt, etwa durch kürzere Einarbeitung, erfolgreichere Übungsaufgaben oder weniger unbesetzte Aufgaben?" },
+                { "text": "Werden Kompetenzprofile und Lernangebote bei veränderten Aufgaben überprüft und überholte Inhalte oder Maßnahmen nachweislich ersetzt oder gestrichen?" }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "slug": "betrieb",
+      "category": "organizational",
+      "released": true,
+      "texts": {
+        "de": {
+          "title": "Betrieb",
+          "summary": "Was nötig ist, damit KI-Anwendungen zuverlässig verfügbar sind, sicher arbeiten und wirtschaftlich laufen.",
+          "intro": [
+            "Die Dimension Betrieb beschreibt, was ein Unternehmen sicherstellen muss, damit KI-Applikationen zuverlässig verfügbar sind, sicher arbeiten und wirtschaftlich betrieben werden können. Eine Automatisierung kann sich über mehrere Anwendungen und Dienstleister erstrecken. Deshalb braucht sie eine benannte Betriebsverantwortung für die gesamte Ausführung.",
+            "Für Support und Störungsbehandlung braucht es erreichbare Ansprechpartner, festgelegte Reaktionszeiten und klare Eskalationswege. Für Ausfälle und Fehlaktionen sind erprobte Verfahren zum Anhalten, zur menschlichen Übernahme, zum Notfallbetrieb und zur Wiederherstellung erforderlich.",
+            "Ein beherrschbarer Betrieb setzt voraus, dass Konfigurationen, Änderungen und ausgeführte Aktionen nachvollziehbar sind. Die Überwachung umfasst Verfügbarkeit, erfolgreiche Aufgabenerledigung und Ressourcenverbrauch. Eine zuordenbare Kostenübersicht macht laufende Aufwände und Verbrauchsspitzen sichtbar."
+          ],
+          "benefits": [
+            "KI-Anwendungen sind zuverlässig verfügbar, weil Betriebsverantwortung, Support und Eskalationswege auch über Applikations- und Dienstleistergrenzen hinweg geregelt sind.",
+            "Bei Ausfällen und Fehlaktionen greifen erprobte Verfahren zum Anhalten, zur menschlichen Übernahme und zur Wiederaufnahme – statt Improvisation.",
+            "Eine zuordenbare Kostenübersicht macht Verbrauchsspitzen sichtbar und ermöglicht es, bei überschrittenen Grenzen rechtzeitig einzugreifen."
+          ],
+          "notApplied": "Eine organisatorische Betreuung der eingesetzten KI-Anwendungen, integrierten KI-Funktionen oder automatisierten Aufgaben ist im betrachteten Bereich noch nicht nachweisbar. Verantwortliche und konkrete Betreuungs- oder Überwachungsvorgänge sind nicht ausreichend belegt.",
+          "levels": [
+            {
+              "description": "Mindestens eine KI-Anwendung, integrierte KI-Funktion oder automatisierte Aufgabe wird tatsächlich betreut. Einzelne Personen beantworten Fragen, prüfen einen Auftrag oder beheben eine Störung. Das Vorgehen hängt noch von ihrer Erfahrung ab. Eine durchgängige Überwachung, verbindliche Eingriffswege und geregelte Übergaben bestehen noch nicht.",
+              "questions": [
+                { "text": "Gibt es für mindestens eine KI-Anwendung, integrierte KI-Funktion oder automatisierte Aufgabe einen belegten Betreuungsvorgang, etwa eine bearbeitete Supportanfrage, eine überwachte Verbrauchszahl oder eine durchgeführte Änderung?" },
+                { "text": "Kann eine Person benannt werden, die die betreffende Anwendung, Funktion oder Automatisierung faktisch betreut?" },
+                { "text": "Bei eingesetzten Agenten: Können für mindestens einen tatsächlich bearbeiteten Auftrag der Bearbeitungsstand und die ausgeführten Aktionen anhand vorhandener Aufzeichnungen gezeigt werden?", "conditional": true }
+              ]
+            },
+            {
+              "description": "Alle KI-Anwendungen, integrierten KI-Funktionen und automatisierten Aufgaben im betrachteten Betrieb werden nach dokumentierten Verfahren betreut. Zuständigkeiten gelten auch über die Grenzen einzelner Applikationen und Dienstleister hinweg. Bei Agenten werden Bearbeitungszustand, Aufgabenerledigung und Verbrauch laufend überwacht; für Stillstand, Unterbrechung, menschliche Übernahme und Wiederaufnahme bestehen praktisch nutzbare Betriebsanweisungen.",
+              "questions": [
+                { "text": "Sind alle betriebenen KI-Anwendungen, integrierten KI-Funktionen und Automatisierungen in einem aktuellen Verzeichnis mit Betriebsverantwortung, Supportkontakt, Vertretung, beteiligten Applikationen und Dienstleistern erfasst?" },
+                { "text": "Ist für jede Automatisierung eine Betriebsverantwortung für die gesamte Ausführung benannt und sind die Zuständigkeiten zwischen den beteiligten Betriebsteams und Dienstleistern dokumentiert?" },
+                { "text": "Sind die Entscheidungsrollen für Änderungsfreigabe, Unterbrechung, Eskalation und Wiederaufnahme festgelegt und gibt es einen genutzten Meldeweg mit Reaktionszeiten und Information der Betroffenen?" },
+                { "text": "Bei Agenten: Sind Aufträge eindeutig identifizierbar und werden laufende, wartende, abgeschlossene, fehlgeschlagene und teilweise erledigte Aufträge einschließlich ihres Fortschritts erfasst, sodass Stillstand, Rückstau und überschrittene Bearbeitungszeiten eine vorgesehene Bearbeitung auslösen?", "conditional": true },
+                { "text": "Bei Agenten: Lassen sich Auftrag, verwendete Modell-, Prompt-, Werkzeug- und Konfigurationsversionen, Werkzeugaufrufe sowie tatsächlich wirksam ausgeführte Aktionen anhand zusammenhängender Aufzeichnungen nachvollziehen?", "conditional": true },
+                { "text": "Werden Verfügbarkeit, erfolgreiche Aufgabenerledigung, Abbrüche, menschliche Eingriffe und notwendige Nachbearbeitungen anhand der fachlich vorgegebenen Kriterien mit Erhebungsrhythmus und Verantwortlichkeit überwacht und lösen definierte Abweichungen eine Bearbeitung aus?" },
+                { "text": "Werden Nutzung und tatsächlicher Ressourcenverbrauch überwacht und sind bei Agenten Laufzeit, Wiederholungen, Werkzeugaufrufe und tatsächliche Kosten einem Auftrag zuordenbar?" },
+                { "text": "Bei Agenten: Sind betriebliche Grenzen für Laufzeit, Wiederholungen, Werkzeugaufrufe und Verbrauch sowie Verantwortlichkeit und Reaktion bei Überschreitung dokumentiert und ist die vorgesehene Reaktion in einer Betriebsübung oder an einem tatsächlichen Vorgang belegt?", "conditional": true },
+                { "text": "Bei Agenten: Gibt es ein erprobtes Vorgehen zum Anhalten einer einzelnen Automatisierung und zur menschlichen Übernahme mit Auftrag, Bearbeitungsstand und bereits ausgeführten Aktionen, das den vorgesehenen Weiterbetrieb der betroffenen Applikationen berücksichtigt?", "conditional": true },
+                { "text": "Bei Agenten: Ist vor einer Wiederaufnahme geregelt, wie bereits ausgeführte Aktionen und unklare Ausführungsstände geklärt werden, welche Schritte erneut ausgeführt werden dürfen und wer dies entscheidet, und ist das Vorgehen für eine teilweise erledigte Aufgabe praktisch erprobt?", "conditional": true },
+                { "text": "Sind relevante Abhängigkeiten von Modellen, Werkzeugen und Zielsystemen in Betriebsanweisungen berücksichtigt und ist bei deren Ausfall geregelt, wie betroffene Aufträge ermittelt, nachgelagerte Ausführungen begrenzt und die Wiederaufnahme koordiniert werden?" },
+                { "text": "Werden Änderungen an Modell, Prompt, Werkzeugen und Konfiguration nachvollziehbar freigegeben und in einer Änderungshistorie erfasst und ist bei Agenten der Umgang mit bereits laufenden Aufträgen beim Versionswechsel festgelegt?" },
+                { "text": "Liegt eine verwendete Betriebsanweisung für Störung, Rücknahme einer Änderung und Abschaltung vor, die bei Fehlaktionen auch das Ermitteln betroffener Vorgänge und das Veranlassen ihrer fachlichen Bereinigung regelt, und ist mindestens ein solcher Ablauf erprobt?" },
+                { "text": "Sind Übergaben an Betrieb, Vertretung und Dienstleister einschließlich der erforderlichen Auftrags- und Betriebsinformationen geregelt und anhand einer tatsächlichen Übergabe oder einer Betriebsübung belegt?" }
+              ]
+            },
+            {
+              "description": "Betriebserfahrungen verändern die Betreuung und Steuerung der Automatisierungen. Das Team überprüft regelmäßig alle Betriebseigenschaften und verbessert die Verfahren anhand von Auftragsverläufen, Störungen und Änderungen. Die Wirkung einer Verbesserung wird am laufenden Betrieb nachgewiesen, etwa durch weniger festhängende Aufträge oder kürzere Klärungszeiten vor einer Wiederaufnahme.",
+              "questions": [
+                { "text": "Gibt es einen festen Rhythmus, in dem alle Betriebseigenschaften einschließlich Zuständigkeiten, Überwachung, Verbrauchsgrenzen, Übergaben, Wiederaufnahme und Änderungsverfahren anhand dokumentierter Betriebsergebnisse überprüft werden?" },
+                { "text": "Werden sich entwickelnder Rückstau, ausbleibender Fortschritt, ungewöhnlicher Verbrauch oder steigender Eingriffsbedarf frühzeitig erkannt und führen diese Signale zu dokumentierten vorbeugenden Betriebsmaßnahmen?" },
+                { "text": "Werden wiederkehrende oder schwerwiegende Betriebsvorfälle einschließlich festhängender Aufträge, mehrfach ausgeführter Aktionen, unklarer Ausführungsstände und Fehlerketten auf ihre Ursachen untersucht und daraus Maßnahmen für die Betriebsverfahren abgeleitet?" },
+                { "text": "Ist mindestens eine daraus abgeleitete Verbesserung an Überwachung, Unterbrechung, Übergabe, Wiederaufnahme oder Änderungsverfahren umgesetzt worden?" },
+                { "text": "Ist die Wirkung einer solchen Verbesserung anhand vergleichbarer Betriebskennzahlen belegt, etwa durch weniger festhängende Aufträge, weniger ungeklärte Ausführungsstände oder kürzere Übernahme- und Klärungszeiten?" },
+                { "text": "Werden Überwachungsindikatoren, Schwellen, Verbrauchsgrenzen und Wiederholungsregeln anhand der tatsächlichen Auftragsverläufe überprüft und bei fehlender Wirkung nachweislich angepasst?" },
+                { "text": "Fließen neue Abhängigkeiten, Erfahrungen mit Versionswechseln und Erkenntnisse aus Störungen in aktualisierte Betriebsanweisungen und gezielte Übungen zu Unterbrechung, Übergabe oder Wiederaufnahme ein?" },
+                { "text": "Werden unnötige Freigabeschritte, wirkungslose Kontrollen oder aufwendige Betriebsübergaben nachweislich vereinfacht, ersetzt oder entfernt und wird die Wirkung der Änderung überprüft?" }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "slug": "governance-und-compliance",
+      "category": "organizational",
+      "released": true,
+      "texts": {
+        "de": {
+          "title": "Governance und Compliance",
+          "summary": "Rechtliche und vertragliche Anforderungen an KI erkennen und in verbindliche Vorgaben übersetzen.",
+          "intro": [
+            "Die Dimension Governance und Compliance beschreibt, wie die durch einen KI-Einsatz entstehenden oder veränderten rechtlichen und vertraglichen Anforderungen ermittelt und in verbindliche Vorgaben übersetzt werden. Ausgangspunkt ist der konkrete Anwendungsfall: Welchen Zweck erfüllt die KI, welche Daten verarbeitet sie und wie werden ihre Ergebnisse verwendet? Bestehende Compliance-Verfahren bilden die Grundlage und werden um die Besonderheiten des KI-Einsatzes ergänzt.",
+            "Im Mittelpunkt stehen die rechtliche Einordnung der Anwendung, die Rolle des Unternehmens sowie die Nutzungsrechte an Daten, Modellen und Ergebnissen. Je nach Einsatz sind insbesondere der EU AI Act, der Datenschutz, Urheber- und Nutzungsrechte, Anbieterbedingungen sowie branchenspezifische Vorgaben zu berücksichtigen.",
+            "Entscheidend ist, dass diese Bedingungen im Arbeitsalltag berücksichtigt und aktuell gehalten werden. Änderungen am Einsatzzweck, an der Datenverwendung oder an den rechtlichen und vertraglichen Rahmenbedingungen geben Anlass für eine erneute Bewertung."
+          ],
+          "benefits": [
+            "Sie wissen je Anwendung, unter welchen Bedingungen sie eingesetzt werden darf und welche Informations-, Dokumentations- und Nachweispflichten gelten.",
+            "Bestehende Compliance-Verfahren werden weiter genutzt und nur um die Besonderheiten des KI-Einsatzes ergänzt.",
+            "Änderungen an Einsatzzweck, Datenverwendung oder Anbieterbedingungen lösen rechtzeitig eine neue Bewertung aus, bevor ein Verstoß entsteht."
+          ],
+          "notApplied": "Eine Prüfung der KI-spezifischen rechtlichen Anforderungen ist im betrachteten Bereich noch nicht vorhanden. Es gibt keine anwendungsbezogene Bewertung und keine Person, die diesen Prüfbedarf tatsächlich bearbeitet.",
+          "levels": [
+            {
+              "description": "Für mindestens eine KI-Anwendung wurde eine konkrete Rechts- oder Vertragsfrage bearbeitet, etwa Anbieterbedingungen gelesen oder eine Datenschutzfrage geklärt. Die Prüfung erfolgt anlassbezogen und hängt von einzelnen Personen ab. Ob andere Anwendungen dieselben Anforderungen erfüllen und wann erneut geprüft werden muss, ist noch nicht einheitlich geregelt.",
+              "questions": [
+                { "text": "Gibt es für mindestens eine KI-Anwendung eine dokumentierte Bewertung einer konkreten Rechts- oder Vertragsfrage mit einem nachvollziehbaren Ergebnis?" },
+                { "text": "Kann eine Person benannt werden, die sich faktisch um den KI-spezifischen rechtlichen Prüfbedarf kümmert?" }
+              ]
+            },
+            {
+              "description": "Für alle betrachteten KI-Anwendungen werden die einschlägigen Anforderungen nach einem dokumentierten Verfahren geprüft. Die Ergebnisse legen zulässige Nutzung, erforderliche Nachweise und Bedingungen für den Einsatz fest. Zuständige Fachrollen bestätigen ihre Bewertungen, und Änderungen an Zweck, Datenverwendung oder Vertragsbedingungen lösen eine erneute Prüfung aus.",
+              "questions": [
+                { "text": "Sind für jede Anwendung Einsatzzweck, Rolle des Unternehmens und rechtliche Einordnung einschließlich der Anwendbarkeit und Risikoeinstufung nach dem EU AI Act dokumentiert?" },
+                { "text": "Liegt je Anwendung eine aktuelle Übersicht der einschlägigen gesetzlichen, vertraglichen und branchenspezifischen Anforderungen sowie der daraus abgeleiteten Vorgaben vor?" },
+                { "text": "Sind Rechte und Bedingungen für die Nutzung von Eingaben, Modellen und Ergebnissen geprüft, einschließlich Anbieterregelungen zur Weiterverwendung von Eingaben?" },
+                { "text": "Bei personenbezogenen Daten: Ist die datenschutzrechtliche Bewertung dokumentiert, einschließlich Rechtsgrundlage, Zweckbindung, erforderlicher Vertragsregelungen, Aufbewahrung und gegebenenfalls einer Folgenabschätzung?", "conditional": true },
+                { "text": "Sind erforderliche Informations-, Dokumentations- und Nachweispflichten einer Rolle zugeordnet und ihre Erfüllung oder begründete Nichtanwendbarkeit belegt?" },
+                { "text": "Ist die rechtliche Einsatzentscheidung mit ihren Bedingungen dokumentiert und sind Auslöser für eine erneute Prüfung festgelegt, etwa ein neuer Einsatzzweck oder geänderte Anbieterbedingungen?" },
+                { "text": "Werden offene rechtliche Auflagen und fällige Prüfungen in einem festgelegten Rhythmus durch eine benannte Rolle nachgehalten und führen Fristüberschreitungen zu einer vorgesehenen Entscheidung?" }
+              ]
+            },
+            {
+              "description": "Das Unternehmen beobachtet relevante Rechts- und Vertragsänderungen und verbessert sein Prüfverfahren anhand der bisherigen Fälle. Wiederkehrende Unklarheiten oder übersehene Anforderungen verändern Prüfschritte und Vorlagen. Zugleich wird geprüft, ob das Verfahren seine Aufgaben mit angemessenem Aufwand erfüllt.",
+              "questions": [
+                { "text": "Gibt es einen festen Rhythmus, in dem Rechts- und Vertragsänderungen auf ihre Auswirkungen auf die betrachteten KI-Anwendungen geprüft werden?" },
+                { "text": "Werden wiederkehrende Compliance-Befunde auf ihre Ursachen im Prüfverfahren untersucht und daraus Änderungen an Prüfschritten oder Vorlagen abgeleitet?" },
+                { "text": "Ist mindestens eine daraus entstandene Verbesserung des Prüfverfahrens umgesetzt worden?" },
+                { "text": "Ist die Wirkung dieser Verbesserung belegt, etwa durch weniger übersehene Auflagen oder vollständigere Nachweise bei Wiederholungsprüfungen?" },
+                { "text": "Werden entfallene oder veränderte Anforderungen in den Einsatzbedingungen und Prüfunterlagen nachvollziehbar berücksichtigt?" }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "slug": "agenten-und-prozesse",
+      "category": "business",
+      "released": true,
+      "texts": {
+        "de": {
+          "title": "Agenten und Prozesse",
+          "summary": "Wie KI und Agenten in Arbeitsabläufe eingebunden werden und diese verbessern.",
+          "intro": [
+            "Die Dimension Agenten und Prozesse beschreibt, wie Unternehmen KI in ihre Arbeitsabläufe einbinden und diese dadurch verbessern oder neu gestalten. KI macht Wissen verfügbar, unterstützt Entscheidungen und übernimmt Aufgaben bis hin zur selbstständigen Ausführung durch Agenten. Dabei wird geprüft, welche bisherigen Prozessschritte weiterhin sinnvoll sind, verändert werden oder entfallen können.",
+            "Mit zunehmender Autonomie und höherem Risiko steigen die Anforderungen an menschliche Aufsicht und Eingriffsmöglichkeiten. Der Prozess legt fest, wann Menschen Ergebnisse prüfen, Entscheidungen treffen oder den Ablauf unterbrechen müssen. Da neue Modellversionen das Verhalten einer KI verändern können, werden ihre Auswirkungen vor der Übernahme geprüft. Klare Verantwortlichkeiten, geregelte Übergaben und geeignete Ersatzabläufe sichern die Verlässlichkeit des Gesamtprozesses."
+          ],
+          "benefits": [
+            "Arbeitsabläufe werden gezielt verbessert oder neu gestaltet, statt KI nur an bestehende Schritte anzuhängen.",
+            "Klare Regeln für menschliche Prüfung, Freigabe und Eingriffe begrenzen die Folgen fehlerhafter Ergebnisse.",
+            "Ersatzabläufe und geregelte Übergaben halten den Gesamtprozess verlässlich, auch wenn die KI ausfällt oder ungeeignete Ergebnisse liefert."
+          ],
+          "notApplied": "KI ist im betrachteten Bereich noch nicht nachweisbar in einen fachlichen Arbeitsablauf eingebunden. Es gibt keinen abgeschlossenen Arbeitsvorgang, an dem ihre Rolle im Ablauf gezeigt werden kann.",
+          "levels": [
+            {
+              "description": "Mindestens eine Person verwendet KI in einem tatsächlichen Arbeitsvorgang, etwa indem eine Antwort in ein Angebot übernommen oder eine Prognose für die Planung verwendet wird. Wie Ergebnisse geprüft und übernommen werden, entscheidet sie überwiegend selbst. Einheitliche Übergaben, Eingriffsregeln und ein Ersatzablauf fehlen noch.",
+              "questions": [
+                { "text": "Gibt es mindestens einen abgeschlossenen fachlichen Arbeitsvorgang, an dem die Verwendung eines KI-Ergebnisses und der weitere Ablauf gezeigt werden können?" },
+                { "text": "Kann eine Person benannt werden, die die KI in diesem Ablauf tatsächlich verwendet und die Arbeitsschritte erklären kann?" }
+              ]
+            },
+            {
+              "description": "Die KI ist in einen dokumentierten und tatsächlich genutzten Arbeitsablauf eingebunden. Fachliche Verantwortung, zulässige Autonomie, Prüfung und Übergaben sind für die Beteiligten eindeutig. Bei ungeeigneten Ergebnissen oder Ausfällen greifen vorgesehene Abläufe. Menschliche Kontrolle ist ein ausführbarer Arbeitsschritt mit ausreichender Zeit und verfügbaren Informationen.",
+              "questions": [
+                { "text": "Ist für jeden betrachteten Ablauf dokumentiert, welche Eingaben die KI erhält, welche Aufgabe sie übernimmt und wie ihr Ergebnis an den nächsten Arbeitsschritt übergeben wird?" },
+                { "text": "Sind die betroffenen Personen und die fachlichen Folgen möglicher Fehler bewertet und in konkrete Prüf- und Freigabeschritte übersetzt?" },
+                { "text": "Ist je Arbeitsschritt festgelegt, ob die KI vorschlagen, entscheiden oder handeln darf und bei welchen Fällen eine menschliche Entscheidung erforderlich ist?" },
+                { "text": "Sind Prüfkriterien, zuständige Prüfrollen und Eingriffswege im Ablauf festgelegt und wird ihre Anwendung an bearbeiteten Vorgängen belegt?" },
+                { "text": "Erhalten die Prüfenden die benötigten Eingaben und Ergebnisinformationen sowie ausreichend Arbeitszeit, um eine eigenständige Entscheidung zu treffen?" },
+                { "text": "Gibt es einen erprobten Ersatzablauf für ungeeignete Ergebnisse und Ausfälle, einschließlich Korrektur bereits weiterverarbeiteter Vorgänge?" },
+                { "text": "Sind fachliche Nutzungsregeln und Voraussetzungen für den Start eines KI-Schritts dokumentiert, etwa notwendige Eingaben, verfügbare Prüfung und ein nutzbarer Ersatzweg?" },
+                { "text": "Werden Prüfaufwand, Rückweisungen oder Nachbearbeitungen mit festgelegtem Rhythmus und Verantwortlichkeit erhoben und führen definierte Abweichungen zu einer Anpassung des konkreten Ablaufs?" }
+              ]
+            },
+            {
+              "description": "Erfahrungen aus bearbeiteten Vorgängen verändern den fachlichen Arbeitsablauf. Das Team überprüft regelmäßig, ob die Aufgabenverteilung zwischen Mensch und KI und die vorgesehenen Kontrollen ihre Wirkung erreichen. Wiederkehrende Nacharbeit führt zu einer Änderung an Übergaben oder Prüfschritten, und Autonomie wird nur auf Grundlage belegter Erfahrungen erweitert oder eingeschränkt.",
+              "questions": [
+                { "text": "Gibt es einen festen Rhythmus zur Überprüfung von Aufgabenverteilung, Übergaben, menschlicher Kontrolle und Ersatzabläufen?" },
+                { "text": "Werden wiederkehrende Fehler und Nacharbeiten auf ihre Ursachen im Arbeitsablauf untersucht?" },
+                { "text": "Ist mindestens eine daraus abgeleitete Änderung an Übergaben, Prüfschritten oder Autonomiegrenzen umgesetzt und dokumentiert?" },
+                { "text": "Ist die Wirkung dieser Änderung belegt, etwa durch weniger Nacharbeit oder eine höhere Quote rechtzeitig erkannter Fehler?" },
+                { "text": "Werden nicht wirksame Prüfschritte oder unnötige Übergaben nachweislich vereinfacht, ersetzt oder entfernt, ohne die erforderliche Kontrolle aufzugeben?" }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "slug": "technologie-und-infrastruktur",
+      "category": "technical",
+      "released": true,
+      "texts": {
+        "de": {
+          "title": "Technologie und Infrastruktur",
+          "summary": "Eine geeignete technische Grundlage für KI auswählen, bereitstellen und in die IT integrieren.",
+          "intro": [
+            "Die Dimension Technologie und Infrastruktur beschreibt, wie Unternehmen eine geeignete technische Grundlage für ihre KI-Anwendungen auswählen, bereitstellen und in die bestehende IT integrieren. Dazu gehören KI-Dienste und Modelle, Plattformen, Werkzeuge, Schnittstellen sowie die benötigten Rechen- und Speicherkapazitäten. Ob eine fertige Lösung genutzt, angepasst oder selbst entwickelt wird, richtet sich nach den Anforderungen des Anwendungsfalls.",
+            "Architektur, Konfigurationen und technische Abhängigkeiten müssen nachvollziehbar sein, und die Bereitstellung soll sich durch andere Personen wiederholen lassen. Die technische Grundlage soll weitere Anwendungen und Änderungen mit überschaubarem Aufwand ermöglichen. Dafür werden Komponenten wiederverwendet und kritische Anbieter- oder Modellabhängigkeiten mit einem praktikablen Ausstiegsweg berücksichtigt."
+          ],
+          "benefits": [
+            "Weitere KI-Anwendungen und Änderungen lassen sich auf derselben technischen Grundlage mit überschaubarem Aufwand umsetzen.",
+            "Eine dokumentierte, versionierte Bereitstellung lässt sich von anderen Personen nachvollziehbar wiederholen.",
+            "Ein praktikabler technischer Ausstiegsweg verringert die Abhängigkeit von einzelnen Anbietern und Modellen."
+          ],
+          "notApplied": "Eine nutzbare technische Grundlage für KI ist im betrachteten Bereich noch nicht vorhanden. Es gibt keine funktionsfähige Bereitstellung eines Modells oder KI-Werkzeugs, an der ein Ergebnis gezeigt werden kann.",
+          "levels": [
+            {
+              "description": "Mindestens ein KI-Werkzeug oder Modell ist nutzbar eingerichtet, etwa ein Cloudzugang oder eine lokal installierte Lösung. Auswahl und Einrichtung erfolgen anlassbezogen und hängen von einzelnen Personen ab. Wie sich der Aufbau wiederholen, integrieren oder auf einen anderen Anbieter übertragen lässt, ist noch nicht dokumentiert.",
+              "questions": [
+                { "text": "Gibt es mindestens eine funktionsfähige Bereitstellung eines KI-Werkzeugs oder Modells, mit der ein vorzeigbares Ergebnis erzeugt wurde?" },
+                { "text": "Kann eine Person benannt werden, die diese technische Bereitstellung eingerichtet hat oder faktisch betreut?" }
+              ]
+            },
+            {
+              "description": "Technische Auswahl und Bereitstellung folgen dokumentierten Kriterien. Architektur, Schnittstellen und Abhängigkeiten sind bekannt; die Anwendung kann anhand der vorhandenen Unterlagen erneut aufgebaut werden. Kapazität und Modellbezug sind für den vorgesehenen Einsatz geplant, und ein Wechsel wesentlicher Komponenten ist technisch vorbereitet.",
+              "questions": [
+                { "text": "Liegt je Anwendung eine aktuelle Architekturübersicht mit Komponenten, Schnittstellen, technischen Datenflüssen und externen Abhängigkeiten vor?" },
+                { "text": "Ist die Entscheidung zwischen Kaufen, Konfigurieren und Entwickeln anhand dokumentierter technischer Kriterien begründet, einschließlich Integration, Modellbezug und Wartbarkeit?" },
+                { "text": "Sind Bereitstellung und Konfiguration so dokumentiert und versioniert, dass eine andere Person die Anwendung nachvollziehbar erneut aufbauen kann, und ist dies erprobt?" },
+                { "text": "Bei Anwendungen mit eigenen Änderungen: Sind Entwicklungs-, Test- und Produktivumgebung getrennt und ist die Zuordnung der Versionen nachvollziehbar?", "conditional": true },
+                { "text": "Sind Rechenleistung, Schnittstellenkontingente und sonstige technische Kapazitäten anhand der erwarteten Nutzung dimensioniert und ist ein Verfahren für zusätzlichen Bedarf festgelegt?" },
+                { "text": "Sind unterstützte Modell- und Komponentenversionen sowie technische Abhängigkeiten erfasst und ist der Umgang mit angekündigten Abkündigungen dokumentiert?" },
+                { "text": "Existiert für kritische Anbieter- oder Modellabhängigkeiten ein dokumentierter technischer Ausstiegsweg mit exportierbaren Konfigurationen und benannten Ersatzkomponenten?" },
+                { "text": "Werden Kapazitätsauslastung und technische Abkündigungen in einem festgelegten Rhythmus durch eine benannte Rolle bewertet und führen Abweichungen zu dokumentierten Bereitstellungsentscheidungen?" }
+              ]
+            },
+            {
+              "description": "Das Unternehmen überprüft seine Architektur und Bereitstellungsverfahren regelmäßig anhand der tatsächlichen technischen Anforderungen. Wiederkehrender Integrationsaufwand und schwer austauschbare Komponenten führen zu gezielten Änderungen. Technische Ausstiegswege werden praktisch erprobt, und Verbesserungen müssen zeigen, dass Aufbau, Integration oder Austausch mit geringerem Aufwand gelingen.",
+              "questions": [
+                { "text": "Gibt es einen festen Rhythmus zur Überprüfung von Architektur, Kapazitätsplanung und Bereitstellungsverfahren anhand der tatsächlichen Nutzung?" },
+                { "text": "Werden wiederkehrende Bereitstellungs- oder Integrationsprobleme auf ihre technischen Ursachen untersucht?" },
+                { "text": "Ist mindestens eine daraus abgeleitete Verbesserung an Architektur oder Bereitstellungsverfahren umgesetzt worden?" },
+                { "text": "Ist ihre Wirkung belegt, etwa durch kürzere Bereitstellungszeit, weniger Integrationsaufwand oder bessere Kapazitätsauslastung?" },
+                { "text": "Ist für mindestens eine kritische Anbieter- oder Modellabhängigkeit ein praktischer Austauschversuch durchgeführt worden und sind dessen Erkenntnisse in den Ausstiegsweg eingeflossen?" }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "slug": "daten-und-wissen",
+      "category": "technical",
+      "released": true,
+      "texts": {
+        "de": {
+          "title": "Daten und Wissen",
+          "summary": "Ob die benötigten Daten und Wissensbestände verfügbar, geeignet und zuverlässig nutzbar sind.",
+          "intro": [
+            "Die Dimension Daten und Wissen beschreibt, ob die für eine KI-Anwendung benötigten Daten und Wissensbestände verfügbar, fachlich geeignet und zuverlässig nutzbar sind. Sie umfasst strukturierte Daten, Dokumente und dokumentiertes Fachwissen für Training, Bewertung und die Bereitstellung von Kontext.",
+            "Die Bestände müssen die vorgesehenen Fälle ausreichend abdecken und hinsichtlich Richtigkeit, Vollständigkeit, Aktualität und Widersprüchen bewertet sein. Für die Nutzung von Unternehmenswissen müssen maßgebliche Aussagen auffindbar und mit ihrem fachlichen Zusammenhang verfügbar sein, einschließlich Angaben zu Herkunft, Version und Gültigkeit.",
+            "Verantwortlichkeiten und Verfahren regeln Auswahl, Prüfung und Pflege der Bestände. Ein Berechtigungskonzept legt fest, welche Personen und Anwendungen auf welche Bestände zugreifen dürfen – auch bei Kopien, Suchindizes und weiteren abgeleiteten Beständen."
+          ],
+          "benefits": [
+            "KI-Anwendungen arbeiten mit geeigneten, aktuellen und widerspruchsfreien Beständen, die die vorgesehenen Fälle abdecken.",
+            "Herkunft, Version und Gültigkeit der bereitgestellten Inhalte sind nachvollziehbar, wenn ein Ergebnis hinterfragt wird.",
+            "Ein gelebtes Berechtigungskonzept regelt, wer auf welche Bestände zugreifen darf – auch bei Kopien und Suchindizes."
+          ],
+          "notApplied": "Eine gezielte Bereitstellung oder Bewertung von Daten und Wissen für KI ist im betrachteten Bereich noch nicht vorhanden. Es gibt keinen für eine KI-Aufgabe erschlossenen Bestand mit einem vorzeigbaren Ergebnis.",
+          "levels": [
+            {
+              "description": "Für mindestens eine KI-Aufgabe wurden Daten oder Wissensquellen erschlossen, etwa Dokumente hochgeladen oder Daten exportiert. Einzelne Personen wählen Bestände aus und beurteilen deren Eignung nach eigener Erfahrung. Welche Quelle verbindlich ist und wie Änderungen sowie Zugriffe gepflegt werden, ist noch nicht einheitlich geregelt.",
+              "questions": [
+                { "text": "Gibt es mindestens einen für eine konkrete KI-Aufgabe bereitgestellten Daten- oder Wissensbestand und ein belegtes Ergebnis seiner Nutzung oder Eignungsprüfung?" },
+                { "text": "Kann eine Person benannt werden, die den betreffenden Bestand faktisch erschließt oder pflegt?" }
+              ]
+            },
+            {
+              "description": "Die verwendeten Bestände sind erfasst, fachlich bewertet und nach einem dokumentierten Verfahren gepflegt. Verantwortlichkeiten, Qualitätskriterien und Zugriffszuordnungen sind für die Beteiligten nachvollziehbar. Veraltete oder ungeeignete Quellen werden erkannt und bearbeitet, und die Anwendung verwendet einen bekannten Bestand, dessen Herkunft und Änderungen nachvollzogen werden können.",
+              "questions": [
+                { "text": "Sind alle verwendeten Daten- und Wissensquellen mit fachlicher Verantwortung, Herkunft, vorgesehenem Einsatz und Aktualisierungsrhythmus erfasst?" },
+                { "text": "Ist die Eignung der Bestände anhand dokumentierter Kriterien geprüft, etwa Vollständigkeit, Richtigkeit, Aktualität und Abdeckung der vorgesehenen Fälle?" },
+                { "text": "Bei Trainings- oder Bewertungsdaten: Sind relevante Verzerrungen und fehlende Fallgruppen untersucht und Maßnahmen für erkannte Lücken dokumentiert?", "conditional": true },
+                { "text": "Gibt es ein genutztes Verfahren zum Korrigieren, Aktualisieren und Entfernen von Inhalten, das auch abgeleitete Bestände wie Suchindizes einbezieht?" },
+                { "text": "Sind maßgebliche Quellen, Versionsstände und die Herkunft der bereitgestellten Inhalte für die Anwendung nachvollziehbar?" },
+                { "text": "Ist in einem aktuellen Berechtigungskonzept festgelegt und tatsächlich zugeordnet, welche Personen und Anwendungen auf welche Bestände zugreifen dürfen, einschließlich abgeleiteter Kopien und Indizes?" },
+                { "text": "Werden Quellenverfügbarkeit und vereinbarte Datenqualitätswerte in einem festgelegten Rhythmus durch eine benannte Rolle überprüft und führen definierte Abweichungen zur Korrektur oder zum Ausschluss der Quelle?" }
+              ]
+            },
+            {
+              "description": "Erfahrungen mit Daten- und Wissenslücken verändern die Verfahren zur Bereitstellung und Pflege. Das Team behebt wiederkehrende Mängel an ihrer Quelle und überprüft, ob Qualitätskriterien noch zur Aufgabe passen. Überflüssige oder widersprüchliche Bestände werden bereinigt, und die Wirkung einer Verbesserung wird an der Informationsgrundlage selbst nachgewiesen.",
+              "questions": [
+                { "text": "Gibt es einen festen Rhythmus zur Überprüfung der Quellenwahl, Datenqualitätskriterien, Pflegeverfahren und fachlichen Zugriffszuordnungen?" },
+                { "text": "Werden wiederkehrende Daten- oder Wissensmängel auf ihre Ursachen in Erfassung, Auswahl oder Pflege zurückgeführt?" },
+                { "text": "Ist mindestens eine daraus abgeleitete Verbesserung des Bereitstellungs- oder Pflegeverfahrens umgesetzt worden?" },
+                { "text": "Ist ihre Wirkung belegt, etwa durch weniger veraltete Inhalte, vollständigere Fallabdeckung oder schnellere Korrektur an der Quelle?" },
+                { "text": "Werden Qualitätskriterien und Bestände bei veränderten Aufgaben nachweislich angepasst und ungeeignete oder doppelte Quellen entfernt?" }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "slug": "sicherheit-und-zuverlaessigkeit",
+      "category": "technical",
+      "released": true,
+      "texts": {
+        "de": {
+          "title": "Sicherheit und Zuverlässigkeit",
+          "summary": "Technische Risiken von KI-Anwendungen begrenzen und verlässliches Verhalten nachweisen.",
+          "intro": [
+            "Die Dimension Sicherheit und Zuverlässigkeit beschreibt, wie ein Unternehmen technische Risiken seiner KI-Anwendungen begrenzt und deren verlässliches Verhalten nachweist. Betrachtet wird die gesamte Anwendung einschließlich angebundener Datenquellen und Werkzeuge. Neben der Ergebnisqualität werden Performance, Verfügbarkeit und Robustheit bei Störungen festgelegt und geprüft.",
+            "Datensicherheit umfasst den Schutz von Eingaben, Wissensbeständen und Ausgaben vor unberechtigtem Zugriff, Manipulation, Verlust und unbeabsichtigter Weitergabe. Zugriffsrechte und Aktionsgrenzen müssen technisch durchgesetzt werden, auch wenn das Modell fehlerhafte oder manipulierte Ausgaben erzeugt. Bei generativer KI sind insbesondere eingeschleuste Anweisungen, sogenannte Prompt Injection, zu berücksichtigen.",
+            "Für jede Anwendung wird festgelegt, welche Fehler nicht akzeptabel sind und wann Ergebnisse zur menschlichen Prüfung weitergeleitet oder Folgeaktionen blockiert werden müssen. Bei Unsicherheit, Zeitüberschreitungen oder Ausfällen soll die Anwendung einen definierten sicheren Zustand erreichen."
+          ],
+          "benefits": [
+            "Messbare Zielwerte und realistische Normal-, Grenz- und Ausfalltests zeigen, unter welchen Bedingungen die Anwendung verlässlich eingesetzt werden kann.",
+            "Eingaben, Wissensbestände und Ausgaben sind vor unberechtigtem Zugriff, Manipulation und Abfluss geschützt – auch gegen Prompt Injection.",
+            "Bei Unsicherheit, Zeitüberschreitung oder Ausfall erreicht die Anwendung einen sicheren Zustand, und fehlerhafte Ergebnisse lösen keine unkontrollierten Folgeaktionen aus."
+          ],
+          "notApplied": "Eine gezielte technische Prüfung oder Absicherung der KI-Anwendung ist im betrachteten Bereich noch nicht vorhanden. Es gibt keinen dokumentierten Test und keinen belegten Nachweis einer Schutzmaßnahme.",
+          "levels": [
+            {
+              "description": "Für mindestens eine Anwendung wurden Ergebnisse getestet oder technische Schutzmaßnahmen überprüft, etwa einige Antworten kontrolliert oder ein Zugriff ausprobiert. Die Auswahl der Fälle und die Bewertung hängen noch von einzelnen Personen ab. Aus diesen Einzeltests lässt sich keine belastbare Aussage über andere Fälle und spätere Versionen ableiten.",
+              "questions": [
+                { "text": "Gibt es für mindestens eine KI-Anwendung ein dokumentiertes Testergebnis zur Ergebnisqualität, zum Fehlerverhalten oder zur Wirksamkeit einer technischen Schutzmaßnahme?" },
+                { "text": "Kann eine Person benannt werden, die solche Tests oder Schutzmaßnahmen faktisch bearbeitet?" }
+              ]
+            },
+            {
+              "description": "Sicherheit und Ergebnisqualität werden nach einem dokumentierten Verfahren geprüft. Realistische Normal-, Grenz-, Fehler- und Angriffsfälle sind mit erwarteten Ergebnissen und eindeutigen Bestehenskriterien hinterlegt. Schutzmaßnahmen werden außerhalb bloßer Modellanweisungen durchgesetzt, und wiederholbare Tests liefern Nachweise für die jeweils eingesetzte Version.",
+              "questions": [
+                { "text": "Liegt eine anwendungsbezogene technische Bedrohungsanalyse mit Schutzmaßnahmen vor, die Manipulation, Datenabfluss und unzulässige Werkzeugaktionen abdeckt und bei generativer KI direkte und indirekte Prompt Injection berücksichtigt?" },
+                { "text": "Existiert ein versionierter Testsatz mit realistischen Normal-, Grenz-, Fehler- und Angriffsfällen sowie dokumentierten erwarteten Ergebnissen?" },
+                { "text": "Sind für die vorgesehenen Fälle messbare Qualitätsgrenzen und nicht akzeptable Fehler festgelegt und anhand der eingesetzten Anwendung geprüft?" },
+                { "text": "Wird die Streuung nicht deterministischer Ergebnisse durch wiederholte Ausführung repräsentativer Fälle geprüft und anhand festgelegter Grenzen bewertet?" },
+                { "text": "Sind Zugriffs- und Aktionsgrenzen technisch außerhalb des Modells durchgesetzt und ist ihre Wirksamkeit durch negative Tests gegen Umgehung belegt?" },
+                { "text": "Sind Ein- und Ausgaben vor ihrer Weitergabe an andere Systeme technisch validiert und sind Datenabfluss sowie unzulässige Aktionen mit geeigneten Schutzmaßnahmen begrenzt und getestet?" },
+                { "text": "Ist das Verhalten bei fehlenden Quellen, Zeitüberschreitungen und Komponentenausfällen geprüft und wird ein definierter sicherer Zustand erreicht?" },
+                { "text": "Werden die Tests bei relevanten Änderungen sowie in einem festgelegten Rhythmus durch eine benannte Rolle wiederholt und ist die Einhaltung der Bestehenskriterien für die geprüfte Version belegt?" }
+              ]
+            },
+            {
+              "description": "Neue Fehler und Angriffsmuster verändern die Tests und Schutzmaßnahmen der Anwendung. Ursachen werden untersucht, damit Verbesserungen über die Behebung des einzelnen Befunds hinausgehen. Das Team überprüft auch die Aussagekraft seiner Tests und weist die Wirksamkeit einer Änderung mit vergleichbaren Fällen nach.",
+              "questions": [
+                { "text": "Gibt es einen festen Rhythmus zur Überprüfung von Testabdeckung, Bestehenskriterien und Wirksamkeit der technischen Schutzmaßnahmen?" },
+                { "text": "Werden neue Fehlverhalten und Sicherheitsbefunde auf ihre technischen Ursachen untersucht und in konkrete Änderungen am Test- oder Schutzverfahren übersetzt?" },
+                { "text": "Sind aufgetretene Fehler und relevante neue Angriffsmuster als wiederholbare Testfälle aufgenommen worden?" },
+                { "text": "Ist mindestens eine daraus entstandene Verbesserung umgesetzt und ihre Wirkung durch einen vergleichbaren Test vor und nach der Änderung belegt?" },
+                { "text": "Werden nicht aussagekräftige Tests oder unwirksame Schutzmaßnahmen nachweislich ersetzt und verbleibende technische Grenzen dokumentiert?" }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

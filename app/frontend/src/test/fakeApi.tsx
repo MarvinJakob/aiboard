@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import { createMemoryRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { vi } from 'vitest';
-import type { Post, PostSummary, Topic, TopicDetail } from '../api/client';
+import type { AuditDimension, AuditOverview, AuditQuestion, Post, PostSummary, Topic, TopicDetail } from '../api/client';
 import { Providers, createQueryClient, routes } from '../App';
 
 type L = 'de' | 'en';
@@ -83,6 +83,56 @@ function summary(p: FakePost, lang: L): PostSummary {
   };
 }
 
+// Audit-Inhalte liegen nur auf Deutsch vor (wie im Backend).
+const LEVEL_NAMES = ['Nicht angewendet', 'Einfach', 'Strukturiert', 'Intelligent'];
+
+const question = (id: string, conditional = false): AuditQuestion => ({ id, text: `Frage ${id}?`, conditional });
+
+export const AUDIT_DIMENSIONS: AuditDimension[] = [
+  {
+    slug: 'strategie-und-wirtschaftlichkeit',
+    lang: 'de',
+    title: 'Strategie und Wirtschaftlichkeit',
+    summary: 'Kurz Strategie',
+    category: 'organizational',
+    translations: ['de'],
+    intro: ['Einführung Strategie'],
+    benefits: ['Vorteil Budget', 'Vorteil Priorisierung'],
+    notApplied: { level: 0, name: LEVEL_NAMES[0], description: 'Beschreibung Strategie 0', questions: [] },
+    levels: [
+      { level: 1, name: LEVEL_NAMES[1], description: 'Beschreibung Strategie 1', questions: [question('1.1'), question('1.2')] },
+      { level: 2, name: LEVEL_NAMES[2], description: 'Beschreibung Strategie 2', questions: [question('2.1'), question('2.2', true)] },
+      { level: 3, name: LEVEL_NAMES[3], description: 'Beschreibung Strategie 3', questions: [question('3.1')] },
+    ],
+  },
+  {
+    slug: 'betrieb',
+    lang: 'de',
+    title: 'Betrieb',
+    summary: 'Kurz Betrieb',
+    category: 'organizational',
+    translations: ['de'],
+    intro: ['Einführung Betrieb'],
+    benefits: ['Vorteil Verfügbarkeit', 'Vorteil Kosten'],
+    notApplied: { level: 0, name: LEVEL_NAMES[0], description: 'Beschreibung Betrieb 0', questions: [] },
+    levels: [
+      { level: 1, name: LEVEL_NAMES[1], description: 'Beschreibung Betrieb 1', questions: [question('1.1')] },
+      { level: 2, name: LEVEL_NAMES[2], description: 'Beschreibung Betrieb 2', questions: [question('2.1')] },
+      { level: 3, name: LEVEL_NAMES[3], description: 'Beschreibung Betrieb 3', questions: [question('3.1')] },
+    ],
+  },
+];
+
+function auditOverview(): AuditOverview {
+  return {
+    lang: 'de',
+    translations: ['de'],
+    intro: ['Das KI-Audit zeigt, welche Fähigkeiten vorhanden sind.'],
+    levels: [1, 2, 3].map((level) => ({ level, name: LEVEL_NAMES[level], motto: `Leitsatz ${level}` })),
+    dimensions: AUDIT_DIMENSIONS.map(({ slug, lang, title, summary, category }) => ({ slug, lang, title, summary, category })),
+  };
+}
+
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
@@ -117,6 +167,11 @@ export function installFakeApi(posts: FakePost[] = POSTS) {
       const [tx] = pick(p.text, lang);
       const post: Post = { ...summary(p, lang), bodyMarkdown: tx.body, readingMinutes: 1, updatedAt: p.date };
       return json(200, post);
+    }
+    if (parts[1] === 'audit' && parts.length === 2) return json(200, auditOverview());
+    if (parts[1] === 'audit' && parts[2] === 'dimensions' && parts.length === 4) {
+      const d = AUDIT_DIMENSIONS.find((x) => x.slug === parts[3]);
+      return d ? json(200, d) : json(404, { message: 'Dimension nicht gefunden.' });
     }
     return json(404, { message: 'Unbekannter Endpunkt.' });
   });

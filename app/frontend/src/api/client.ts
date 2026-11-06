@@ -9,6 +9,12 @@ export type TopicDetail = components['schemas']['TopicDetail'];
 export type PostSummary = components['schemas']['PostSummary'];
 export type Post = components['schemas']['Post'];
 export type Image = components['schemas']['Image'];
+export type AuditOverview = components['schemas']['AuditOverview'];
+export type AuditDimensionSummary = components['schemas']['AuditDimensionSummary'];
+export type AuditDimension = components['schemas']['AuditDimension'];
+export type AuditLevel = components['schemas']['AuditLevel'];
+export type AuditQuestion = components['schemas']['AuditQuestion'];
+export type AuditCategory = components['schemas']['AuditCategory'];
 
 /** Fehler mit HTTP-Status, z. B. 404 für unbekannte oder nicht öffentliche Inhalte. */
 export class ApiError extends Error {
@@ -57,4 +63,17 @@ export const usePost = (slug: string, lang: Lang) =>
   useQuery({
     queryKey: ['post', slug, lang],
     queryFn: () => unwrap(client.GET('/api/posts/{slug}', { params: { path: { slug }, query: { lang } } })),
+  });
+
+export const useAudit = (lang: Lang) =>
+  useQuery({
+    queryKey: ['audit', lang],
+    queryFn: () => unwrap(client.GET('/api/audit', { params: { query: { lang } } })),
+  });
+
+export const useAuditDimension = (slug: string, lang: Lang) =>
+  useQuery({
+    queryKey: ['auditDimension', slug, lang],
+    queryFn: () =>
+      unwrap(client.GET('/api/audit/dimensions/{slug}', { params: { path: { slug }, query: { lang } } })),
   });

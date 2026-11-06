@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"ki-web/backend/internal/audit"
 	"ki-web/backend/internal/service"
 	"ki-web/backend/internal/web"
 )
@@ -15,6 +16,7 @@ import (
 // Config enthält alles, was der Router braucht.
 type Config struct {
 	Public    *service.Public
+	Audit     *audit.Catalog
 	Site      *web.Site
 	MediaPath string // optional: liefert /media/* lokal aus (in Produktion übernimmt das Caddy)
 	Log       *slog.Logger
@@ -23,7 +25,7 @@ type Config struct {
 // New baut den vollständigen HTTP-Handler aus API, Medien und Webseite.
 func New(cfg Config) http.Handler {
 	mux := http.NewServeMux()
-	registerAPI(mux, cfg.Public, cfg.Log)
+	registerAPI(mux, cfg.Public, cfg.Audit, cfg.Log)
 	if cfg.MediaPath != "" {
 		mux.Handle("GET /media/", mediaHandler(cfg.MediaPath))
 	}

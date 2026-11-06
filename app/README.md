@@ -2,7 +2,7 @@
 
 Öffentliche Webseite mit Themenseiten und Blog rund um KI. Grundlage sind die [Architektur](../requirements/ARCHITECTURE.md), das [Design-Konzept](../Design.md) und die [Tickets](../requirements/Tickets).
 
-## Stand: Sprint 1
+## Stand: Sprint 2
 
 | Ticket | Umgesetzt |
 |---|---|
@@ -11,8 +11,11 @@
 | [3 Themenseiten](../requirements/Tickets/3%20Themenseiten.md) | Drei Startthemen per Migration, Seite mit Titel, Einführung und zugeordneten Beiträgen, leerer Zustand |
 | [4 Öffentlicher Blog](../requirements/Tickets/4%20%C3%96ffentlicher%20Blog.md) | Übersicht (neueste zuerst) und Beitragsseite. Entwürfe liefern überall `404` und fehlen in der Sitemap. |
 | [7 Sprachwechsel](../requirements/Tickets/7%20Sprachwechsel.md) | DE/EN über das URL-Präfix, Sprache bleibt beim Navigieren erhalten und wird lokal gespeichert, Hinweis bei fehlender Übersetzung |
+| [8 KI-Audit-Übersicht](../requirements/Tickets/8%20KI-Audit-%C3%9Cbersicht.md) | Die Themenseite „AI Audit für Unternehmen“ zeigt Einführung, die drei Reifegrade und alle freigegebenen Dimensionen mit Link zu ihrer Seite. |
+| [9 Seiten für die Audit-Dimensionen](../requirements/Tickets/9%20Seiten%20f%C3%BCr%20die%20Audit-Dimensionen.md) | Acht Dimensionen aus `content/KI Audit.docx` unter `/{lang}/themen/ai-audit/{dimension}`, je mit Einführung, hervorgehobenen Vorteilen und den Reifegraden Einfach, Strukturiert und Intelligent. Meta-Tags und Sitemap sind ergänzt. |
+| [10 Quiz zur Selbsteinschätzung](../requirements/Tickets/10%20Quiz%20zur%20Selbsteinsch%C3%A4tzung.md) | Ja/Nein-Prüffragen je Dimension, Hinweis auf offene Fragen, Ergebnis mit nächstem Schritt, Auswertung nur im Browser. Regeln und Antwortsätze für die Abnahme: [docs/audit-abnahme.md](docs/audit-abnahme.md). |
 
-Noch nicht enthalten (Sprint 2 und 3): KI-Audit-Seiten und Quiz, Redaktionsfrontend, Anmeldung, Benutzerverwaltung, Bild-Upload. Bis dahin legt eine Entwicklungs-Migration Testbeiträge an (`DEV_SEED=true`), darunter ein Entwurf und Beiträge ohne englische Fassung.
+Noch nicht enthalten (Sprint 3): Redaktionsfrontend, Anmeldung, Benutzerverwaltung, Bild-Upload. Bis dahin legt eine Entwicklungs-Migration Testbeiträge an (`DEV_SEED=true`), darunter ein Entwurf und Beiträge ohne englische Fassung.
 
 ## Aufbau
 
@@ -24,6 +27,7 @@ backend/                Go-Modul
   cmd/server/           Einstiegspunkt: server, server healthcheck, server backup
   internal/api/         Aus openapi.yaml erzeugt (nicht von Hand ändern)
   internal/http/        Handler, Routing, Middleware
+  internal/audit/       Inhalte des KI-Audits (content.json, eingebettet) und ihre Prüfung
   internal/service/     Fachlogik: Sichtbarkeit und Sprachauswahl
   internal/store/       Datenzugriff, von sqlc aus queries.sql erzeugt
   internal/web/         Auslieferung des Frontends, Meta-Tags, Sitemap, robots.txt
@@ -31,6 +35,7 @@ backend/                Go-Modul
   migrations/           Schema und Startthemen; dev/ enthält Testbeiträge
 deploy/                 Caddyfile und Sicherungsskript
 docs/adr/               Architekturentscheidungen
+docs/audit-abnahme.md   Regeln und Antwortsätze für die Abnahme des Quiz
 ```
 
 ## Lokal entwickeln
@@ -112,3 +117,8 @@ Umgebungsvariablen, siehe [.env.example](.env.example):
 - **Kontoeinstieg:** Das Kontosymbol in der Kopfzeile fehlt noch. Es kommt mit der Anmeldung in Sprint 3 (Anforderung 6).
 - **Schriften:** Es werden keine WOFF2-Dateien ausgeliefert, weil das Design-Konzept System-Schriften vorsieht.
 - **Impressum und Datenschutz** sind Platzhalter in `frontend/src/content/legal` und müssen vor dem Livegang ersetzt werden.
+- **KI-Audit-Inhalte:** Die Inhalte stehen nicht in der Datenbank, sondern in `backend/internal/audit/content.json` (ADR 0009). Eine Dimension erscheint nur mit `"released": true`. Die Texte folgen `content/KI Audit.docx`. Daraus abgeleitet sind die Kurzbeschreibungen und die Vorteile je Dimension, die das Dokument nicht ausdrücklich nennt. Sie müssen fachlich bestätigt werden.
+- **Reifegrad 0:** Ist Stufe 1 nicht erfüllt, zeigt das Quiz „Nicht angewendet“. Anforderung 10 nennt nur die drei Reifegrade, das Fachdokument sieht diesen Fall aber vor.
+- **Bedingte Prüffragen:** Fragen wie „Bei Agenten: …“ lassen sich mit „Trifft nicht zu“ beantworten und gelten dann als erfüllt (Fachdokument: begründete Nichtanwendbarkeit).
+- **Sprache der Audit-Inhalte:** Die Audit-Inhalte liegen nur auf Deutsch vor. Unter `/en/…` erscheint die deutsche Fassung mit Hinweis, wie bei nicht übersetzten Beiträgen. Die Bedienelemente sind übersetzt.
+- **Redaktionelle Anpassungen am Fachdokument:** „Gouvernance“ heißt „Governance“, „EU KI Act“ heißt „EU AI Act“. Die Einleitungen von „Governance und Compliance“ und „Agenten und Prozesse“ nennen jetzt den Namen ihrer Dimension (im Dokument „Recht und Compliance“ bzw. „Prozesse“). Einige Einleitungen sind gekürzt, bedingte Fragen beginnen einheitlich mit ihrer Voraussetzung.

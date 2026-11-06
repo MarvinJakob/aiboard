@@ -2,7 +2,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Navigate, type RouteObject } from 'react-router';
 import { ApiError } from './api/client';
 import { LangLayout, Shell } from './components/Layout';
+import { AUDIT_TOPIC } from './lib/audit';
 import { DEFAULT_LANG, preferredLang } from './lib/lang';
+import { AuditDimensionPage } from './pages/AuditDimension';
 import { Blog } from './pages/Blog';
 import { Home } from './pages/Home';
 import { Legal } from './pages/Legal';
@@ -19,6 +21,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <Home /> },
       { path: 'themen/:slug', element: <TopicPage /> },
+      { path: `themen/${AUDIT_TOPIC}/:dimension`, element: <AuditDimensionPage /> },
       { path: 'blog', element: <Blog /> },
       { path: 'blog/:slug', element: <PostPage /> },
       { path: 'impressum', element: <Legal page="imprint" /> },

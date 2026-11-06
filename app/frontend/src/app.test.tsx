@@ -180,3 +180,111 @@ describe('Anforderung 7: Sprachwechsel', () => {
     expect(switchLangPath('/irgendwo', 'en')).toBe('/en');
   });
 });
+
+describe('Anforderung 8: KI-Audit-Übersicht', () => {
+  it('zeigt auf der Themenseite AI Audit die Einführung und alle Dimensionen mit Link', async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de/themen/ai-audit');
+    expect(await screen.findByRole('heading', { level: 2, name: 'Die Dimensionen des KI-Audits' })).toBeInTheDocument();
+    expect(screen.getByText('Das KI-Audit zeigt, welche Fähigkeiten vorhanden sind.')).toBeInTheDocument();
+    expect(screen.getByText('Leitsatz 2')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Betrieb/ })).toHaveAttribute('href', '/de/themen/ai-audit/betrieb');
+    await user.click(screen.getByRole('link', { name: /Strategie und Wirtschaftlichkeit/ }));
+    expect(router.state.location.pathname).toBe('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Strategie und Wirtschaftlichkeit' })).toBeInTheDocument();
+  });
+
+  it('erscheint nur beim Thema AI Audit', async () => {
+    renderApp('/de/themen/softwareentwicklung');
+    await screen.findByRole('heading', { level: 1, name: 'AI in der Softwareentwicklung' });
+    expect(screen.queryByRole('heading', { name: 'Die Dimensionen des KI-Audits' })).not.toBeInTheDocument();
+  });
+});
+
+describe('Anforderung 9: Seiten für die Audit-Dimensionen', () => {
+  it('zeigt Überschrift, Einführung, hervorgehobene Vorteile und die drei Reifegrade', async () => {
+    renderApp('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Strategie und Wirtschaftlichkeit' })).toBeInTheDocument();
+    expect(screen.getByText('Einführung Strategie')).toBeInTheDocument();
+    const benefits = screen.getByRole('region', { name: 'Ihr Nutzen' });
+    expect(within(benefits).getAllByRole('listitem')).toHaveLength(2);
+    for (const name of ['Einfach', 'Strukturiert', 'Intelligent']) {
+      expect(screen.getByRole('heading', { level: 3, name })).toBeInTheDocument();
+    }
+    expect(screen.getByText('Beschreibung Strategie 2')).toBeInTheDocument();
+  });
+
+  it('zeigt für unbekannte Dimensionen die Fehlerseite', async () => {
+    renderApp('/de/themen/ai-audit/gibt-es-nicht');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Seite nicht gefunden' })).toBeInTheDocument();
+  });
+
+  it('zeigt auf Englisch die deutsche Fassung mit Hinweis', async () => {
+    renderApp('/en/themen/ai-audit/betrieb');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Betrieb' })).toBeInTheDocument();
+    expect(screen.getByText('The AI audit is not available in English. You are reading the German version.')).toBeInTheDocument();
+    expect(screen.getAllByRole('radio', { name: 'Yes' })).toHaveLength(3);
+  });
+});
+
+describe('Anforderung 10: Quiz zur Selbsteinschätzung', () => {
+  const answer = async (user: ReturnType<typeof userEvent.setup>, id: string, option: string) =>
+    user.click(within(screen.getByRole('group', { name: `${id} Frage ${id}?` })).getByRole('radio', { name: option }));
+
+  it('zeigt erst nach allen Pflichtfragen den Reifegrad und aktualisiert ihn bei Änderungen', async () => {
+    const user = userEvent.setup();
+    renderApp('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    await screen.findByRole('heading', { level: 2, name: 'Selbsteinschätzung' });
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('Noch 5 Fragen offen.');
+
+    await answer(user, '1.1', 'Ja');
+    await answer(user, '1.2', 'Ja');
+    await answer(user, '2.1', 'Nein');
+    await answer(user, '2.2', 'Trifft nicht zu');
+    expect(status).toHaveTextContent('Noch 1 Frage offen.');
+    expect(status).not.toHaveTextContent('Reifegrad:');
+
+    await answer(user, '3.1', 'Ja');
+    expect(status).toHaveTextContent('Reifegrad: Einfach');
+    const next = screen.getByRole('heading', { level: 4, name: 'Nächster Schritt: Strukturiert' }).parentElement!;
+    expect(next).toHaveTextContent('Frage 2.1?');
+
+    await answer(user, '2.1', 'Ja');
+    expect(status).toHaveTextContent('Reifegrad: Intelligent');
+
+    await answer(user, '1.2', 'Nein');
+    expect(status).toHaveTextContent('Reifegrad: Nicht angewendet');
+
+    await user.click(screen.getByRole('button', { name: 'Antworten zurücksetzen' }));
+    expect(status).toHaveTextContent('Noch 5 Fragen offen.');
+  });
+
+  it('bietet „Trifft nicht zu“ nur für bedingte Fragen an', async () => {
+    renderApp('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    await screen.findByRole('heading', { level: 2, name: 'Selbsteinschätzung' });
+    expect(screen.getAllByRole('radio', { name: 'Trifft nicht zu' })).toHaveLength(1);
+  });
+
+  it('springt zur ersten offenen Frage', async () => {
+    const user = userEvent.setup();
+    renderApp('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    await screen.findByRole('heading', { level: 2, name: 'Selbsteinschätzung' });
+    await answer(user, '1.1', 'Ja');
+    await user.click(screen.getByRole('button', { name: 'Zur ersten offenen Frage' }));
+    expect(within(screen.getByRole('group', { name: '1.2 Frage 1.2?' })).getByRole('radio', { name: 'Ja' })).toHaveFocus();
+  });
+
+  it('wirkt nur auf die Dimension, auf deren Seite geantwortet wurde', async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de/themen/ai-audit/betrieb');
+    await screen.findByRole('heading', { level: 1, name: 'Betrieb' });
+    for (const id of ['1.1', '2.1', '3.1']) await answer(user, id, 'Ja');
+    expect(screen.getByRole('status')).toHaveTextContent('Reifegrad: Intelligent');
+
+    await router.navigate('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    await screen.findByRole('heading', { level: 1, name: 'Strategie und Wirtschaftlichkeit' });
+    expect(screen.getByRole('status')).toHaveTextContent('Noch 5 Fragen offen.');
+    expect(screen.queryByRole('radio', { checked: true })).not.toBeInTheDocument();
+  });
+});

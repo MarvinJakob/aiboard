@@ -7,10 +7,11 @@ afterEach(() => {
   localStorage.clear();
 });
 
-// jsdom kennt scrollTo und matchMedia nicht vollständig
+// jsdom kennt scrollTo, scrollIntoView und matchMedia nicht vollständig
 window.scrollTo = (() => {}) as typeof window.scrollTo;
 Element.prototype.scrollTo = function () {} as typeof Element.prototype.scrollTo;
 Element.prototype.scrollBy = function () {} as typeof Element.prototype.scrollBy;
+Element.prototype.scrollIntoView = function () {} as typeof Element.prototype.scrollIntoView;
 if (!window.matchMedia) {
   window.matchMedia = ((query: string) => ({
     matches: false,

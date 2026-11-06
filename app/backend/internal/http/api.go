@@ -8,13 +8,15 @@ import (
 	"net/http"
 
 	"ki-web/backend/internal/api"
+	"ki-web/backend/internal/audit"
 	"ki-web/backend/internal/service"
 )
 
 // apiServer setzt das aus openapi.yaml erzeugte StrictServerInterface um.
 type apiServer struct {
-	svc *service.Public
-	log *slog.Logger
+	svc   *service.Public
+	audit *audit.Catalog
+	log   *slog.Logger
 }
 
 var _ api.StrictServerInterface = (*apiServer)(nil)
@@ -115,9 +117,59 @@ func (s *apiServer) GetPost(ctx context.Context, req api.GetPostRequestObject) (
 	}, nil
 }
 
+func (s *apiServer) GetAudit(_ context.Context, req api.GetAuditRequestObject) (api.GetAuditResponseObject, error) {
+	if !validLang(req.Params.Lang) {
+		return api.GetAudit400JSONResponse{BadRequestJSONResponse: api.BadRequestJSONResponse{Message: msgBadLang}}, nil
+	}
+	o := s.audit.Overview(langOf(req.Params.Lang))
+	levels := make([]api.AuditLevelInfo, 0, len(o.Levels))
+	for _, l := range o.Levels {
+		levels = append(levels, api.AuditLevelInfo{Level: l.Level, Name: l.Name, Motto: l.Motto})
+	}
+	dims := make([]api.AuditDimensionSummary, 0, len(o.Dimensions))
+	for _, d := range o.Dimensions {
+		dims = append(dims, api.AuditDimensionSummary{
+			Slug: d.Slug, Lang: api.Lang(d.Lang), Title: d.Title, Summary: d.Summary, Category: api.AuditCategory(d.Category),
+		})
+	}
+	return api.GetAudit200JSONResponse{
+		Lang: api.Lang(o.Lang), Translations: toLangs(o.Translations), Intro: o.Intro, Levels: levels, Dimensions: dims,
+	}, nil
+}
+
+func (s *apiServer) GetAuditDimension(_ context.Context, req api.GetAuditDimensionRequestObject) (api.GetAuditDimensionResponseObject, error) {
+	if !validLang(req.Params.Lang) {
+		return api.GetAuditDimension400JSONResponse{BadRequestJSONResponse: api.BadRequestJSONResponse{Message: msgBadLang}}, nil
+	}
+	d, err := s.audit.Dimension(req.Slug, langOf(req.Params.Lang))
+	if errors.Is(err, service.ErrNotFound) {
+		return api.GetAuditDimension404JSONResponse{NotFoundJSONResponse: api.NotFoundJSONResponse{Message: "Dimension nicht gefunden."}}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	levels := make([]api.AuditLevel, 0, len(d.Levels))
+	for _, l := range d.Levels {
+		levels = append(levels, toAuditLevel(l))
+	}
+	return api.GetAuditDimension200JSONResponse{
+		Slug: d.Slug, Lang: api.Lang(d.Lang), Title: d.Title, Summary: d.Summary, Category: api.AuditCategory(d.Category),
+		Translations: toLangs(d.Translations), Intro: d.Intro, Benefits: d.Benefits,
+		NotApplied: toAuditLevel(d.NotApplied), Levels: levels,
+	}, nil
+}
+
 // ---------------------------------------------------------------------------
 // Abbildung Fachmodell -> API-Modell
 // ---------------------------------------------------------------------------
+
+func toAuditLevel(l audit.Level) api.AuditLevel {
+	qs := make([]api.AuditQuestion, 0, len(l.Questions))
+	for _, q := range l.Questions {
+		qs = append(qs, api.AuditQuestion{Id: q.ID, Text: q.Text, Conditional: q.Conditional})
+	}
+	return api.AuditLevel{Level: l.Level, Name: l.Name, Description: l.Description, Questions: qs}
+}
 
 func toLangs(ls []service.Lang) []api.Lang {
 	out := make([]api.Lang, 0, len(ls))
@@ -167,8 +219,8 @@ func toSummaries(ps []service.PostSummary) []api.PostSummary {
 }
 
 // registerAPI baut den API-Handler und registriert ihn am Router.
-func registerAPI(mux *http.ServeMux, svc *service.Public, log *slog.Logger) {
-	strict := api.NewStrictHandlerWithOptions(&apiServer{svc: svc, log: log}, nil, api.StrictHTTPServerOptions{
+func registerAPI(mux *http.ServeMux, svc *service.Public, catalog *audit.Catalog, log *slog.Logger) {
+	strict := api.NewStrictHandlerWithOptions(&apiServer{svc: svc, audit: catalog, log: log}, nil, api.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeJSONError(w, http.StatusBadRequest, "Ungültige Anfrage.")
 		},
