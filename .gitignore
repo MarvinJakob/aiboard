@@ -33,5 +33,4 @@ desktop.ini
 .~lock.*
 
 # Lokale Einstellungen der Werkzeuge
-.claude/settings.local.json
-.claude/worktrees/
+.claude/
