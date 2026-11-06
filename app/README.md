@@ -25,6 +25,12 @@
 
 Noch nicht enthalten: Medienverwaltung mit Bild-Upload und Titelbildern (`/redaktion/medien`, nicht Teil der Akzeptanzkriterien von Anforderung 5). Eine Entwicklungs-Migration legt Testbeiträge und Testkonten an (`DEV_SEED=true`), darunter ein Entwurf und Beiträge ohne englische Fassung.
 
+## Stand: Sprint 4
+
+| Ticket | Umgesetzt |
+|---|---|
+| [24 Beitragsaktionen in der Beitragsübersicht](https://github.com/MarvinJakob/aiboard/issues/24) | Jede Zeile der Beitragsliste bietet „Veröffentlichen“ (nur für Entwürfe) und „Löschen“, beschriftet mit dem Beitragstitel. Fehlen Texte, bleibt der Beitrag unverändert und die Übersicht nennt den Grund. Löschen verlangt eine Bestätigung in der Zeile und nutzt `DELETE /api/admin/posts/{id}`. Sprachfassungen und Themenzuordnungen entfernt die Datenbank mit (`ON DELETE CASCADE`). |
+
 ## Aufbau
 
 ```

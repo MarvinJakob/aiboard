@@ -103,6 +103,18 @@ func (s *apiServer) AdminUnpublishPost(ctx context.Context, req api.AdminUnpubli
 	return api.AdminUnpublishPost200JSONResponse(toEditorPost(p)), nil
 }
 
+// AdminDeletePost löscht einen Beitrag (Ticket #24).
+func (s *apiServer) AdminDeletePost(ctx context.Context, req api.AdminDeletePostRequestObject) (api.AdminDeletePostResponseObject, error) {
+	err := s.editorial.Delete(ctx, req.Id)
+	if errors.Is(err, service.ErrNotFound) {
+		return api.AdminDeletePost404JSONResponse{NotFoundJSONResponse: api.NotFoundJSONResponse{Message: msgPostNotFound}}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return api.AdminDeletePost204Response{}, nil
+}
+
 func fromPostInput(in api.PostInput) service.PostInput {
 	out := service.PostInput{Featured: in.Featured, Topics: in.Topics}
 	if in.Slug != nil {

@@ -225,7 +225,12 @@ export interface paths {
          */
         put: operations["adminUpdatePost"];
         post?: never;
-        delete?: never;
+        /**
+         * Beitrag löschen
+         * @description Löscht den Beitrag mit allen Sprachfassungen und Themenzuordnungen endgültig (Ticket #24).
+         *     Danach ist er öffentlich nicht mehr erreichbar (`404`) und fehlt in der Sitemap.
+         */
+        delete: operations["adminDeletePost"];
         options?: never;
         head?: never;
         patch?: never;
@@ -998,6 +1003,29 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["Unprocessable"];
+        };
+    };
+    adminDeletePost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Gelöscht */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
         };
     };
     adminPublishPost: {

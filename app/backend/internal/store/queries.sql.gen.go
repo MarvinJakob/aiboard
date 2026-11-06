@@ -130,6 +130,19 @@ func (q *Queries) DeleteExpiredSessions(ctx context.Context, expiresAt string) (
 	return result.RowsAffected()
 }
 
+const deletePost = `-- name: DeletePost :execrows
+DELETE FROM posts WHERE id = ?
+`
+
+// Loeschen eines Beitrags (Ticket #24). Sprachfassungen und Themenzuordnungen entfernt ON DELETE CASCADE.
+func (q *Queries) DeletePost(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deletePost, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const deletePostTopics = `-- name: DeletePostTopics :exec
 DELETE FROM post_topics WHERE post_id = ?
 `
