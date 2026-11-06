@@ -147,6 +147,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Alle Beiträge inklusive Entwürfe, zuletzt geänderte zuerst */
+        get: operations["adminListPosts"];
+        put?: never;
+        /** Neuen Entwurf anlegen */
+        post: operations["adminCreatePost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/posts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        /** Beitrag mit allen Sprachfassungen zum Bearbeiten laden */
+        get: operations["adminGetPost"];
+        /**
+         * Texte, Themen und Einstellungen speichern
+         * @description Ein veröffentlichter Beitrag bleibt veröffentlicht, die öffentliche Seite zeigt sofort die neue Fassung.
+         *     Er muss dafür in jeder Sprache Titel, Kurztext und Beitragstext behalten (sonst `422`).
+         */
+        put: operations["adminUpdatePost"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/posts/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Veröffentlichen
+         * @description Verlangt Titel, Kurztext und Beitragstext in jeder vorhandenen Sprache (sonst `422`).
+         */
+        post: operations["adminPublishPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/posts/{id}/unpublish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Veröffentlichung zurücknehmen
+         * @description Der Beitrag wird wieder zum Entwurf und ist öffentlich nicht mehr erreichbar.
+         */
+        post: operations["adminUnpublishPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -240,6 +326,60 @@ export interface components {
             /** @description Für den Header `X-CSRF-Token` bei schreibenden Aufrufen */
             csrfToken: string;
         };
+        /** @enum {string} */
+        PostStatus: "draft" | "published";
+        /** @description Fassung eines Beitrags in einer Sprache */
+        PostText: {
+            lang: components["schemas"]["Lang"];
+            title: string;
+            /** @description Kurztext */
+            summary: string;
+            bodyMarkdown: string;
+        };
+        PostInput: {
+            /** @description URL-Kürzel. Leer lassen, um es aus dem Titel zu erzeugen. */
+            slug?: string;
+            /** @description Im Karussell der Startseite hervorheben */
+            featured: boolean;
+            /** @description Slugs der zugeordneten Themen */
+            topics: string[];
+            /** @description Fassungen je Sprache. Leere Fassungen werden nicht gespeichert. */
+            texts: components["schemas"]["PostText"][];
+        };
+        EditorPost: {
+            /** Format: int64 */
+            id: number;
+            slug: string;
+            status: components["schemas"]["PostStatus"];
+            featured: boolean;
+            topics: string[];
+            texts: components["schemas"]["PostText"][];
+            /**
+             * Format: date-time
+             * @description Erste Veröffentlichung
+             */
+            publishedAt?: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        EditorPostSummary: {
+            /** Format: int64 */
+            id: number;
+            slug: string;
+            status: components["schemas"]["PostStatus"];
+            /** @description Deutscher Titel, sonst der Titel einer anderen Sprache */
+            title: string;
+            featured: boolean;
+            topics: string[];
+            translations: components["schemas"]["Lang"][];
+            /** Format: date-time */
+            publishedAt?: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        EditorPostList: {
+            items: components["schemas"]["EditorPostSummary"][];
+        };
     };
     responses: {
         /** @description Ungültige Anfrage */
@@ -269,6 +409,24 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
+        /** @description Konflikt, z. B. bereits vergebenes URL-Kürzel oder E-Mail-Adresse */
+        Conflict: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Eingaben unvollständig oder ungültig, die Meldung nennt den Grund */
+        Unprocessable: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
         /** @description Nicht gefunden oder nicht öffentlich */
         NotFound: {
             headers: {
@@ -280,6 +438,7 @@ export interface components {
         };
     };
     parameters: {
+        Id: number;
         /** @description Gewünschte Sprache */
         Lang: components["schemas"]["Lang"];
         Slug: string;
@@ -505,6 +664,165 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthorized"];
+        };
+    };
+    adminListPosts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Beiträge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorPostList"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    adminCreatePost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostInput"];
+            };
+        };
+        responses: {
+            /** @description Entwurf angelegt */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorPost"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    adminGetPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Beitrag */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorPost"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    adminUpdatePost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostInput"];
+            };
+        };
+        responses: {
+            /** @description Gespeichert */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorPost"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    adminPublishPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Veröffentlicht */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorPost"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    adminUnpublishPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Zurückgenommen */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorPost"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
         };
     };
 }

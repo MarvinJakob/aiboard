@@ -3,6 +3,7 @@ import type { RouteObject } from 'react-router';
 import { ApiError, ME_KEY, isStatus } from './api/client';
 import { Layout, RequireRole } from './components/Layout';
 import { LoginPage } from './pages/Login';
+import { EditPostPage } from './pages/EditPost';
 import { NotFound } from './pages/NotFound';
 import { PostsPage } from './pages/Posts';
 import { UsersPage } from './pages/Users';
@@ -17,6 +18,7 @@ export const routes: RouteObject[] = [
     element: <Layout />,
     children: [
       { index: true, element: <RequireRole can="edit"><PostsPage /></RequireRole> },
+      { path: 'beitraege/:id', element: <RequireRole can="edit"><EditPostPage /></RequireRole> },
       { path: 'benutzer', element: <RequireRole can="manageUsers"><UsersPage /></RequireRole> },
       { path: '*', element: <NotFound /> },
     ],

@@ -17,8 +17,9 @@
 | Ticket | Umgesetzt |
 |---|---|
 | [6 Zugang zur Redaktion](https://github.com/MarvinJakob/aiboard/issues/6) | Kontosymbol in der Kopfzeile führt zu `/redaktion/anmelden`. Anmeldung mit E-Mail-Adresse und Passwort ohne Selbstregistrierung. Danach führt die Redaktion zur Beitragsliste und Admin-Konten zur Benutzerverwaltung. Sitzungen liegen in der Datenbank. Das Backend prüft Sitzung, Rolle und CSRF-Token bei jeder Redaktionsseite und jedem Aufruf unter `/api/admin`. Abmelden löscht die Sitzung serverseitig. |
+| [5 Redaktionssystem](https://github.com/MarvinJakob/aiboard/issues/5) | Beitragsliste mit Entwürfen und Status unter `/redaktion`. Editor unter `/redaktion/beitraege/{id}` mit deutscher und englischer Fassung (Titel, Kurztext, Markdown-Text), Themenzuordnung, Karussell-Markierung und URL-Kürzel. Veröffentlichen verlangt Titel, Kurztext und Beitragstext in jeder angefangenen Fassung. Änderungen an veröffentlichten Beiträgen sind sofort öffentlich. Zurücknehmen braucht eine Bestätigung, bietet danach „Rückgängig“ und macht den Beitrag überall unsichtbar (`404`). |
 
-Noch nicht enthalten: KI-Audit-Seiten und Quiz (Sprint 2, eigener Pull Request), Bild-Upload. Eine Entwicklungs-Migration legt Testbeiträge und Testkonten an (`DEV_SEED=true`), darunter ein Entwurf und Beiträge ohne englische Fassung.
+Noch nicht enthalten: KI-Audit-Seiten und Quiz (Sprint 2, eigener Pull Request), Medienverwaltung mit Bild-Upload und Titelbildern (`/redaktion/medien`, nicht Teil der Akzeptanzkriterien von Anforderung 5). Eine Entwicklungs-Migration legt Testbeiträge und Testkonten an (`DEV_SEED=true`), darunter ein Entwurf und Beiträge ohne englische Fassung.
 
 ## Aufbau
 
@@ -152,6 +153,7 @@ Das Sitzungscookie erhält das Attribut `Secure`, wenn `PUBLIC_BASE_URL` mit `ht
 - **Kontoeinstieg:** Das Kontosymbol führt zur Anmeldeseite `/redaktion/anmelden` im Redaktionsfrontend statt zu einem Dialog auf der öffentlichen Seite (Design-Konzept). So verlangt es Anforderung 6, und das Sitzungscookie entsteht nur in der Redaktion.
 - **Sitzungen:** Das Cookie enthält einen zufälligen Wert mit 256 Bit, die Datenbank speichert nur dessen SHA-256-Hash. Ein `SESSION_SECRET` ist dafür nicht nötig und entfällt. Eine Sitzung gilt 12 Stunden ab der Anmeldung. Das CSRF-Token gehört zur Sitzung und kommt aus `GET /api/auth/me`. Zusätzlich lehnt das Backend schreibende Aufrufe mit fremdem `Origin` ab.
 - **Rollen:** Admin-Konten dürfen neben der Benutzerverwaltung auch Beiträge verwalten. Redaktionskonten (`editor`) haben keinen Zugriff auf die Benutzerverwaltung.
+- **Beiträge:** Leere Sprachfassungen werden nicht gespeichert. Zum Speichern eines Entwurfs reicht ein Titel. Ein veröffentlichter Beitrag lässt sich nur vollständig speichern, damit die öffentliche Seite nie leer ist. Erneutes Veröffentlichen nach dem Zurücknehmen behält das erste Veröffentlichungsdatum. Fehlt das URL-Kürzel, entsteht es aus dem Titel (Umlaute werden umschrieben, bei Dopplungen folgt eine Nummer).
 - **Anmeldeversuche:** Nach 10 Fehlversuchen von einer IP-Adresse sperrt das Backend weitere Versuche für 15 Minuten (`429`).
 - **Schriften:** Es werden keine WOFF2-Dateien ausgeliefert, weil das Design-Konzept System-Schriften vorsieht.
 - **Impressum und Datenschutz** sind Platzhalter in `frontend/src/content/legal` und müssen vor dem Livegang ersetzt werden.

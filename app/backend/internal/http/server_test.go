@@ -49,11 +49,12 @@ func newServer(t *testing.T, devSeed bool) (*httptest.Server, *sql.DB) {
 		"assets/redaktion-1.js": {Data: []byte("console.log(2)")},
 	}
 	h := httpserver.New(httpserver.Config{
-		Public:    public,
-		Accounts:  accounts,
-		Site:      web.New(public, "https://example.test", files, log),
-		Editorial: web.NewEditorial(accounts, editorialFiles, log),
-		Log:       log,
+		Public:        public,
+		Accounts:      accounts,
+		Site:          web.New(public, "https://example.test", files, log),
+		Editorial:     service.NewEditorial(db),
+		EditorialSite: web.NewEditorial(accounts, editorialFiles, log),
+		Log:           log,
 	})
 	srv := httptest.NewServer(h)
 	t.Cleanup(srv.Close)

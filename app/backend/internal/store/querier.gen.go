@@ -10,19 +10,30 @@ import (
 
 type Querier interface {
 	CountPublishedPostsByTopic(ctx context.Context) ([]CountPublishedPostsByTopicRow, error)
+	CreatePost(ctx context.Context, arg CreatePostParams) (int64, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) error
 	// ---------------------------------------------------------------------------
 	// Konten und Sitzungen der Redaktion (Anforderungen 6 und 11)
 	// ---------------------------------------------------------------------------
 	CreateUser(ctx context.Context, arg CreateUserParams) (int64, error)
 	DeleteExpiredSessions(ctx context.Context, expiresAt string) (int64, error)
+	DeletePostTopics(ctx context.Context, postID int64) error
+	DeletePostTranslations(ctx context.Context, postID int64) error
 	DeleteSession(ctx context.Context, id string) error
 	DeleteUserSessions(ctx context.Context, userID int64) error
+	GetPostByID(ctx context.Context, id int64) (Post, error)
+	GetPostIDBySlug(ctx context.Context, slug string) (int64, error)
 	GetPublishedPostBySlug(ctx context.Context, slug string) (Post, error)
 	GetSession(ctx context.Context, id string) (GetSessionRow, error)
 	GetTopicBySlug(ctx context.Context, slug string) (Topic, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int64) (User, error)
+	InsertPostTopic(ctx context.Context, arg InsertPostTopicParams) error
+	InsertPostTranslation(ctx context.Context, arg InsertPostTranslationParams) error
+	// ---------------------------------------------------------------------------
+	// Redaktion: Beitraege verwalten (Anforderung 5)
+	// ---------------------------------------------------------------------------
+	ListAllPosts(ctx context.Context) ([]Post, error)
 	ListMedia(ctx context.Context, mediaIds []int64) ([]ListMediaRow, error)
 	ListMediaTranslations(ctx context.Context, mediaIds []int64) ([]MediaTranslation, error)
 	ListPostTopics(ctx context.Context, postIds []int64) ([]PostTopic, error)
@@ -34,7 +45,10 @@ type Querier interface {
 	ListTopics(ctx context.Context) ([]Topic, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	Ping(ctx context.Context) (int64, error)
+	PublishPost(ctx context.Context, arg PublishPostParams) (int64, error)
 	SetUserActive(ctx context.Context, arg SetUserActiveParams) (int64, error)
+	UnpublishPost(ctx context.Context, arg UnpublishPostParams) (int64, error)
+	UpdatePost(ctx context.Context, arg UpdatePostParams) (int64, error)
 }
 
 var _ Querier = (*Queries)(nil)

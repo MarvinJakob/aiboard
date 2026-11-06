@@ -7,6 +7,7 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 )
 
@@ -44,6 +45,24 @@ func (q *Queries) CountPublishedPostsByTopic(ctx context.Context) ([]CountPublis
 		return nil, err
 	}
 	return items, nil
+}
+
+const createPost = `-- name: CreatePost :execlastid
+INSERT INTO posts (slug, status, featured, updated_at) VALUES (?, 'draft', ?, ?)
+`
+
+type CreatePostParams struct {
+	Slug      string
+	Featured  bool
+	UpdatedAt string
+}
+
+func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createPost, arg.Slug, arg.Featured, arg.UpdatedAt)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
 }
 
 const createSession = `-- name: CreateSession :exec
@@ -111,6 +130,24 @@ func (q *Queries) DeleteExpiredSessions(ctx context.Context, expiresAt string) (
 	return result.RowsAffected()
 }
 
+const deletePostTopics = `-- name: DeletePostTopics :exec
+DELETE FROM post_topics WHERE post_id = ?
+`
+
+func (q *Queries) DeletePostTopics(ctx context.Context, postID int64) error {
+	_, err := q.db.ExecContext(ctx, deletePostTopics, postID)
+	return err
+}
+
+const deletePostTranslations = `-- name: DeletePostTranslations :exec
+DELETE FROM post_translations WHERE post_id = ?
+`
+
+func (q *Queries) DeletePostTranslations(ctx context.Context, postID int64) error {
+	_, err := q.db.ExecContext(ctx, deletePostTranslations, postID)
+	return err
+}
+
 const deleteSession = `-- name: DeleteSession :exec
 DELETE FROM sessions WHERE id = ?
 `
@@ -127,6 +164,36 @@ DELETE FROM sessions WHERE user_id = ?
 func (q *Queries) DeleteUserSessions(ctx context.Context, userID int64) error {
 	_, err := q.db.ExecContext(ctx, deleteUserSessions, userID)
 	return err
+}
+
+const getPostByID = `-- name: GetPostByID :one
+SELECT id, slug, status, published_at, featured, cover_media_id, updated_at FROM posts WHERE id = ?
+`
+
+func (q *Queries) GetPostByID(ctx context.Context, id int64) (Post, error) {
+	row := q.db.QueryRowContext(ctx, getPostByID, id)
+	var i Post
+	err := row.Scan(
+		&i.ID,
+		&i.Slug,
+		&i.Status,
+		&i.PublishedAt,
+		&i.Featured,
+		&i.CoverMediaID,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getPostIDBySlug = `-- name: GetPostIDBySlug :one
+SELECT id FROM posts WHERE slug = ?
+`
+
+func (q *Queries) GetPostIDBySlug(ctx context.Context, slug string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getPostIDBySlug, slug)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const getPublishedPostBySlug = `-- name: GetPublishedPostBySlug :one
@@ -227,6 +294,82 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const insertPostTopic = `-- name: InsertPostTopic :exec
+INSERT INTO post_topics (post_id, topic_id) VALUES (?, ?)
+`
+
+type InsertPostTopicParams struct {
+	PostID  int64
+	TopicID int64
+}
+
+func (q *Queries) InsertPostTopic(ctx context.Context, arg InsertPostTopicParams) error {
+	_, err := q.db.ExecContext(ctx, insertPostTopic, arg.PostID, arg.TopicID)
+	return err
+}
+
+const insertPostTranslation = `-- name: InsertPostTranslation :exec
+INSERT INTO post_translations (post_id, lang, title, summary, body_markdown) VALUES (?, ?, ?, ?, ?)
+`
+
+type InsertPostTranslationParams struct {
+	PostID       int64
+	Lang         string
+	Title        string
+	Summary      string
+	BodyMarkdown string
+}
+
+func (q *Queries) InsertPostTranslation(ctx context.Context, arg InsertPostTranslationParams) error {
+	_, err := q.db.ExecContext(ctx, insertPostTranslation,
+		arg.PostID,
+		arg.Lang,
+		arg.Title,
+		arg.Summary,
+		arg.BodyMarkdown,
+	)
+	return err
+}
+
+const listAllPosts = `-- name: ListAllPosts :many
+
+SELECT id, slug, status, published_at, featured, cover_media_id, updated_at FROM posts ORDER BY updated_at DESC, id DESC
+`
+
+// ---------------------------------------------------------------------------
+// Redaktion: Beitraege verwalten (Anforderung 5)
+// ---------------------------------------------------------------------------
+func (q *Queries) ListAllPosts(ctx context.Context) ([]Post, error) {
+	rows, err := q.db.QueryContext(ctx, listAllPosts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Post{}
+	for rows.Next() {
+		var i Post
+		if err := rows.Scan(
+			&i.ID,
+			&i.Slug,
+			&i.Status,
+			&i.PublishedAt,
+			&i.Featured,
+			&i.CoverMediaID,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listMedia = `-- name: ListMedia :many
@@ -635,6 +778,28 @@ func (q *Queries) Ping(ctx context.Context) (int64, error) {
 	return column_1, err
 }
 
+const publishPost = `-- name: PublishPost :execrows
+UPDATE posts
+SET status = 'published',
+    published_at = COALESCE(published_at, ?1),
+    updated_at = ?2
+WHERE id = ?3
+`
+
+type PublishPostParams struct {
+	PublishedAt sql.NullString
+	UpdatedAt   string
+	ID          int64
+}
+
+func (q *Queries) PublishPost(ctx context.Context, arg PublishPostParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, publishPost, arg.PublishedAt, arg.UpdatedAt, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const setUserActive = `-- name: SetUserActive :execrows
 UPDATE users SET active = ? WHERE id = ?
 `
@@ -646,6 +811,47 @@ type SetUserActiveParams struct {
 
 func (q *Queries) SetUserActive(ctx context.Context, arg SetUserActiveParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, setUserActive, arg.Active, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const unpublishPost = `-- name: UnpublishPost :execrows
+UPDATE posts SET status = 'draft', updated_at = ? WHERE id = ?
+`
+
+type UnpublishPostParams struct {
+	UpdatedAt string
+	ID        int64
+}
+
+func (q *Queries) UnpublishPost(ctx context.Context, arg UnpublishPostParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, unpublishPost, arg.UpdatedAt, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const updatePost = `-- name: UpdatePost :execrows
+UPDATE posts SET slug = ?, featured = ?, updated_at = ? WHERE id = ?
+`
+
+type UpdatePostParams struct {
+	Slug      string
+	Featured  bool
+	UpdatedAt string
+	ID        int64
+}
+
+func (q *Queries) UpdatePost(ctx context.Context, arg UpdatePostParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updatePost,
+		arg.Slug,
+		arg.Featured,
+		arg.UpdatedAt,
+		arg.ID,
+	)
 	if err != nil {
 		return 0, err
 	}

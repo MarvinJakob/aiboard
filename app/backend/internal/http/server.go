@@ -15,11 +15,12 @@ import (
 
 // Config enthält alles, was der Router braucht.
 type Config struct {
-	Public    *service.Public
-	Accounts  *service.Accounts
-	Site      *web.Site
-	Editorial *web.Editorial
-	MediaPath string // optional: liefert /media/* lokal aus (in Produktion übernimmt das Caddy)
+	Public        *service.Public
+	Accounts      *service.Accounts
+	Editorial     *service.Editorial
+	Site          *web.Site
+	EditorialSite *web.Editorial
+	MediaPath     string // optional: liefert /media/* lokal aus (in Produktion übernimmt das Caddy)
 	// SecureCookies setzt das Secure-Attribut am Sitzungscookie (bei HTTPS).
 	SecureCookies bool
 	// TrustProxy liest die IP-Adresse aus X-Forwarded-For (hinter Caddy).
@@ -33,6 +34,7 @@ func New(cfg Config) http.Handler {
 	registerAPI(mux, &apiServer{
 		svc:           cfg.Public,
 		accounts:      cfg.Accounts,
+		editorial:     cfg.Editorial,
 		limiter:       auth.NewLimiter(loginMaxFailures, loginWindow),
 		secureCookies: cfg.SecureCookies,
 		log:           cfg.Log,
@@ -40,7 +42,7 @@ func New(cfg Config) http.Handler {
 	if cfg.MediaPath != "" {
 		mux.Handle("GET /media/", mediaHandler(cfg.MediaPath))
 	}
-	cfg.Editorial.Register(mux)
+	cfg.EditorialSite.Register(mux)
 	cfg.Site.Register(mux)
 	g := &guard{accounts: cfg.Accounts, trustProxy: cfg.TrustProxy, log: cfg.Log}
 	return recoverer(cfg.Log, logRequests(cfg.Log, g.wrap(mux)))
