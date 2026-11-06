@@ -253,6 +253,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/posts/{id}/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Automatische Veröffentlichung planen oder ändern
+         * @description Nur für Beiträge „In Arbeit“ (Ticket #23). Der Zeitpunkt muss in der Zukunft liegen, und der Beitrag
+         *     braucht Titel, Kurztext und Beitragstext in jeder vorhandenen Sprache (sonst `422`). Das Backend
+         *     veröffentlicht fällige Beiträge mit höchstens einer Minute Verzögerung.
+         */
+        put: operations["adminSchedulePost"];
+        post?: never;
+        /**
+         * Geplanten Zeitpunkt entfernen
+         * @description Der Beitrag bleibt „In Arbeit“.
+         */
+        delete: operations["adminUnschedulePost"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/posts/{id}/unpublish": {
         parameters: {
             query?: never;
@@ -412,7 +440,10 @@ export interface components {
             /** @description Für den Header `X-CSRF-Token` bei schreibenden Aufrufen */
             csrfToken: string;
         };
-        /** @enum {string} */
+        /**
+         * @description `draft` erscheint in der Redaktion als „In Arbeit“, `published` als „Veröffentlicht“
+         * @enum {string}
+         */
         PostStatus: "draft" | "published";
         /** @description Fassung eines Beitrags in einer Sprache */
         PostText: {
@@ -445,6 +476,11 @@ export interface components {
              * @description Erste Veröffentlichung
              */
             publishedAt?: string;
+            /**
+             * Format: date-time
+             * @description Geplante automatische Veröffentlichung in UTC, nur bei Beiträgen „In Arbeit“
+             */
+            scheduledAt?: string;
             /** Format: date-time */
             updatedAt: string;
         };
@@ -460,8 +496,20 @@ export interface components {
             translations: components["schemas"]["Lang"][];
             /** Format: date-time */
             publishedAt?: string;
+            /**
+             * Format: date-time
+             * @description Geplante automatische Veröffentlichung in UTC
+             */
+            scheduledAt?: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        ScheduleInput: {
+            /**
+             * Format: date-time
+             * @description Zeitpunkt der automatischen Veröffentlichung, mit Zeitzone (wird in UTC gespeichert)
+             */
+            publishAt: string;
         };
         /** @description Redaktionskonto ohne Passwortdaten */
         User: {
@@ -1024,6 +1072,62 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["Unprocessable"];
+        };
+    };
+    adminSchedulePost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleInput"];
+            };
+        };
+        responses: {
+            /** @description Geplant */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorPost"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    adminUnschedulePost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Zeitpunkt entfernt */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorPost"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
         };
     };
     adminUnpublishPost: {

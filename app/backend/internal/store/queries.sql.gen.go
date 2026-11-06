@@ -167,7 +167,7 @@ func (q *Queries) DeleteUserSessions(ctx context.Context, userID int64) error {
 }
 
 const getPostByID = `-- name: GetPostByID :one
-SELECT id, slug, status, published_at, featured, cover_media_id, updated_at FROM posts WHERE id = ?
+SELECT id, slug, status, published_at, featured, cover_media_id, updated_at, scheduled_at FROM posts WHERE id = ?
 `
 
 func (q *Queries) GetPostByID(ctx context.Context, id int64) (Post, error) {
@@ -181,6 +181,7 @@ func (q *Queries) GetPostByID(ctx context.Context, id int64) (Post, error) {
 		&i.Featured,
 		&i.CoverMediaID,
 		&i.UpdatedAt,
+		&i.ScheduledAt,
 	)
 	return i, err
 }
@@ -197,7 +198,7 @@ func (q *Queries) GetPostIDBySlug(ctx context.Context, slug string) (int64, erro
 }
 
 const getPublishedPostBySlug = `-- name: GetPublishedPostBySlug :one
-SELECT id, slug, status, published_at, featured, cover_media_id, updated_at
+SELECT id, slug, status, published_at, featured, cover_media_id, updated_at, scheduled_at
 FROM posts
 WHERE slug = ? AND status = 'published'
 `
@@ -213,6 +214,7 @@ func (q *Queries) GetPublishedPostBySlug(ctx context.Context, slug string) (Post
 		&i.Featured,
 		&i.CoverMediaID,
 		&i.UpdatedAt,
+		&i.ScheduledAt,
 	)
 	return i, err
 }
@@ -335,7 +337,7 @@ func (q *Queries) InsertPostTranslation(ctx context.Context, arg InsertPostTrans
 
 const listAllPosts = `-- name: ListAllPosts :many
 
-SELECT id, slug, status, published_at, featured, cover_media_id, updated_at FROM posts ORDER BY updated_at DESC, id DESC
+SELECT id, slug, status, published_at, featured, cover_media_id, updated_at, scheduled_at FROM posts ORDER BY updated_at DESC, id DESC
 `
 
 // ---------------------------------------------------------------------------
@@ -358,7 +360,42 @@ func (q *Queries) ListAllPosts(ctx context.Context) ([]Post, error) {
 			&i.Featured,
 			&i.CoverMediaID,
 			&i.UpdatedAt,
+			&i.ScheduledAt,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDuePosts = `-- name: ListDuePosts :many
+SELECT id, scheduled_at FROM posts
+WHERE status = 'draft' AND scheduled_at IS NOT NULL AND scheduled_at <= ?
+ORDER BY scheduled_at, id
+`
+
+type ListDuePostsRow struct {
+	ID          int64
+	ScheduledAt sql.NullString
+}
+
+func (q *Queries) ListDuePosts(ctx context.Context, scheduledAt sql.NullString) ([]ListDuePostsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listDuePosts, scheduledAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListDuePostsRow{}
+	for rows.Next() {
+		var i ListDuePostsRow
+		if err := rows.Scan(&i.ID, &i.ScheduledAt); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -594,7 +631,7 @@ func (q *Queries) ListPostTranslations(ctx context.Context, postID int64) ([]Pos
 }
 
 const listPublishedPosts = `-- name: ListPublishedPosts :many
-SELECT id, slug, status, published_at, featured, cover_media_id, updated_at
+SELECT id, slug, status, published_at, featured, cover_media_id, updated_at, scheduled_at
 FROM posts
 WHERE status = 'published'
 ORDER BY published_at DESC, id DESC
@@ -617,6 +654,7 @@ func (q *Queries) ListPublishedPosts(ctx context.Context) ([]Post, error) {
 			&i.Featured,
 			&i.CoverMediaID,
 			&i.UpdatedAt,
+			&i.ScheduledAt,
 		); err != nil {
 			return nil, err
 		}
@@ -632,7 +670,7 @@ func (q *Queries) ListPublishedPosts(ctx context.Context) ([]Post, error) {
 }
 
 const listPublishedPostsByTopic = `-- name: ListPublishedPostsByTopic :many
-SELECT p.id, p.slug, p.status, p.published_at, p.featured, p.cover_media_id, p.updated_at
+SELECT p.id, p.slug, p.status, p.published_at, p.featured, p.cover_media_id, p.updated_at, p.scheduled_at
 FROM posts p
 JOIN post_topics pt ON pt.post_id = p.id
 WHERE pt.topic_id = ? AND p.status = 'published'
@@ -656,6 +694,7 @@ func (q *Queries) ListPublishedPostsByTopic(ctx context.Context, topicID int64) 
 			&i.Featured,
 			&i.CoverMediaID,
 			&i.UpdatedAt,
+			&i.ScheduledAt,
 		); err != nil {
 			return nil, err
 		}
@@ -782,6 +821,7 @@ const publishPost = `-- name: PublishPost :execrows
 UPDATE posts
 SET status = 'published',
     published_at = COALESCE(published_at, ?1),
+    scheduled_at = NULL,
     updated_at = ?2
 WHERE id = ?3
 `
@@ -794,6 +834,49 @@ type PublishPostParams struct {
 
 func (q *Queries) PublishPost(ctx context.Context, arg PublishPostParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, publishPost, arg.PublishedAt, arg.UpdatedAt, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const publishScheduledPost = `-- name: PublishScheduledPost :execrows
+UPDATE posts
+SET status = 'published',
+    published_at = COALESCE(published_at, scheduled_at),
+    scheduled_at = NULL,
+    updated_at = ?1
+WHERE id = ?2 AND status = 'draft' AND scheduled_at IS NOT NULL
+`
+
+type PublishScheduledPostParams struct {
+	UpdatedAt string
+	ID        int64
+}
+
+func (q *Queries) PublishScheduledPost(ctx context.Context, arg PublishScheduledPostParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, publishScheduledPost, arg.UpdatedAt, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const schedulePost = `-- name: SchedulePost :execrows
+
+UPDATE posts SET scheduled_at = ?, updated_at = ? WHERE id = ? AND status = 'draft'
+`
+
+type SchedulePostParams struct {
+	ScheduledAt sql.NullString
+	UpdatedAt   string
+	ID          int64
+}
+
+// Geplante Veroeffentlichung (Ticket #23). Zeitpunkte in UTC, RFC 3339 ohne Sekundenbruchteile,
+// damit der Textvergleich der zeitlichen Reihenfolge entspricht.
+func (q *Queries) SchedulePost(ctx context.Context, arg SchedulePostParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, schedulePost, arg.ScheduledAt, arg.UpdatedAt, arg.ID)
 	if err != nil {
 		return 0, err
 	}
@@ -828,6 +911,23 @@ type UnpublishPostParams struct {
 
 func (q *Queries) UnpublishPost(ctx context.Context, arg UnpublishPostParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, unpublishPost, arg.UpdatedAt, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const unschedulePost = `-- name: UnschedulePost :execrows
+UPDATE posts SET scheduled_at = NULL, updated_at = ? WHERE id = ?
+`
+
+type UnschedulePostParams struct {
+	UpdatedAt string
+	ID        int64
+}
+
+func (q *Queries) UnschedulePost(ctx context.Context, arg UnschedulePostParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, unschedulePost, arg.UpdatedAt, arg.ID)
 	if err != nil {
 		return 0, err
 	}

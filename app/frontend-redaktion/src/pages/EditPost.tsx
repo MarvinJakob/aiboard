@@ -13,7 +13,7 @@ import {
   type PostText,
 } from '../api/posts';
 import { Loading, Page } from '../components/Layout';
-import { StatusBadge, formatDate } from '../components/PostParts';
+import { StatusBadge, formatDate, fromLocalInput, toLocalInput } from '../components/PostParts';
 
 interface Form {
   slug: string;
@@ -46,7 +46,7 @@ function toInput(f: Form): PostInput {
 
 const hasText = (t: PostText) => Boolean(t.title.trim() || t.summary.trim() || t.bodyMarkdown.trim());
 
-/** Beitrag anlegen oder bearbeiten (Anforderung 5). „neu“ legt beim ersten Speichern einen Entwurf an. */
+/** Beitrag anlegen oder bearbeiten (Anforderung 5). „neu“ legt beim ersten Speichern einen Beitrag „In Arbeit“ an. */
 export function EditPostPage() {
   const { id: param } = useParams();
   const id = param === 'neu' ? undefined : Number(param);
@@ -78,7 +78,8 @@ function Editor({ post }: { post?: EditorPost }) {
   const [notice, setNotice] = useState<Notice | null>((location.state as { notice?: Notice } | null)?.notice ?? null);
   const [error, setError] = useState('');
   const [confirmUnpublish, setConfirmUnpublish] = useState(false);
-  const ids = { slug: useId(), title: useId(), summary: useId(), body: useId(), error: useId() };
+  const [scheduleValue, setScheduleValue] = useState(() => (post?.scheduledAt ? toLocalInput(post.scheduledAt) : ''));
+  const ids = { slug: useId(), title: useId(), summary: useId(), body: useId(), error: useId(), schedule: useId(), scheduleHint: useId() };
 
   const dirty = JSON.stringify(toInput(form)) !== baseline;
   const published = post?.status === 'published';
@@ -110,6 +111,7 @@ function Editor({ post }: { post?: EditorPost }) {
       }
       setForm(toForm(saved));
       setBaseline(JSON.stringify(toInput(toForm(saved))));
+      setScheduleValue(saved.scheduledAt ? toLocalInput(saved.scheduledAt) : '');
       setNotice(success);
     } catch (e) {
       setError(errorText(e));
@@ -119,7 +121,7 @@ function Editor({ post }: { post?: EditorPost }) {
   const save = () =>
     run(
       () => (post ? action.mutateAsync({ kind: 'save', id: post.id, input: toInput(form) }) : action.mutateAsync({ kind: 'create', input: toInput(form) })),
-      { text: published ? 'Änderungen gespeichert. Die Webseite zeigt jetzt die neue Fassung.' : 'Entwurf gespeichert.' },
+      { text: published ? 'Änderungen gespeichert. Die Webseite zeigt jetzt die neue Fassung.' : 'Gespeichert. Der Beitrag bleibt „In Arbeit“.' },
     );
 
   const publish = () =>
@@ -141,6 +143,31 @@ function Editor({ post }: { post?: EditorPost }) {
     });
   };
 
+  // Geplante Veröffentlichung (Ticket #23): Eingabe in lokaler Zeit, gespeichert wird UTC.
+  const schedule = () => {
+    const iso = fromLocalInput(scheduleValue);
+    if (!iso || new Date(iso).getTime() <= Date.now()) {
+      setNotice(null);
+      setError(
+        iso
+          ? 'Der Zeitpunkt liegt in der Vergangenheit. Bitte wählen Sie einen Zeitpunkt in der Zukunft.'
+          : 'Bitte Datum und Uhrzeit für die Veröffentlichung angeben.',
+      );
+      return;
+    }
+    return run(
+      async () => {
+        let target = post!;
+        if (dirty) target = await action.mutateAsync({ kind: 'save', id: target.id, input: toInput(form) });
+        return action.mutateAsync({ kind: 'schedule', id: target.id, publishAt: iso });
+      },
+      { text: `Geplant: Der Beitrag erscheint am ${formatDate(iso)} automatisch auf der Webseite.` },
+    );
+  };
+
+  const unschedule = () =>
+    run(() => action.mutateAsync({ kind: 'unschedule', id: post!.id }), { text: 'Zeitpunkt entfernt. Der Beitrag bleibt „In Arbeit“.' });
+
   const title = post ? form.texts.de.title || form.texts.en.title || 'Ohne Titel' : 'Neuer Beitrag';
   const publicLang = useMemo<Lang>(() => (post?.texts.some((t) => t.lang === 'de') ? 'de' : 'en'), [post]);
 
@@ -153,7 +180,8 @@ function Editor({ post }: { post?: EditorPost }) {
         {post ? (
           <>
             Zuletzt geändert am {formatDate(post.updatedAt)}
-            {published && post.publishedAt && <>, veröffentlicht am {formatDate(post.publishedAt)}</>}.{' '}
+            {published && post.publishedAt && <>, veröffentlicht am {formatDate(post.publishedAt)}</>}
+            {!published && post.scheduledAt && <>, automatische Veröffentlichung am {formatDate(post.scheduledAt)}</>}.{' '}
             {published && (
               <a href={`/${publicLang}/blog/${post.slug}`} target="_blank" rel="noreferrer">
                 Auf der Webseite ansehen
@@ -161,7 +189,7 @@ function Editor({ post }: { post?: EditorPost }) {
             )}
           </>
         ) : (
-          'Der Entwurf ist erst nach dem Veröffentlichen auf der Webseite sichtbar.'
+          'Der Beitrag bleibt „In Arbeit“ und ist erst nach dem Veröffentlichen auf der Webseite sichtbar.'
         )}
       </p>
 
@@ -247,6 +275,48 @@ function Editor({ post }: { post?: EditorPost }) {
             </span>
           </div>
         </div>
+
+        {!published && (
+          <section className="card" aria-labelledby={ids.schedule + '-title'}>
+            <h2 className="card-title" id={ids.schedule + '-title'}>
+              Automatisch veröffentlichen
+            </h2>
+            {post ? (
+              <>
+                <div className="field">
+                  <label htmlFor={ids.schedule}>Datum und Uhrzeit</label>
+                  <input
+                    id={ids.schedule}
+                    type="datetime-local"
+                    value={scheduleValue}
+                    min={toLocalInput(new Date())}
+                    aria-describedby={ids.scheduleHint}
+                    onChange={(e) => setScheduleValue(e.target.value)}
+                  />
+                  <span className="field-hint" id={ids.scheduleHint}>
+                    {post.scheduledAt
+                      ? `Geplant für ${formatDate(post.scheduledAt)} (Ortszeit). `
+                      : 'Angabe in Ortszeit. '}
+                    Bis dahin bleibt der Beitrag „In Arbeit“ und ist öffentlich nicht sichtbar. Titel, Kurztext und
+                    Beitragstext müssen vorhanden sein.
+                  </span>
+                </div>
+                <div className="schedule-actions">
+                  <button type="button" className="btn btn-secondary press" disabled={busy} onClick={() => void schedule()}>
+                    {post.scheduledAt ? 'Zeitpunkt ändern' : 'Zeitpunkt speichern'}
+                  </button>
+                  {post.scheduledAt && (
+                    <button type="button" className="btn btn-danger press" disabled={busy} onClick={() => void unschedule()}>
+                      Zeitpunkt entfernen
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="field-hint">Speichern Sie den Beitrag zuerst. Danach können Sie einen Zeitpunkt festlegen.</p>
+            )}
+          </section>
+        )}
 
         <div className="toolbar glass" role="toolbar" aria-label="Beitrag">
           <div className="toolbar-status" aria-live="polite">

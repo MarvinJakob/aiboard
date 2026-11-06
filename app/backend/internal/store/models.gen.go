@@ -31,6 +31,7 @@ type Post struct {
 	Featured     bool
 	CoverMediaID sql.NullInt64
 	UpdatedAt    string
+	ScheduledAt  sql.NullString
 }
 
 type PostTopic struct {

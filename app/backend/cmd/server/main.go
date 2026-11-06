@@ -119,12 +119,14 @@ func runServer(cfg config, log *slog.Logger) error {
 	public := service.NewPublic(store.New(db))
 	accounts := service.NewAccounts(db)
 	go cleanupSessions(ctx, accounts, log)
+	editorial := service.NewEditorial(db)
+	go publishScheduled(ctx, editorial, log)
 	hcfg := httpserver.Config{
 		Public:        public,
 		Audit:         catalog,
 		Accounts:      accounts,
 		Site:          web.New(public, catalog, cfg.baseURL, nil, log),
-		Editorial:     service.NewEditorial(db),
+		Editorial:     editorial,
 		EditorialSite: web.NewEditorial(accounts, nil, log),
 		SecureCookies: strings.HasPrefix(cfg.baseURL, "https://"),
 		TrustProxy:    cfg.trustProxy,
@@ -160,6 +162,34 @@ func runServer(cfg config, log *slog.Logger) error {
 		return srv.Shutdown(shutdownCtx)
 	}
 	return nil
+}
+
+// publishInterval bestimmt, wie oft fällige Beiträge veröffentlicht werden. Ticket #23 erlaubt
+// höchstens eine Minute Abweichung vom geplanten Zeitpunkt.
+const publishInterval = 15 * time.Second
+
+// publishScheduled veröffentlicht beim Start und danach regelmäßig alle Beiträge, deren geplanter
+// Zeitpunkt erreicht ist (Ticket #23).
+func publishScheduled(ctx context.Context, editorial *service.Editorial, log *slog.Logger) {
+	t := time.NewTicker(publishInterval)
+	defer t.Stop()
+	for {
+		published, skipped, err := editorial.PublishDue(ctx)
+		if err != nil && ctx.Err() == nil {
+			log.Error("geplante beiträge veröffentlichen", "fehler", err)
+		}
+		for _, id := range published {
+			log.Info("geplanten beitrag veröffentlicht", "id", id)
+		}
+		for _, id := range skipped {
+			log.Warn("geplanter beitrag unvollständig, zeitpunkt entfernt", "id", id)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+		}
+	}
 }
 
 // cleanupSessions löscht abgelaufene Sitzungen beim Start und danach täglich (ARCHITECTURE.md, Abschnitt 4).
