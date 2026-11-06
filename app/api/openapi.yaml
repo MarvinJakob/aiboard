@@ -329,6 +329,88 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+  /api/admin/users:
+    get:
+      operationId: adminListUsers
+      summary: Redaktionskonten mit E-Mail-Adresse, Rolle und Status
+      description: Nur für Admin-Konten. Passwörter und Hashes gibt die API nie zurück.
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: Konten, sortiert nach E-Mail-Adresse
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      operationId: adminCreateUser
+      summary: Redaktionskonto mit Rolle editor und Startpasswort anlegen
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewUser'
+      responses:
+        '201':
+          description: Konto angelegt, es kann sich sofort anmelden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /api/admin/users/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    patch:
+      operationId: adminUpdateUser
+      summary: Konto deaktivieren oder reaktivieren
+      description: |
+        Beim Deaktivieren löscht das Backend alle Sitzungen des Kontos in derselben Transaktion.
+        Bereits geöffnete Sitzungen sind damit sofort ungültig. Das eigene Konto lässt sich nicht deaktivieren (`422`).
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPatch'
+      responses:
+        '200':
+          description: Geändert
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
 components:
   securitySchemes:
     sessionCookie:
@@ -664,6 +746,48 @@ components:
         updatedAt:
           type: string
           format: date-time
+    User:
+      type: object
+      description: Redaktionskonto ohne Passwortdaten
+      required: [id, email, role, active, createdAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+        active:
+          type: boolean
+          description: Deaktivierte Konten können sich nicht anmelden
+        createdAt:
+          type: string
+          format: date-time
+    UserList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    NewUser:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          description: Eindeutige E-Mail-Adresse, Groß- und Kleinschreibung zählt nicht
+        password:
+          type: string
+          description: Startpasswort mit mindestens 10 Zeichen
+    UserPatch:
+      type: object
+      required: [active]
+      properties:
+        active:
+          type: boolean
     EditorPostList:
       type: object
       required: [items]

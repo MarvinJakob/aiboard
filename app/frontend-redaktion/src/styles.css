@@ -284,6 +284,17 @@ fieldset.field { margin: 0; padding: 0; border: 0; }
 .toolbar-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
 .confirm-text { font-size: .875rem; font-weight: 650; }
 
+/* Benutzerverwaltung */
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.card-title { font-size: 1.25rem; font-weight: 720; }
+.inline-form { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto; align-items: start; gap: 0 16px; }
+.inline-form-actions { padding-top: 38px; }
+.form-ok:empty { margin: 0; }
+
+@media (max-width: 760px) {
+  .inline-form { grid-template-columns: 1fr; }
+  .inline-form-actions { padding-top: 16px; }
+}
 @media (max-width: 760px) {
   .brand-name { display: none; }
   .ed-user { display: none; }
