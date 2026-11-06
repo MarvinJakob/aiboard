@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ki-web",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "app\\.build\\run-dev.cmd"],
+      "port": 8080
+    }
+  ]
+}

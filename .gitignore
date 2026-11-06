@@ -1,0 +1,37 @@
+# Abhängigkeiten und Build-Artefakte
+node_modules/
+.build/
+dist/
+coverage/
+*.exe
+*.test
+*.out
+
+# Daten, Medien und Geheimnisse
+*.db
+*.db-wal
+*.db-shm
+data/
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor und Betriebssystem
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Office-Temporärdateien (z. B. geöffnetes KI Audit.docx)
+~$*
+.~lock.*
+
+# Lokale Einstellungen der Werkzeuge
+.claude/settings.local.json
+.claude/worktrees/
