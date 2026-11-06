@@ -77,3 +77,25 @@ Der [Review-Rücklauf](https://github.com/MarvinJakob/aiboard/issues/10#issuecom
 Vorschlag für Akzeptanzkriterium 2: Sobald alle Pflichtfragen beantwortet sind, zeigt das Quiz „Nicht angewendet“ (0), „Einfach“ (1), „Strukturiert“ (2) oder „Intelligent“ (3). Ein Reifegrad gilt nur, wenn alle Fragen dieser und aller darunterliegenden Stufen erfüllt sind. Ist Stufe 1 nicht vollständig erfüllt, gilt Stufe 0. Vor vollständiger Beantwortung erscheint nur ein Hinweis auf die fehlenden Antworten.
 
 Der Vorschlag und die Freigabe der oben abgeglichenen Fragen einschließlich der redaktionellen Anpassungen sind am [Ticket 10](https://github.com/MarvinJakob/aiboard/issues/10) zu bestätigen. Die separaten Freigaben für Übersicht und Dimensionsseiten in Tickets 14 und 15 bleiben davon unberührt.
+
+## Abgleich der Dimensionsseiten für Ticket 15
+
+Im Vorläufer-Commit [06aeb9a](https://github.com/MarvinJakob/aiboard/commit/06aeb9a4a27138b51dd73fdeb2a71ab9f3ba13a6) wurde folgender Abgleich vom 2026-11-06 dokumentiert: Es wurden Kurzbeschreibung, Einführung, Vorteile und die Erläuterungen zu den Reifegraden aller acht Dimensionsseiten mit [KI Audit.docx](../../content/KI%20Audit.docx), Version 1.0 vom 23.10.2026, abgeglichen (SHA-256 `D36CA21532BA0FCC5F4BC985732540CD224F627679B999859EF983A607380C6B`). Grundlage sind die Abschnitte der Dimensionen mit Einführung und Audit (Level 0 bis 3).
+
+Jede Seite enthält eine Einführung, drei Vorteile und je eine Erläuterung zu „Nicht angewendet“ und zu den drei Reifegraden. `audit_test.go` verlangt mindestens zwei Vorteile je freigegebener Dimension.
+
+| Inhalt | Verhältnis zum Fachdokument |
+|---|---|
+| Einführung | Gekürzte Fassung der zwei bis drei Einführungsabsätze der Dimension; keine neuen Aussagen. |
+| Kurzbeschreibung und Vorteile | Redaktionell aus den Einführungsabsätzen abgeleitet (zum Beispiel Wirkungen wie „Engpässe werden sichtbar“, „Lernzeit wird eingeplant“). Das Fachdokument enthält sie nicht als eigene Liste. |
+| Reifegrade | Gekürzte Fassung der Beschreibungen zu Level 0 bis 3; Beispiele und Abgrenzungen wurden teilweise weggelassen, Bedeutung unverändert. |
+
+Abweichungen und Korrekturen:
+
+- Strategie, Vorteil 2: „statt des nächsten Piloten aus dem Bauch heraus“ hatte keinen Beleg im Dokument. Ersetzt durch „statt dass Vorhaben entstehen, weil jemand Lust darauf hatte“ (Level 2, Strategie).
+- Governance und Compliance: Das Fachdokument nennt die Dimension in der Überschrift „Gouvernance und Compliance“ und im Einführungstext „Recht und Compliance“. Die Seite verwendet „Governance und Compliance“ wie Inhaltsverzeichnis, Quiz und Adresse. Diese Abweichung ist in der unten dokumentierten Freigabe eingeschlossen.
+- Agenten und Prozesse: Das Fachdokument beginnt mit „Die Dimension Prozesse“. Die Seite verwendet den Titel „Agenten und Prozesse“.
+
+### Freigabe
+
+Die technische Gegenprüfung ersetzt die fachliche Freigabe nicht. Marvin Jakob hat am 2026-11-06 alle acht Dimensionen einschließlich der dokumentierten Abweichungen ausdrücklich fachlich freigegeben (Implementierungsauftrag zu [Ticket 29](https://github.com/MarvinJakob/aiboard/issues/29)). Die vollständige [Freigabevorlage](audit-dimensionsfreigabe.md) enthält die aktuellen Texte und den zugehörigen SHA-256. Seiten ohne Freigabe können über `"released": false` in `content.json` ausgeblendet werden.
