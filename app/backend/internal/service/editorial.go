@@ -415,13 +415,21 @@ func (e *Editorial) PublishDue(ctx context.Context) (published, skipped []int64,
 			return published, skipped, err
 		}
 		if publishable(p.Texts, p.Cover != nil) != nil {
-			if _, err := e.q.UnschedulePost(ctx, store.UnschedulePostParams{UpdatedAt: formatTime(now), ID: d.ID}); err != nil {
+			// Nur einen weiterhin fälligen Termin entfernen, nicht einen inzwischen verschobenen (Ticket #30).
+			n, err := e.q.UnscheduleDuePost(ctx, store.UnscheduleDuePostParams{
+				UpdatedAt: formatTime(now), ID: d.ID, Now: sql.NullString{String: formatTime(now), Valid: true},
+			})
+			if err != nil {
 				return published, skipped, err
 			}
-			skipped = append(skipped, d.ID)
+			if n > 0 {
+				skipped = append(skipped, d.ID)
+			}
 			continue
 		}
-		n, err := e.q.PublishScheduledPost(ctx, store.PublishScheduledPostParams{UpdatedAt: formatTime(now), ID: d.ID})
+		n, err := e.q.PublishScheduledPost(ctx, store.PublishScheduledPostParams{
+			UpdatedAt: formatTime(now), ID: d.ID, Now: sql.NullString{String: formatTime(now), Valid: true},
+		})
 		if err != nil {
 			return published, skipped, err
 		}

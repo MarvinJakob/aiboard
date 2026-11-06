@@ -191,4 +191,11 @@ SET status = 'published',
     published_at = scheduled_at,
     scheduled_at = NULL,
     updated_at = sqlc.arg(updated_at)
-WHERE id = sqlc.arg(id) AND status = 'draft' AND scheduled_at IS NOT NULL;
+WHERE id = sqlc.arg(id) AND status = 'draft' AND scheduled_at IS NOT NULL
+  -- Ticket #30: Der Termin muss beim Schreiben noch faellig sein. Wurde er nach dem Einlesen
+  -- verschoben, aendert sich nichts.
+  AND scheduled_at <= sqlc.arg(now);
+
+-- name: UnscheduleDuePost :execrows
+UPDATE posts SET scheduled_at = NULL, updated_at = sqlc.arg(updated_at)
+WHERE id = sqlc.arg(id) AND status = 'draft' AND scheduled_at <= sqlc.arg(now);

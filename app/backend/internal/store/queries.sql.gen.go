@@ -944,17 +944,21 @@ SET status = 'published',
     scheduled_at = NULL,
     updated_at = ?1
 WHERE id = ?2 AND status = 'draft' AND scheduled_at IS NOT NULL
+  -- Ticket #30: Der Termin muss beim Schreiben noch faellig sein. Wurde er nach dem Einlesen
+  -- verschoben, aendert sich nichts.
+  AND scheduled_at <= ?3
 `
 
 type PublishScheduledPostParams struct {
 	UpdatedAt string
 	ID        int64
+	Now       sql.NullString
 }
 
 // Ticket #31: Eine automatische Veroeffentlichung traegt immer den geplanten Zeitpunkt als Datum,
 // auch wenn der Beitrag frueher schon einmal veroeffentlicht war.
 func (q *Queries) PublishScheduledPost(ctx context.Context, arg PublishScheduledPostParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, publishScheduledPost, arg.UpdatedAt, arg.ID)
+	result, err := q.db.ExecContext(ctx, publishScheduledPost, arg.UpdatedAt, arg.ID, arg.Now)
 	if err != nil {
 		return 0, err
 	}
@@ -1028,6 +1032,25 @@ type UnpublishPostParams struct {
 
 func (q *Queries) UnpublishPost(ctx context.Context, arg UnpublishPostParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, unpublishPost, arg.UpdatedAt, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const unscheduleDuePost = `-- name: UnscheduleDuePost :execrows
+UPDATE posts SET scheduled_at = NULL, updated_at = ?1
+WHERE id = ?2 AND status = 'draft' AND scheduled_at <= ?3
+`
+
+type UnscheduleDuePostParams struct {
+	UpdatedAt string
+	ID        int64
+	Now       sql.NullString
+}
+
+func (q *Queries) UnscheduleDuePost(ctx context.Context, arg UnscheduleDuePostParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, unscheduleDuePost, arg.UpdatedAt, arg.ID, arg.Now)
 	if err != nil {
 		return 0, err
 	}

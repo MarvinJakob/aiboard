@@ -64,6 +64,7 @@ type Querier interface {
 	SetPostCover(ctx context.Context, arg SetPostCoverParams) (int64, error)
 	SetUserActive(ctx context.Context, arg SetUserActiveParams) (int64, error)
 	UnpublishPost(ctx context.Context, arg UnpublishPostParams) (int64, error)
+	UnscheduleDuePost(ctx context.Context, arg UnscheduleDuePostParams) (int64, error)
 	UnschedulePost(ctx context.Context, arg UnschedulePostParams) (int64, error)
 	UpdatePost(ctx context.Context, arg UpdatePostParams) (int64, error)
 }
