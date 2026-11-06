@@ -1,3 +1,7 @@
+# Orientierung im Projekt
+
+Schau bei der Suche nach Dateien, Code oder Dokumentation zuerst in [RESSOURCES.md](RESSOURCES.md). Dort stehen die wichtigsten Ablageorte und wofür sie gedacht sind.
+
 # Regeln für Recherchen
 
 - **Datum im Dateinamen.** Jede Recherchedatei muss mit dem Datum ihres Recherchestands im Format `JJJJ-MM-TT` beginnen, gefolgt von einem Leerzeichen und dem Titel. Beispiel `2026-11-05 AI Slop.md`.
