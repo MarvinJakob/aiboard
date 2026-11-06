@@ -55,6 +55,8 @@ type Querier interface {
 	ListUsers(ctx context.Context) ([]User, error)
 	Ping(ctx context.Context) (int64, error)
 	PublishPost(ctx context.Context, arg PublishPostParams) (int64, error)
+	// Ticket #31: Eine automatische Veroeffentlichung traegt immer den geplanten Zeitpunkt als Datum,
+	// auch wenn der Beitrag frueher schon einmal veroeffentlicht war.
 	PublishScheduledPost(ctx context.Context, arg PublishScheduledPostParams) (int64, error)
 	// Geplante Veroeffentlichung (Ticket #23). Zeitpunkte in UTC, RFC 3339 ohne Sekundenbruchteile,
 	// damit der Textvergleich der zeitlichen Reihenfolge entspricht.
