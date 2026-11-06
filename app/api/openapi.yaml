@@ -320,6 +320,68 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+  /api/admin/posts/{id}/cover:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    put:
+      operationId: adminSetPostCover
+      summary: Titelbild hochladen oder ersetzen
+      description: |
+        Ticket #25. Erlaubt sind JPEG, PNG und WebP bis 5 MB und 40 Megapixel; der Typ wird am Inhalt
+        erkannt. Das Backend kodiert das Bild neu (ohne Metadaten), vergibt den Dateinamen selbst und legt
+        die Varianten 480, 960, 1600 und `og` (1200 × 630) an. Beim Ersetzen bleiben die Alternativtexte
+        erhalten, das alte Bild wird gelöscht. Ungültige Dateien lehnt es mit `422` und Begründung ab.
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Titelbild gespeichert
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorPost'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+    delete:
+      operationId: adminDeletePostCover
+      summary: Titelbild entfernen
+      description: Entfernt das Titelbild samt Alternativtexten und Bilddateien. Die Beitragsseite zeigt wieder die Themengrafik.
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      responses:
+        '200':
+          description: Titelbild entfernt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorPost'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/admin/posts/{id}/publish:
     parameters:
       - $ref: '#/components/parameters/Id'
@@ -764,6 +826,11 @@ components:
           description: Kurztext
         bodyMarkdown:
           type: string
+        coverAlt:
+          type: string
+          description: |
+            Alternativtext des Titelbilds in dieser Sprache (Ticket #25). Hat der Beitrag ein Titelbild,
+            ist er zum Veröffentlichen in jeder Fassung nötig.
     PostInput:
       type: object
       required: [featured, topics, texts]
@@ -813,6 +880,8 @@ components:
           type: string
           format: date-time
           description: Geplante automatische Veröffentlichung in UTC, nur bei Beiträgen „In Arbeit“
+        cover:
+          $ref: '#/components/schemas/Image'
         updatedAt:
           type: string
           format: date-time

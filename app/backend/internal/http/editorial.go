@@ -3,8 +3,10 @@ package httpserver
 import (
 	"context"
 	"errors"
+	"io"
 
 	"ki-web/backend/internal/api"
+	"ki-web/backend/internal/media"
 	"ki-web/backend/internal/service"
 )
 
@@ -140,9 +142,11 @@ func fromPostInput(in api.PostInput) service.PostInput {
 		out.Slug = *in.Slug
 	}
 	for _, t := range in.Texts {
-		out.Texts = append(out.Texts, service.PostText{
-			Lang: service.Lang(t.Lang), Title: t.Title, Summary: t.Summary, BodyMarkdown: t.BodyMarkdown,
-		})
+		pt := service.PostText{Lang: service.Lang(t.Lang), Title: t.Title, Summary: t.Summary, BodyMarkdown: t.BodyMarkdown}
+		if t.CoverAlt != nil {
+			pt.CoverAlt = *t.CoverAlt
+		}
+		out.Texts = append(out.Texts, pt)
 	}
 	return out
 }
@@ -150,10 +154,111 @@ func fromPostInput(in api.PostInput) service.PostInput {
 func toEditorPost(p service.EditorPost) api.EditorPost {
 	texts := make([]api.PostText, 0, len(p.Texts))
 	for _, t := range p.Texts {
-		texts = append(texts, api.PostText{Lang: api.Lang(t.Lang), Title: t.Title, Summary: t.Summary, BodyMarkdown: t.BodyMarkdown})
+		pt := api.PostText{Lang: api.Lang(t.Lang), Title: t.Title, Summary: t.Summary, BodyMarkdown: t.BodyMarkdown}
+		if t.CoverAlt != "" {
+			pt.CoverAlt = &t.CoverAlt
+		}
+		texts = append(texts, pt)
 	}
-	return api.EditorPost{
+	out := api.EditorPost{
 		Id: p.ID, Slug: p.Slug, Status: api.PostStatus(p.Status), Featured: p.Featured,
 		Topics: p.Topics, Texts: texts, PublishedAt: p.PublishedAt, ScheduledAt: p.ScheduledAt, UpdatedAt: p.UpdatedAt,
+	}
+	if c := p.Cover; c != nil {
+		alt := ""
+		for _, t := range p.Texts {
+			if t.CoverAlt != "" {
+				alt = t.CoverAlt
+				break
+			}
+		}
+		out.Cover = &api.Image{
+			Src: media.URL(c.Key, c.MimeType, "960"), Srcset: media.Srcset(c.Key, c.MimeType),
+			Width: c.Width, Height: c.Height, Alt: alt,
+		}
+	}
+	return out
+}
+
+// Titelbild (Ticket #25). Sitzung, Rolle und CSRF-Token prüft guard vorab.
+
+const msgNoMedia = "Bild-Upload ist auf diesem Server nicht eingerichtet."
+
+// AdminSetPostCover nimmt ein Bild aus dem Feld „file“ entgegen, speichert die Varianten und macht
+// es zum Titelbild. Bei einem Fehler nach dem Speichern werden die neuen Dateien wieder gelöscht.
+func (s *apiServer) AdminSetPostCover(ctx context.Context, req api.AdminSetPostCoverRequestObject) (api.AdminSetPostCoverResponseObject, error) {
+	if s.media == nil {
+		return nil, errors.New(msgNoMedia)
+	}
+	if _, err := s.editorial.Post(ctx, req.Id); errors.Is(err, service.ErrNotFound) {
+		return api.AdminSetPostCover404JSONResponse{NotFoundJSONResponse: api.NotFoundJSONResponse{Message: msgPostNotFound}}, nil
+	} else if err != nil {
+		return nil, err
+	}
+	if req.Body == nil {
+		return api.AdminSetPostCover400JSONResponse{BadRequestJSONResponse: api.BadRequestJSONResponse{Message: msgNoBody}}, nil
+	}
+	var stored media.Stored
+	found := false
+	for {
+		part, err := req.Body.NextPart()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return api.AdminSetPostCover400JSONResponse{BadRequestJSONResponse: api.BadRequestJSONResponse{Message: msgNoBody}}, nil
+		}
+		if part.FormName() != "file" {
+			continue
+		}
+		found = true
+		stored, err = s.media.Save(part)
+		var uerr *media.UploadError
+		if errors.As(err, &uerr) {
+			return api.AdminSetPostCover422JSONResponse{UnprocessableJSONResponse: api.UnprocessableJSONResponse{Message: uerr.Msg}}, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		break
+	}
+	if !found {
+		return api.AdminSetPostCover422JSONResponse{UnprocessableJSONResponse: api.UnprocessableJSONResponse{Message: "Bitte eine Bilddatei auswählen."}}, nil
+	}
+	p, old, err := s.editorial.SetCover(ctx, req.Id, stored)
+	if err != nil {
+		s.removeMedia(stored.Key, stored.MimeType)
+		if errors.Is(err, service.ErrNotFound) {
+			return api.AdminSetPostCover404JSONResponse{NotFoundJSONResponse: api.NotFoundJSONResponse{Message: msgPostNotFound}}, nil
+		}
+		return nil, err
+	}
+	if old != nil {
+		s.removeMedia(old.Key, old.MimeType)
+	}
+	return api.AdminSetPostCover200JSONResponse(toEditorPost(p)), nil
+}
+
+// AdminDeletePostCover entfernt das Titelbild samt Dateien.
+func (s *apiServer) AdminDeletePostCover(ctx context.Context, req api.AdminDeletePostCoverRequestObject) (api.AdminDeletePostCoverResponseObject, error) {
+	p, old, err := s.editorial.RemoveCover(ctx, req.Id)
+	if errors.Is(err, service.ErrNotFound) {
+		return api.AdminDeletePostCover404JSONResponse{NotFoundJSONResponse: api.NotFoundJSONResponse{Message: msgPostNotFound}}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if old != nil {
+		s.removeMedia(old.Key, old.MimeType)
+	}
+	return api.AdminDeletePostCover200JSONResponse(toEditorPost(p)), nil
+}
+
+func (s *apiServer) removeMedia(key, mimeType string) {
+	if s.media == nil {
+		return
+	}
+	if err := s.media.Remove(key, mimeType); err != nil {
+		s.log.Warn("bilddateien löschen", "schlüssel", key, "fehler", err)
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"sync"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -16,6 +17,7 @@ import (
 	"ki-web/backend/internal/api"
 	"ki-web/backend/internal/audit"
 	httpserver "ki-web/backend/internal/http"
+	"ki-web/backend/internal/media"
 	"ki-web/backend/internal/service"
 	"ki-web/backend/internal/store"
 	"ki-web/backend/internal/web"
@@ -42,6 +44,7 @@ func newServer(t *testing.T, devSeed bool) (*httptest.Server, *sql.DB) {
 		t.Fatal(err)
 	}
 	public := service.NewPublic(store.New(db))
+	mediaDir := t.TempDir()
 	files := fstest.MapFS{
 		"index.html":        {Data: []byte(testIndex)},
 		"favicon.svg":       {Data: []byte("<svg/>")},
@@ -60,11 +63,22 @@ func newServer(t *testing.T, devSeed bool) (*httptest.Server, *sql.DB) {
 		Site:          web.New(public, catalog, "https://example.test", files, log),
 		Editorial:     service.NewEditorial(db),
 		EditorialSite: web.NewEditorial(accounts, editorialFiles, log),
+		Media:         media.NewStore(mediaDir),
+		MediaPath:     mediaDir,
 		Log:           log,
 	})
 	srv := httptest.NewServer(h)
 	t.Cleanup(srv.Close)
+	mediaDirs.Store(srv.URL, mediaDir)
 	return srv, db
+}
+
+// mediaDirs merkt sich je Testserver sein Medienverzeichnis (Ticket #25).
+var mediaDirs sync.Map
+
+func mediaDirOf(srv *httptest.Server) string {
+	d, _ := mediaDirs.Load(srv.URL)
+	return d.(string)
 }
 
 func get(t *testing.T, srv *httptest.Server, path string) (*http.Response, string) {

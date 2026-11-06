@@ -231,6 +231,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/posts/{id}/cover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Titelbild hochladen oder ersetzen
+         * @description Ticket #25. Erlaubt sind JPEG, PNG und WebP bis 5 MB und 40 Megapixel; der Typ wird am Inhalt
+         *     erkannt. Das Backend kodiert das Bild neu (ohne Metadaten), vergibt den Dateinamen selbst und legt
+         *     die Varianten 480, 960, 1600 und `og` (1200 × 630) an. Beim Ersetzen bleiben die Alternativtexte
+         *     erhalten, das alte Bild wird gelöscht. Ungültige Dateien lehnt es mit `422` und Begründung ab.
+         */
+        put: operations["adminSetPostCover"];
+        post?: never;
+        /**
+         * Titelbild entfernen
+         * @description Entfernt das Titelbild samt Alternativtexten und Bilddateien. Die Beitragsseite zeigt wieder die Themengrafik.
+         */
+        delete: operations["adminDeletePostCover"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/posts/{id}/publish": {
         parameters: {
             query?: never;
@@ -452,6 +481,11 @@ export interface components {
             /** @description Kurztext */
             summary: string;
             bodyMarkdown: string;
+            /**
+             * @description Alternativtext des Titelbilds in dieser Sprache (Ticket #25). Hat der Beitrag ein Titelbild,
+             *     ist er zum Veröffentlichen in jeder Fassung nötig.
+             */
+            coverAlt?: string;
         };
         PostInput: {
             /** @description URL-Kürzel. Leer lassen, um es aus dem Titel zu erzeugen. */
@@ -481,6 +515,7 @@ export interface components {
              * @description Geplante automatische Veröffentlichung in UTC, nur bei Beiträgen „In Arbeit“
              */
             scheduledAt?: string;
+            cover?: components["schemas"]["Image"];
             /** Format: date-time */
             updatedAt: string;
         };
@@ -1046,6 +1081,65 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["Unprocessable"];
+        };
+    };
+    adminSetPostCover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Titelbild gespeichert */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorPost"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    adminDeletePostCover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Titelbild entfernt */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorPost"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
         };
     };
     adminPublishPost: {

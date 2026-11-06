@@ -25,6 +25,7 @@ import (
 
 	"ki-web/backend/internal/audit"
 	httpserver "ki-web/backend/internal/http"
+	"ki-web/backend/internal/media"
 	"ki-web/backend/internal/service"
 	"ki-web/backend/internal/store"
 	"ki-web/backend/internal/web"
@@ -127,6 +128,7 @@ func runServer(cfg config, log *slog.Logger) error {
 		Accounts:      accounts,
 		Site:          web.New(public, catalog, cfg.baseURL, nil, log),
 		Editorial:     editorial,
+		Media:         media.NewStore(cfg.mediaPath),
 		EditorialSite: web.NewEditorial(accounts, nil, log),
 		SecureCookies: strings.HasPrefix(cfg.baseURL, "https://"),
 		TrustProxy:    cfg.trustProxy,

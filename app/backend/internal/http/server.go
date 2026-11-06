@@ -10,6 +10,7 @@ import (
 
 	"ki-web/backend/internal/audit"
 	"ki-web/backend/internal/auth"
+	"ki-web/backend/internal/media"
 	"ki-web/backend/internal/service"
 	"ki-web/backend/internal/web"
 )
@@ -23,6 +24,8 @@ type Config struct {
 	Site          *web.Site
 	EditorialSite *web.Editorial
 	MediaPath     string // optional: liefert /media/* lokal aus (in Produktion übernimmt das Caddy)
+	// Media speichert hochgeladene Bilder (Ticket #25). Ohne Media lehnt das Backend Uploads ab.
+	Media *media.Store
 	// SecureCookies setzt das Secure-Attribut am Sitzungscookie (bei HTTPS).
 	SecureCookies bool
 	// TrustProxy liest die IP-Adresse aus X-Forwarded-For (hinter Caddy).
@@ -38,6 +41,7 @@ func New(cfg Config) http.Handler {
 		audit:         cfg.Audit,
 		accounts:      cfg.Accounts,
 		editorial:     cfg.Editorial,
+		media:         cfg.Media,
 		limiter:       auth.NewLimiter(loginMaxFailures, loginWindow),
 		secureCookies: cfg.SecureCookies,
 		log:           cfg.Log,

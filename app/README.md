@@ -23,7 +23,7 @@
 | [5 Redaktionssystem](https://github.com/MarvinJakob/aiboard/issues/5) | Beitragsliste mit Entwürfen und Status unter `/redaktion`. Editor unter `/redaktion/beitraege/{id}` mit deutscher und englischer Fassung (Titel, Kurztext, Markdown-Text), Themenzuordnung, Karussell-Markierung und URL-Kürzel. Veröffentlichen verlangt Titel, Kurztext und Beitragstext in jeder angefangenen Fassung. Änderungen an veröffentlichten Beiträgen sind sofort öffentlich. Zurücknehmen braucht eine Bestätigung, bietet danach „Rückgängig“ und macht den Beitrag überall unsichtbar (`404`). |
 | [11 Benutzerverwaltung der Redaktion](https://github.com/MarvinJakob/aiboard/issues/11) | Unter `/redaktion/benutzer` sehen Admin-Konten alle Konten mit Rolle und Status, legen Redaktionskonten mit eindeutiger E-Mail-Adresse und Startpasswort an und deaktivieren oder reaktivieren sie. Deaktivieren löscht alle Sitzungen des Kontos in derselben Transaktion. `/api/admin/users` antwortet Konten ohne Admin-Rolle mit `403`. |
 
-Noch nicht enthalten: Medienverwaltung mit Bild-Upload und Titelbildern (`/redaktion/medien`, nicht Teil der Akzeptanzkriterien von Anforderung 5). Eine Entwicklungs-Migration legt Testbeiträge und Testkonten an (`DEV_SEED=true`), darunter ein Entwurf und Beiträge ohne englische Fassung.
+Noch nicht enthalten: eine eigene Medienverwaltung (`/redaktion/medien`). Titelbilder lädt die Redaktion seit Ticket #25 direkt im Beitrag hoch. Eine Entwicklungs-Migration legt Testbeiträge und Testkonten an (`DEV_SEED=true`), darunter ein Entwurf und Beiträge ohne englische Fassung.
 
 ## Stand: Sprint 4
 
@@ -32,6 +32,7 @@ Noch nicht enthalten: Medienverwaltung mit Bild-Upload und Titelbildern (`/redak
 | [23 Beitragsstatus und geplante Veröffentlichung](https://github.com/MarvinJakob/aiboard/issues/23) | Beitragsliste und Editor zeigen „In Arbeit“ oder „Veröffentlicht“. Im Editor lässt sich für Beiträge „In Arbeit“ ein Zeitpunkt in Ortszeit eintragen, ändern und entfernen (`PUT`/`DELETE /api/admin/posts/{id}/schedule`). Gespeichert wird UTC. Zeitpunkte in der Vergangenheit und unvollständige Beiträge lehnt das Backend mit `422` ab. Ein Hintergrundjob prüft alle 15 Sekunden und veröffentlicht fällige Beiträge. Bis dahin liefern sie `404` und fehlen in der Sitemap. |
 | [20 Helle und dunkle Darstellung](https://github.com/MarvinJakob/aiboard/issues/20) | Schalter „Dunkle Darstellung“ in der Kopfzeile der Webseite, auf der Anmeldeseite und in der Kopfzeile der Redaktion. Die Wahl gilt sofort und für beide Frontends, sie bleibt im Browser gespeichert (`localStorage`, Schlüssel `ki-perspektiven.theme`). Ohne gespeicherte Wahl gilt die Systemeinstellung, sonst hell. `public/theme.js` setzt `data-theme` vor dem ersten Zeichnen, damit nichts aufblitzt. |
 | [21 AI Audit als eigener Navigationseintrag](https://github.com/MarvinJakob/aiboard/issues/21) | Eintrag „AI Audit“ in der Hauptnavigation neben „Themen“ und „Blog“, führt zur Audit-Übersicht in der aktuellen Sprache. Das Themenmenü zeigt das Audit nicht mehr. Auf der Übersicht und allen Dimensionsseiten ist „AI Audit“ aktiv, „Themen“ nicht. Die URLs unter `/{lang}/themen/ai-audit` bleiben unverändert. |
+| [25 Titelbild für Beiträge](https://github.com/MarvinJakob/aiboard/issues/25) | Im Editor lässt sich pro Beitrag ein Titelbild (JPEG, PNG oder WebP bis 5 MB) hochladen, in der Vorschau ansehen, ersetzen und entfernen (`PUT`/`DELETE /api/admin/posts/{id}/cover`). Je Sprachfassung gibt es einen Alternativtext; ohne ihn lässt sich der Beitrag nicht veröffentlichen, und öffentlich erscheint das Bild erst mit Alternativtext. Das Backend erkennt den Typ am Inhalt, kodiert neu (ohne EXIF/GPS), vergibt den Dateinamen und legt die Varianten 480, 960, 1600 und `og` (1200 × 630) an. Die Beitragsseite zeigt das Bild unter der Überschrift mit festem Seitenverhältnis; `og:image` zeigt auf die `og`-Variante. |
 
 ## Aufbau
 
@@ -50,7 +51,7 @@ backend/                Go-Modul
   internal/service/     Fachlogik: Sichtbarkeit, Sprachauswahl, Konten und Sitzungen
   internal/store/       Datenzugriff, von sqlc aus queries.sql erzeugt
   internal/web/         Auslieferung beider Frontends mit Zugriffskontrolle, Meta-Tags, Sitemap, robots.txt
-  internal/media/       Bild-URLs (Upload folgt in Sprint 3)
+  internal/media/       Bild-URLs, Prüfen, Neukodieren und Speichern hochgeladener Bilder
   migrations/           Schema und Startthemen; dev/ enthält Testbeiträge und Testkonten
 deploy/                 Caddyfile und Sicherungsskript
 docs/adr/               Architekturentscheidungen
@@ -174,6 +175,7 @@ Das Sitzungscookie erhält das Attribut `Secure`, wenn `PUBLIC_BASE_URL` mit `ht
 - **AI Audit in Themenkarten und Pfadnavigation:** Die Themenkarten der Startseite und die Pfadnavigation („Start / Themen / AI Audit für Unternehmen“) führen das Audit weiter als Thema. Ticket #21 verlangt die Änderung nur für das Themenmenü.
 - **Kopfzeile auf schmalen Bildschirmen:** Bis 600 px Breite hat die Kopfzeile zwei Zeilen: oben Marke, Sprache, Darstellung und Konto, darunter die Navigation. Der Darstellungsschalter und der Eintrag „AI Audit“ passen auf 375 px nicht mehr zusammen in eine Zeile.
 - **Darstellungsschalter als eigene Datei:** `theme.js` liegt in `public/` statt inline im HTML, weil die Content-Security-Policy in `deploy/Caddyfile` Inline-Skripte verbietet.
+- **Titelbilder:** Erlaubt sind höchstens 5 MB (Ticket #25) statt der 10 MB aus ARCHITECTURE.md, Abschnitt 7. Ein Titelbild gehört genau zu einem Beitrag: Beim Ersetzen oder Entfernen löscht das Backend das alte Bild samt Dateien sofort, statt auf einen späteren Aufräumjob zu warten. Die Alternativtexte bleiben beim Ersetzen erhalten. Lokal ohne Caddy liefert `SERVE_MEDIA=true` die Bilder unter `/media/*` aus.
 - **Schriften:** Es werden keine WOFF2-Dateien ausgeliefert, weil das Design-Konzept System-Schriften vorsieht.
 - **Impressum und Datenschutz** sind Platzhalter in `frontend/src/content/legal` und müssen vor dem Livegang ersetzt werden.
 - **KI-Audit-Inhalte:** Die Inhalte stehen nicht in der Datenbank, sondern in `backend/internal/audit/content.json` (ADR 0009). Eine Dimension erscheint nur mit `"released": true`. Die Texte folgen `content/KI Audit.docx`. Daraus abgeleitet sind die Kurzbeschreibungen und die Vorteile je Dimension, die das Dokument nicht ausdrücklich nennt. Sie müssen fachlich bestätigt werden.
