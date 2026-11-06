@@ -23,6 +23,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
+    // Feste Zeitzone, damit Tests zur Zeitumstellung (Ticket #32) überall gleich laufen.
+    env: { TZ: 'Europe/Berlin' },
     css: false,
   },
 });

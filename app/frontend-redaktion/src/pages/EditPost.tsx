@@ -13,7 +13,7 @@ import {
   type PostText,
 } from '../api/posts';
 import { Loading, Page } from '../components/Layout';
-import { StatusBadge, formatDate, fromLocalInput, toLocalInput } from '../components/PostParts';
+import { StatusBadge, formatDate, formatWithZone, resolveLocalInput, toLocalInput } from '../components/PostParts';
 
 interface Form {
   slug: string;
@@ -28,6 +28,11 @@ interface Notice {
 }
 
 const emptyText = (lang: Lang): PostText => ({ lang, title: '', summary: '', bodyMarkdown: '', coverAlt: '' });
+
+/** Meldungen zur Zeitumstellung (Ticket #32). */
+const NONEXISTENT =
+  'Diese Uhrzeit gibt es an diesem Tag wegen der Umstellung auf Sommerzeit nicht. Bitte wählen Sie eine andere Uhrzeit.';
+const AMBIGUOUS = 'Diese Uhrzeit gibt es wegen der Zeitumstellung zweimal. Bitte wählen Sie, welche gemeint ist.';
 
 /** Grenzen für Titelbilder wie im Backend (Ticket #25). */
 const COVER_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -90,6 +95,9 @@ function Editor({ post }: { post?: EditorPost }) {
   const [error, setError] = useState('');
   const [confirmUnpublish, setConfirmUnpublish] = useState(false);
   const [scheduleValue, setScheduleValue] = useState(() => (post?.scheduledAt ? toLocalInput(post.scheduledAt) : ''));
+  // Bei doppeldeutiger Ortszeit (Ende der Sommerzeit) wählt die Redaktion den gemeinten Zeitpunkt (Ticket #32).
+  const [scheduleChoice, setScheduleChoice] = useState<string | null>(null);
+  const resolved = resolveLocalInput(scheduleValue);
   const ids = {
     slug: useId(), title: useId(), summary: useId(), body: useId(), error: useId(), schedule: useId(), scheduleHint: useId(),
     cover: useId(), coverHint: useId(), coverAlt: useId(), coverAltHint: useId(),
@@ -127,6 +135,7 @@ function Editor({ post }: { post?: EditorPost }) {
       setForm(toForm(saved));
       setBaseline(JSON.stringify(toInput(toForm(saved))));
       setScheduleValue(saved.scheduledAt ? toLocalInput(saved.scheduledAt) : '');
+      setScheduleChoice(saved.scheduledAt ?? null);
       setNotice(success);
     } catch (e) {
       setError(errorText(e));
@@ -160,23 +169,34 @@ function Editor({ post }: { post?: EditorPost }) {
 
   // Geplante Veröffentlichung (Ticket #23): Eingabe in lokaler Zeit, gespeichert wird UTC.
   const schedule = () => {
-    const iso = fromLocalInput(scheduleValue);
-    if (!iso || new Date(iso).getTime() <= Date.now()) {
+    const fail = (msg: string) => {
       setNotice(null);
-      setError(
-        iso
-          ? 'Der Zeitpunkt liegt in der Vergangenheit. Bitte wählen Sie einen Zeitpunkt in der Zukunft.'
-          : 'Bitte Datum und Uhrzeit für die Veröffentlichung angeben.',
-      );
-      return;
+      setError(msg);
+    };
+    let iso: string | null = null;
+    switch (resolved.kind) {
+      case 'empty':
+        return fail('Bitte Datum und Uhrzeit für die Veröffentlichung angeben.');
+      case 'nonexistent':
+        return fail(NONEXISTENT);
+      case 'ambiguous':
+        iso = resolved.options.find((o) => o === scheduleChoice) ?? null;
+        if (!iso) return fail(AMBIGUOUS);
+        break;
+      case 'ok':
+        iso = resolved.iso;
     }
+    if (new Date(iso).getTime() <= Date.now()) {
+      return fail('Der Zeitpunkt liegt in der Vergangenheit. Bitte wählen Sie einen Zeitpunkt in der Zukunft.');
+    }
+    const at = iso;
     return run(
       async () => {
         let target = post!;
         if (dirty) target = await action.mutateAsync({ kind: 'save', id: target.id, input: toInput(form) });
-        return action.mutateAsync({ kind: 'schedule', id: target.id, publishAt: iso });
+        return action.mutateAsync({ kind: 'schedule', id: target.id, publishAt: at });
       },
-      { text: `Geplant: Der Beitrag erscheint am ${formatDate(iso)} automatisch auf der Webseite.` },
+      { text: `Geplant: Der Beitrag erscheint am ${formatWithZone(at)} automatisch auf der Webseite.` },
     );
   };
 
@@ -233,7 +253,7 @@ function Editor({ post }: { post?: EditorPost }) {
           <>
             Zuletzt geändert am {formatDate(post.updatedAt)}
             {published && post.publishedAt && <>, veröffentlicht am {formatDate(post.publishedAt)}</>}
-            {!published && post.scheduledAt && <>, automatische Veröffentlichung am {formatDate(post.scheduledAt)}</>}.{' '}
+            {!published && post.scheduledAt && <>, automatische Veröffentlichung am {formatWithZone(post.scheduledAt)}</>}.{' '}
             {published && (
               <a href={`/${publicLang}/blog/${post.slug}`} target="_blank" rel="noreferrer">
                 Auf der Webseite ansehen
@@ -409,11 +429,35 @@ function Editor({ post }: { post?: EditorPost }) {
                     value={scheduleValue}
                     min={toLocalInput(new Date())}
                     aria-describedby={ids.scheduleHint}
-                    onChange={(e) => setScheduleValue(e.target.value)}
+                    onChange={(e) => {
+                      setScheduleValue(e.target.value);
+                      setScheduleChoice(null);
+                    }}
                   />
+                  {resolved.kind === 'ok' && (
+                    <span className="field-hint schedule-resolved">Gilt: {formatWithZone(resolved.iso)}</span>
+                  )}
+                  {resolved.kind === 'nonexistent' && <span className="field-hint schedule-warning">{NONEXISTENT}</span>}
+                  {resolved.kind === 'ambiguous' && (
+                    <fieldset className="schedule-choice">
+                      <legend>Diese Uhrzeit gibt es wegen der Zeitumstellung zweimal. Welche ist gemeint?</legend>
+                      {resolved.options.map((o, i) => (
+                        <label key={o} className="check">
+                          <input
+                            type="radio"
+                            name={ids.schedule + '-choice'}
+                            value={o}
+                            checked={scheduleChoice === o}
+                            onChange={() => setScheduleChoice(o)}
+                          />
+                          {formatWithZone(o)} {i === 0 ? '(erstes Mal, noch Sommerzeit)' : '(zweites Mal, schon Winterzeit)'}
+                        </label>
+                      ))}
+                    </fieldset>
+                  )}
                   <span className="field-hint" id={ids.scheduleHint}>
                     {post.scheduledAt
-                      ? `Geplant für ${formatDate(post.scheduledAt)} (Ortszeit). `
+                      ? `Geplant für ${formatWithZone(post.scheduledAt)}. `
                       : 'Angabe in Ortszeit. '}
                     Bis dahin bleibt der Beitrag „In Arbeit“ und ist öffentlich nicht sichtbar. Titel, Kurztext und
                     Beitragstext müssen vorhanden sein.
