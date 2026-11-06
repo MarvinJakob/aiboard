@@ -438,8 +438,8 @@ svg { display: block; }
   .footer-grid > :first-child { grid-column: 1 / -1; }
 }
 @media (max-width: 600px) {
-  /* Zwei Zeilen: oben Marke und Einstellungen, unten die Navigation. So bleiben alle Einträge
-     ohne Umweg erreichbar, auch mit Darstellungsschalter (Ticket #20). */
+  /* Zwei Zeilen: oben Marke und Einstellungen, unten die Navigation. In einer Zeile ist auf
+     375 px nicht genug Platz für alle Einträge, so bleiben sie ohne Umweg erreichbar. */
   :root { --header-h: 104px; }
   .bar { gap: 2px; flex-wrap: wrap; align-content: center; border-radius: var(--radius-l); }
   .nav-main { order: 3; flex: 1 0 100%; justify-content: center; margin-inline: 0; }
