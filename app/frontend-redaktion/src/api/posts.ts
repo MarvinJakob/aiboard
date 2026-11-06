@@ -15,18 +15,35 @@ export const LANG_NAMES: Record<Lang, string> = { de: 'Deutsch', en: 'Englisch' 
 const POSTS_KEY = ['admin', 'posts'] as const;
 const postKey = (id: number) => ['admin', 'post', id] as const;
 
+/**
+ * Ticket #33: Der Hintergrundjob veröffentlicht geplante Beiträge spätestens 15 Sekunden nach dem Termin.
+ * Solange ein Termin aussteht, laden Liste und Editor deshalb alle 15 Sekunden neu, außerdem beim
+ * Zurückkehren in den Tab. So erscheint „Veröffentlicht“ innerhalb einer Minute ohne Neuladen.
+ */
+export const STATUS_REFRESH_MS = 15_000;
+
+const scheduled = (p?: { status: string; scheduledAt?: string }) => p?.status === 'draft' && Boolean(p.scheduledAt);
+
 /** Alle Beiträge inklusive Entwürfe (Anforderung 5). */
 export const useEditorPosts = () =>
   useQuery({
     queryKey: POSTS_KEY,
     queryFn: () => unwrap(client.GET('/api/admin/posts')).then((d) => d.items),
+    refetchInterval: (q) => (q.state.data?.some(scheduled) ? STATUS_REFRESH_MS : false),
+    refetchOnWindowFocus: true,
   });
 
+/**
+ * Ein Beitrag zum Bearbeiten. Neu geladene Daten ändern nur Status und Metadaten in der Ansicht;
+ * das Formular übernimmt sie nicht, damit ungespeicherte Eingaben erhalten bleiben.
+ */
 export const useEditorPost = (id: number | undefined) =>
   useQuery({
     queryKey: postKey(id ?? 0),
     queryFn: () => unwrap(client.GET('/api/admin/posts/{id}', { params: { path: { id: id! } } })),
     enabled: id !== undefined,
+    refetchInterval: (q) => (scheduled(q.state.data) ? STATUS_REFRESH_MS : false),
+    refetchOnWindowFocus: true,
   });
 
 /** Themen für die Zuordnung. Die drei Startthemen kommen aus der öffentlichen API. */
