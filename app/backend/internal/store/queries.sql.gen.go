@@ -940,7 +940,7 @@ func (q *Queries) PublishPost(ctx context.Context, arg PublishPostParams) (int64
 const publishScheduledPost = `-- name: PublishScheduledPost :execrows
 UPDATE posts
 SET status = 'published',
-    published_at = COALESCE(published_at, scheduled_at),
+    published_at = scheduled_at,
     scheduled_at = NULL,
     updated_at = ?1
 WHERE id = ?2 AND status = 'draft' AND scheduled_at IS NOT NULL
@@ -951,6 +951,8 @@ type PublishScheduledPostParams struct {
 	ID        int64
 }
 
+// Ticket #31: Eine automatische Veroeffentlichung traegt immer den geplanten Zeitpunkt als Datum,
+// auch wenn der Beitrag frueher schon einmal veroeffentlicht war.
 func (q *Queries) PublishScheduledPost(ctx context.Context, arg PublishScheduledPostParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, publishScheduledPost, arg.UpdatedAt, arg.ID)
 	if err != nil {

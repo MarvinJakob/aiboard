@@ -183,10 +183,12 @@ SELECT id, scheduled_at FROM posts
 WHERE status = 'draft' AND scheduled_at IS NOT NULL AND scheduled_at <= ?
 ORDER BY scheduled_at, id;
 
+-- Ticket #31: Eine automatische Veroeffentlichung traegt immer den geplanten Zeitpunkt als Datum,
+-- auch wenn der Beitrag frueher schon einmal veroeffentlicht war.
 -- name: PublishScheduledPost :execrows
 UPDATE posts
 SET status = 'published',
-    published_at = COALESCE(published_at, scheduled_at),
+    published_at = scheduled_at,
     scheduled_at = NULL,
     updated_at = sqlc.arg(updated_at)
 WHERE id = sqlc.arg(id) AND status = 'draft' AND scheduled_at IS NOT NULL;

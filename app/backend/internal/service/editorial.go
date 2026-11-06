@@ -397,7 +397,8 @@ func (e *Editorial) Unschedule(ctx context.Context, id int64) (EditorPost, error
 }
 
 // PublishDue veröffentlicht alle Beiträge, deren geplanter Zeitpunkt erreicht ist, und liefert ihre IDs.
-// Als Veröffentlichungsdatum gilt der geplante Zeitpunkt. Ist ein Beitrag wider Erwarten unvollständig,
+// Als Veröffentlichungsdatum gilt der geplante Zeitpunkt, auch bei einem früher schon einmal
+// veröffentlichten Beitrag (Ticket #31). Ist ein Beitrag wider Erwarten unvollständig,
 // verliert er nur seinen Zeitpunkt und bleibt „In Arbeit“.
 func (e *Editorial) PublishDue(ctx context.Context) (published, skipped []int64, err error) {
 	now := e.now()
