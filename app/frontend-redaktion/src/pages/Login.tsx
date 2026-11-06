@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router';
 import { ApiError, homeFor, useLogin, useMe } from '../api/client';
+import { ThemeToggle } from '../components/ThemeToggle';
 
 /**
  * Anmeldung der Redaktion (Anforderung 6). Es gibt bewusst keine Selbstregistrierung:
@@ -39,6 +40,7 @@ export function LoginPage() {
 
   return (
     <main className="login" id="inhalt">
+      <ThemeToggle className="login-theme" />
       <div className="login-card glass glass--strong">
         <a className="brand press" href="/" aria-label="KI Perspektiven – zur öffentlichen Webseite">
           <span className="brand-mark" aria-hidden="true" />
