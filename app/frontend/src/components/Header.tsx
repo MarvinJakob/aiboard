@@ -30,6 +30,11 @@ export function Header() {
         </div>
         <div className="nav-actions">
           <LangSwitch />
+          {/* Kontoeinstieg (Anforderung 6): führt zur Anmeldung im eigenständigen Redaktionsfrontend,
+              daher ein normaler Link statt einer Route dieser App. */}
+          <a className="icon-btn press" href="/redaktion/anmelden" aria-label={t('nav.account')} title={t('nav.account')}>
+            <Icon name="user" />
+          </a>
         </div>
       </nav>
     </header>

@@ -23,6 +23,8 @@ import (
 
 const testIndex = `<!doctype html><html lang="de"><head><!--app-head--><title>KI Perspektiven</title><!--/app-head--></head><body><div id="root"></div></body></html>`
 
+const testEditorialIndex = `<!doctype html><html lang="de"><head><title>Redaktion</title></head><body><div id="redaktion"></div></body></html>`
+
 // newServer startet die Anwendung mit einer temporären SQLite-Datenbank je Test.
 func newServer(t *testing.T, devSeed bool) (*httptest.Server, *sql.DB) {
 	t.Helper()
@@ -45,11 +47,20 @@ func newServer(t *testing.T, devSeed bool) (*httptest.Server, *sql.DB) {
 		"favicon.svg":       {Data: []byte("<svg/>")},
 		"assets/app-abc.js": {Data: []byte("console.log(1)")},
 	}
+	accounts := service.NewAccounts(db)
+	editorialFiles := fstest.MapFS{
+		"index.html":            {Data: []byte(testEditorialIndex)},
+		"favicon.svg":           {Data: []byte("<svg/>")},
+		"assets/redaktion-1.js": {Data: []byte("console.log(2)")},
+	}
 	h := httpserver.New(httpserver.Config{
-		Public: public,
-		Audit:  catalog,
-		Site:   web.New(public, catalog, "https://example.test", files, log),
-		Log:    log,
+		Public:        public,
+		Audit:         catalog,
+		Accounts:      accounts,
+		Site:          web.New(public, catalog, "https://example.test", files, log),
+		Editorial:     service.NewEditorial(db),
+		EditorialSite: web.NewEditorial(accounts, editorialFiles, log),
+		Log:           log,
 	})
 	srv := httptest.NewServer(h)
 	t.Cleanup(srv.Close)

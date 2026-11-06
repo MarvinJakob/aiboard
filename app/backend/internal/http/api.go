@@ -9,14 +9,19 @@ import (
 
 	"ki-web/backend/internal/api"
 	"ki-web/backend/internal/audit"
+	"ki-web/backend/internal/auth"
 	"ki-web/backend/internal/service"
 )
 
 // apiServer setzt das aus openapi.yaml erzeugte StrictServerInterface um.
 type apiServer struct {
-	svc   *service.Public
-	audit *audit.Catalog
-	log   *slog.Logger
+	svc           *service.Public
+	audit         *audit.Catalog
+	accounts      *service.Accounts
+	editorial     *service.Editorial
+	limiter       *auth.Limiter
+	secureCookies bool
+	log           *slog.Logger
 }
 
 var _ api.StrictServerInterface = (*apiServer)(nil)
@@ -219,8 +224,8 @@ func toSummaries(ps []service.PostSummary) []api.PostSummary {
 }
 
 // registerAPI baut den API-Handler und registriert ihn am Router.
-func registerAPI(mux *http.ServeMux, svc *service.Public, catalog *audit.Catalog, log *slog.Logger) {
-	strict := api.NewStrictHandlerWithOptions(&apiServer{svc: svc, audit: catalog, log: log}, nil, api.StrictHTTPServerOptions{
+func registerAPI(mux *http.ServeMux, srv *apiServer, log *slog.Logger) {
+	strict := api.NewStrictHandlerWithOptions(srv, nil, api.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeJSONError(w, http.StatusBadRequest, "Ungültige Anfrage.")
 		},
@@ -236,9 +241,11 @@ func registerAPI(mux *http.ServeMux, svc *service.Public, catalog *audit.Catalog
 		},
 	})
 	// Unbekannte API-Pfade liefern JSON statt der Webseite.
-	mux.HandleFunc("GET /api/", func(w http.ResponseWriter, _ *http.Request) {
-		writeJSONError(w, http.StatusNotFound, "Unbekannter Endpunkt.")
-	})
+	for _, m := range []string{"GET", "POST", "PUT", "PATCH", "DELETE"} {
+		mux.HandleFunc(m+" /api/", func(w http.ResponseWriter, _ *http.Request) {
+			writeJSONError(w, http.StatusNotFound, "Unbekannter Endpunkt.")
+		})
+	}
 }
 
 func writeJSONError(w http.ResponseWriter, status int, msg string) {

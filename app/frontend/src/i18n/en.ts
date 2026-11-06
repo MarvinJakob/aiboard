@@ -10,6 +10,7 @@ export const en: Messages = {
     topics: 'Topics',
     blog: 'Blog',
     lang: 'Language',
+    account: 'Sign in for editors',
   },
   langName: { de: 'German', en: 'English' },
   crumbs: 'Breadcrumb',

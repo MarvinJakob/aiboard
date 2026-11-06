@@ -92,6 +92,42 @@ func (e Lang) Valid() bool {
 	}
 }
 
+// Defines values for PostStatus.
+const (
+	Draft     PostStatus = "draft"
+	Published PostStatus = "published"
+)
+
+// Valid indicates whether the value is a known member of the PostStatus enum.
+func (e PostStatus) Valid() bool {
+	switch e {
+	case Draft:
+		return true
+	case Published:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for Role.
+const (
+	Admin  Role = "admin"
+	Editor Role = "editor"
+)
+
+// Valid indicates whether the value is a known member of the Role enum.
+func (e Role) Valid() bool {
+	switch e {
+	case Admin:
+		return true
+	case Editor:
+		return true
+	default:
+		return false
+	}
+}
+
 // AuditCategory Einordnung der Dimension (organisatorisch, fachlich, technisch)
 type AuditCategory string
 
@@ -175,6 +211,40 @@ type AuditQuestion struct {
 	Text string `json:"text"`
 }
 
+// EditorPost defines model for EditorPost.
+type EditorPost struct {
+	Featured bool  `json:"featured"`
+	Id       int64 `json:"id"`
+
+	// PublishedAt Erste Veröffentlichung
+	PublishedAt *time.Time `json:"publishedAt,omitempty"`
+	Slug        string     `json:"slug"`
+	Status      PostStatus `json:"status"`
+	Texts       []PostText `json:"texts"`
+	Topics      []string   `json:"topics"`
+	UpdatedAt   time.Time  `json:"updatedAt"`
+}
+
+// EditorPostList defines model for EditorPostList.
+type EditorPostList struct {
+	Items []EditorPostSummary `json:"items"`
+}
+
+// EditorPostSummary defines model for EditorPostSummary.
+type EditorPostSummary struct {
+	Featured    bool       `json:"featured"`
+	Id          int64      `json:"id"`
+	PublishedAt *time.Time `json:"publishedAt,omitempty"`
+	Slug        string     `json:"slug"`
+	Status      PostStatus `json:"status"`
+
+	// Title Deutscher Titel, sonst der Titel einer anderen Sprache
+	Title        string    `json:"title"`
+	Topics       []string  `json:"topics"`
+	Translations []Lang    `json:"translations"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
 // Error defines model for Error.
 type Error struct {
 	Message string `json:"message"`
@@ -209,6 +279,32 @@ type Image struct {
 // Lang defines model for Lang.
 type Lang string
 
+// LoginRequest defines model for LoginRequest.
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+// Me defines model for Me.
+type Me struct {
+	// CsrfToken Für den Header `X-CSRF-Token` bei schreibenden Aufrufen
+	CsrfToken string `json:"csrfToken"`
+	Email     string `json:"email"`
+	Id        int64  `json:"id"`
+
+	// Role `editor` verwaltet Beiträge, `admin` zusätzlich die Redaktionskonten
+	Role Role `json:"role"`
+}
+
+// NewUser defines model for NewUser.
+type NewUser struct {
+	// Email Eindeutige E-Mail-Adresse, Groß- und Kleinschreibung zählt nicht
+	Email string `json:"email"`
+
+	// Password Startpasswort mit mindestens 10 Zeichen
+	Password string `json:"password"`
+}
+
 // Post defines model for Post.
 type Post struct {
 	BodyMarkdown   string    `json:"bodyMarkdown"`
@@ -229,10 +325,28 @@ type Post struct {
 	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
+// PostInput defines model for PostInput.
+type PostInput struct {
+	// Featured Im Karussell der Startseite hervorheben
+	Featured bool `json:"featured"`
+
+	// Slug URL-Kürzel. Leer lassen, um es aus dem Titel zu erzeugen.
+	Slug *string `json:"slug,omitempty"`
+
+	// Texts Fassungen je Sprache. Leere Fassungen werden nicht gespeichert.
+	Texts []PostText `json:"texts"`
+
+	// Topics Slugs der zugeordneten Themen
+	Topics []string `json:"topics"`
+}
+
 // PostList defines model for PostList.
 type PostList struct {
 	Items []PostSummary `json:"items"`
 }
+
+// PostStatus defines model for PostStatus.
+type PostStatus string
 
 // PostSummary defines model for PostSummary.
 type PostSummary struct {
@@ -250,6 +364,19 @@ type PostSummary struct {
 	// Translations Sprachen, in denen der Beitrag vorliegt
 	Translations []Lang `json:"translations"`
 }
+
+// PostText Fassung eines Beitrags in einer Sprache
+type PostText struct {
+	BodyMarkdown string `json:"bodyMarkdown"`
+	Lang         Lang   `json:"lang"`
+
+	// Summary Kurztext
+	Summary string `json:"summary"`
+	Title   string `json:"title"`
+}
+
+// Role `editor` verwaltet Beiträge, `admin` zusätzlich die Redaktionskonten
+type Role string
 
 // Topic defines model for Topic.
 type Topic struct {
@@ -301,14 +428,51 @@ type TopicRef struct {
 	Title string `json:"title"`
 }
 
+// User Redaktionskonto ohne Passwortdaten
+type User struct {
+	// Active Deaktivierte Konten können sich nicht anmelden
+	Active    bool      `json:"active"`
+	CreatedAt time.Time `json:"createdAt"`
+	Email     string    `json:"email"`
+	Id        int64     `json:"id"`
+
+	// Role `editor` verwaltet Beiträge, `admin` zusätzlich die Redaktionskonten
+	Role Role `json:"role"`
+}
+
+// UserList defines model for UserList.
+type UserList struct {
+	Items []User `json:"items"`
+}
+
+// UserPatch defines model for UserPatch.
+type UserPatch struct {
+	Active bool `json:"active"`
+}
+
+// Id defines model for Id.
+type Id = int64
+
 // Slug defines model for Slug.
 type Slug = string
 
 // BadRequest defines model for BadRequest.
 type BadRequest = Error
 
+// Conflict defines model for Conflict.
+type Conflict = Error
+
+// Forbidden defines model for Forbidden.
+type Forbidden = Error
+
 // NotFound defines model for NotFound.
 type NotFound = Error
+
+// Unauthorized defines model for Unauthorized.
+type Unauthorized = Error
+
+// Unprocessable defines model for Unprocessable.
+type Unprocessable = Error
 
 // GetAuditParams defines parameters for GetAudit.
 type GetAuditParams struct {
@@ -351,14 +515,65 @@ type GetTopicParams struct {
 	Lang *Lang `form:"lang,omitempty" json:"lang,omitempty"`
 }
 
+// AdminCreatePostJSONRequestBody defines body for AdminCreatePost for application/json ContentType.
+type AdminCreatePostJSONRequestBody = PostInput
+
+// AdminUpdatePostJSONRequestBody defines body for AdminUpdatePost for application/json ContentType.
+type AdminUpdatePostJSONRequestBody = PostInput
+
+// AdminCreateUserJSONRequestBody defines body for AdminCreateUser for application/json ContentType.
+type AdminCreateUserJSONRequestBody = NewUser
+
+// AdminUpdateUserJSONRequestBody defines body for AdminUpdateUser for application/json ContentType.
+type AdminUpdateUserJSONRequestBody = UserPatch
+
+// LoginJSONRequestBody defines body for Login for application/json ContentType.
+type LoginJSONRequestBody = LoginRequest
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// AdminListPosts Alle Beiträge inklusive Entwürfe, zuletzt geänderte zuerst
+	// (GET /api/admin/posts)
+	AdminListPosts(w http.ResponseWriter, r *http.Request)
+	// AdminCreatePost Neuen Entwurf anlegen
+	// (POST /api/admin/posts)
+	AdminCreatePost(w http.ResponseWriter, r *http.Request)
+	// AdminGetPost Beitrag mit allen Sprachfassungen zum Bearbeiten laden
+	// (GET /api/admin/posts/{id})
+	AdminGetPost(w http.ResponseWriter, r *http.Request, id Id)
+	// AdminUpdatePost Texte, Themen und Einstellungen speichern
+	// (PUT /api/admin/posts/{id})
+	AdminUpdatePost(w http.ResponseWriter, r *http.Request, id Id)
+	// AdminPublishPost Veröffentlichen
+	// (POST /api/admin/posts/{id}/publish)
+	AdminPublishPost(w http.ResponseWriter, r *http.Request, id Id)
+	// AdminUnpublishPost Veröffentlichung zurücknehmen
+	// (POST /api/admin/posts/{id}/unpublish)
+	AdminUnpublishPost(w http.ResponseWriter, r *http.Request, id Id)
+	// AdminListUsers Redaktionskonten mit E-Mail-Adresse, Rolle und Status
+	// (GET /api/admin/users)
+	AdminListUsers(w http.ResponseWriter, r *http.Request)
+	// AdminCreateUser Redaktionskonto mit Rolle editor und Startpasswort anlegen
+	// (POST /api/admin/users)
+	AdminCreateUser(w http.ResponseWriter, r *http.Request)
+	// AdminUpdateUser Konto deaktivieren oder reaktivieren
+	// (PATCH /api/admin/users/{id})
+	AdminUpdateUser(w http.ResponseWriter, r *http.Request, id Id)
 	// GetAudit Einstieg in das KI-Audit mit allen freigegebenen Dimensionen
 	// (GET /api/audit)
 	GetAudit(w http.ResponseWriter, r *http.Request, params GetAuditParams)
 	// GetAuditDimension Eine Audit-Dimension mit Vorteilen, Reifegraden und Prüffragen
 	// (GET /api/audit/dimensions/{slug})
 	GetAuditDimension(w http.ResponseWriter, r *http.Request, slug Slug, params GetAuditDimensionParams)
+	// Login Anmelden, setzt das Sitzungscookie
+	// (POST /api/auth/login)
+	Login(w http.ResponseWriter, r *http.Request)
+	// Logout Abmelden, löscht die Sitzung serverseitig
+	// (POST /api/auth/logout)
+	Logout(w http.ResponseWriter, r *http.Request)
+	// GetMe Angemeldete Person, Rolle und CSRF-Token
+	// (GET /api/auth/me)
+	GetMe(w http.ResponseWriter, r *http.Request)
 	// GetHealth Zustand der Anwendung und der Datenbank
 	// (GET /api/health)
 	GetHealth(w http.ResponseWriter, r *http.Request)
@@ -384,6 +599,192 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// AdminListPosts operation middleware
+func (siw *ServerInterfaceWrapper) AdminListPosts(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminListPosts(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminCreatePost operation middleware
+func (siw *ServerInterfaceWrapper) AdminCreatePost(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminCreatePost(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminGetPost operation middleware
+func (siw *ServerInterfaceWrapper) AdminGetPost(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminGetPost(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminUpdatePost operation middleware
+func (siw *ServerInterfaceWrapper) AdminUpdatePost(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminUpdatePost(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminPublishPost operation middleware
+func (siw *ServerInterfaceWrapper) AdminPublishPost(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminPublishPost(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminUnpublishPost operation middleware
+func (siw *ServerInterfaceWrapper) AdminUnpublishPost(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminUnpublishPost(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminListUsers operation middleware
+func (siw *ServerInterfaceWrapper) AdminListUsers(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminListUsers(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminCreateUser operation middleware
+func (siw *ServerInterfaceWrapper) AdminCreateUser(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminCreateUser(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminUpdateUser operation middleware
+func (siw *ServerInterfaceWrapper) AdminUpdateUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminUpdateUser(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // GetAudit operation middleware
 func (siw *ServerInterfaceWrapper) GetAudit(w http.ResponseWriter, r *http.Request) {
@@ -451,6 +852,48 @@ func (siw *ServerInterfaceWrapper) GetAuditDimension(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetAuditDimension(w, r, slug, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// Login operation middleware
+func (siw *ServerInterfaceWrapper) Login(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Login(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// Logout operation middleware
+func (siw *ServerInterfaceWrapper) Logout(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Logout(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMe operation middleware
+func (siw *ServerInterfaceWrapper) GetMe(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMe(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -764,13 +1207,721 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/audit", wrapper.GetAudit)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/audit/dimensions/{slug}", wrapper.GetAuditDimension)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/health", wrapper.GetHealth)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/auth/login", wrapper.Login)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/auth/logout", wrapper.Logout)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/auth/me", wrapper.GetMe)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/admin/posts", wrapper.AdminListPosts)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/admin/posts", wrapper.AdminCreatePost)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/admin/posts/{id}", wrapper.AdminGetPost)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/admin/posts/{id}", wrapper.AdminUpdatePost)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/admin/posts/{id}/publish", wrapper.AdminPublishPost)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/admin/posts/{id}/unpublish", wrapper.AdminUnpublishPost)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/admin/users", wrapper.AdminListUsers)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/admin/users", wrapper.AdminCreateUser)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/admin/users/{id}", wrapper.AdminUpdateUser)
 
 	return m
 }
 
 type BadRequestJSONResponse Error
 
+type ConflictJSONResponse Error
+
+type ForbiddenJSONResponse Error
+
 type NotFoundJSONResponse Error
+
+type UnauthorizedJSONResponse Error
+
+type UnprocessableJSONResponse Error
+
+type AdminListPostsRequestObject struct {
+}
+
+type AdminListPostsResponseObject interface {
+	VisitAdminListPostsResponse(w http.ResponseWriter) error
+}
+
+type AdminListPosts200JSONResponse EditorPostList
+
+func (response AdminListPosts200JSONResponse) VisitAdminListPostsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminListPosts401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AdminListPosts401JSONResponse) VisitAdminListPostsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminListPosts403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AdminListPosts403JSONResponse) VisitAdminListPostsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreatePostRequestObject struct {
+	Body *AdminCreatePostJSONRequestBody
+}
+
+type AdminCreatePostResponseObject interface {
+	VisitAdminCreatePostResponse(w http.ResponseWriter) error
+}
+
+type AdminCreatePost201JSONResponse EditorPost
+
+func (response AdminCreatePost201JSONResponse) VisitAdminCreatePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreatePost400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response AdminCreatePost400JSONResponse) VisitAdminCreatePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreatePost401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AdminCreatePost401JSONResponse) VisitAdminCreatePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreatePost403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AdminCreatePost403JSONResponse) VisitAdminCreatePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreatePost409JSONResponse struct{ ConflictJSONResponse }
+
+func (response AdminCreatePost409JSONResponse) VisitAdminCreatePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreatePost422JSONResponse struct{ UnprocessableJSONResponse }
+
+func (response AdminCreatePost422JSONResponse) VisitAdminCreatePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminGetPostRequestObject struct {
+	Id Id `json:"id"`
+}
+
+type AdminGetPostResponseObject interface {
+	VisitAdminGetPostResponse(w http.ResponseWriter) error
+}
+
+type AdminGetPost200JSONResponse EditorPost
+
+func (response AdminGetPost200JSONResponse) VisitAdminGetPostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminGetPost401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AdminGetPost401JSONResponse) VisitAdminGetPostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminGetPost403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AdminGetPost403JSONResponse) VisitAdminGetPostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminGetPost404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AdminGetPost404JSONResponse) VisitAdminGetPostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdatePostRequestObject struct {
+	Id   Id `json:"id"`
+	Body *AdminUpdatePostJSONRequestBody
+}
+
+type AdminUpdatePostResponseObject interface {
+	VisitAdminUpdatePostResponse(w http.ResponseWriter) error
+}
+
+type AdminUpdatePost200JSONResponse EditorPost
+
+func (response AdminUpdatePost200JSONResponse) VisitAdminUpdatePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdatePost400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response AdminUpdatePost400JSONResponse) VisitAdminUpdatePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdatePost401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AdminUpdatePost401JSONResponse) VisitAdminUpdatePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdatePost403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AdminUpdatePost403JSONResponse) VisitAdminUpdatePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdatePost404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AdminUpdatePost404JSONResponse) VisitAdminUpdatePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdatePost409JSONResponse struct{ ConflictJSONResponse }
+
+func (response AdminUpdatePost409JSONResponse) VisitAdminUpdatePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdatePost422JSONResponse struct{ UnprocessableJSONResponse }
+
+func (response AdminUpdatePost422JSONResponse) VisitAdminUpdatePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminPublishPostRequestObject struct {
+	Id Id `json:"id"`
+}
+
+type AdminPublishPostResponseObject interface {
+	VisitAdminPublishPostResponse(w http.ResponseWriter) error
+}
+
+type AdminPublishPost200JSONResponse EditorPost
+
+func (response AdminPublishPost200JSONResponse) VisitAdminPublishPostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminPublishPost401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AdminPublishPost401JSONResponse) VisitAdminPublishPostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminPublishPost403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AdminPublishPost403JSONResponse) VisitAdminPublishPostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminPublishPost404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AdminPublishPost404JSONResponse) VisitAdminPublishPostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminPublishPost422JSONResponse struct{ UnprocessableJSONResponse }
+
+func (response AdminPublishPost422JSONResponse) VisitAdminPublishPostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUnpublishPostRequestObject struct {
+	Id Id `json:"id"`
+}
+
+type AdminUnpublishPostResponseObject interface {
+	VisitAdminUnpublishPostResponse(w http.ResponseWriter) error
+}
+
+type AdminUnpublishPost200JSONResponse EditorPost
+
+func (response AdminUnpublishPost200JSONResponse) VisitAdminUnpublishPostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUnpublishPost401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AdminUnpublishPost401JSONResponse) VisitAdminUnpublishPostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUnpublishPost403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AdminUnpublishPost403JSONResponse) VisitAdminUnpublishPostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUnpublishPost404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AdminUnpublishPost404JSONResponse) VisitAdminUnpublishPostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminListUsersRequestObject struct {
+}
+
+type AdminListUsersResponseObject interface {
+	VisitAdminListUsersResponse(w http.ResponseWriter) error
+}
+
+type AdminListUsers200JSONResponse UserList
+
+func (response AdminListUsers200JSONResponse) VisitAdminListUsersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminListUsers401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AdminListUsers401JSONResponse) VisitAdminListUsersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminListUsers403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AdminListUsers403JSONResponse) VisitAdminListUsersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreateUserRequestObject struct {
+	Body *AdminCreateUserJSONRequestBody
+}
+
+type AdminCreateUserResponseObject interface {
+	VisitAdminCreateUserResponse(w http.ResponseWriter) error
+}
+
+type AdminCreateUser201JSONResponse User
+
+func (response AdminCreateUser201JSONResponse) VisitAdminCreateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreateUser400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response AdminCreateUser400JSONResponse) VisitAdminCreateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreateUser401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AdminCreateUser401JSONResponse) VisitAdminCreateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreateUser403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AdminCreateUser403JSONResponse) VisitAdminCreateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreateUser409JSONResponse struct{ ConflictJSONResponse }
+
+func (response AdminCreateUser409JSONResponse) VisitAdminCreateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreateUser422JSONResponse struct{ UnprocessableJSONResponse }
+
+func (response AdminCreateUser422JSONResponse) VisitAdminCreateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdateUserRequestObject struct {
+	Id   Id `json:"id"`
+	Body *AdminUpdateUserJSONRequestBody
+}
+
+type AdminUpdateUserResponseObject interface {
+	VisitAdminUpdateUserResponse(w http.ResponseWriter) error
+}
+
+type AdminUpdateUser200JSONResponse User
+
+func (response AdminUpdateUser200JSONResponse) VisitAdminUpdateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdateUser400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response AdminUpdateUser400JSONResponse) VisitAdminUpdateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdateUser401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AdminUpdateUser401JSONResponse) VisitAdminUpdateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdateUser403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AdminUpdateUser403JSONResponse) VisitAdminUpdateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdateUser404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AdminUpdateUser404JSONResponse) VisitAdminUpdateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdateUser422JSONResponse struct{ UnprocessableJSONResponse }
+
+func (response AdminUpdateUser422JSONResponse) VisitAdminUpdateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
 
 type GetAuditRequestObject struct {
 	Params GetAuditParams
@@ -855,6 +2006,166 @@ func (response GetAuditDimension404JSONResponse) VisitGetAuditDimensionResponse(
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LoginRequestObject struct {
+	Body *LoginJSONRequestBody
+}
+
+type LoginResponseObject interface {
+	VisitLoginResponse(w http.ResponseWriter) error
+}
+
+type Login200ResponseHeaders struct {
+	SetCookie *string
+}
+
+type Login200JSONResponse struct {
+	Body    Me
+	Headers Login200ResponseHeaders
+}
+
+func (response Login200JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.SetCookie != nil {
+		w.Header().Set("Set-Cookie", fmt.Sprint(*response.Headers.SetCookie))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type Login400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response Login400JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type Login401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response Login401JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type Login429JSONResponse Error
+
+func (response Login429JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LogoutRequestObject struct {
+}
+
+type LogoutResponseObject interface {
+	VisitLogoutResponse(w http.ResponseWriter) error
+}
+
+type Logout204ResponseHeaders struct {
+	SetCookie *string
+}
+
+type Logout204Response struct {
+	Headers Logout204ResponseHeaders
+}
+
+func (response Logout204Response) VisitLogoutResponse(w http.ResponseWriter) error {
+	if response.Headers.SetCookie != nil {
+		w.Header().Set("Set-Cookie", fmt.Sprint(*response.Headers.SetCookie))
+	}
+	w.WriteHeader(204)
+	return nil
+}
+
+type Logout401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response Logout401JSONResponse) VisitLogoutResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type Logout403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response Logout403JSONResponse) VisitLogoutResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMeRequestObject struct {
+}
+
+type GetMeResponseObject interface {
+	VisitGetMeResponse(w http.ResponseWriter) error
+}
+
+type GetMe200JSONResponse Me
+
+func (response GetMe200JSONResponse) VisitGetMeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMe401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetMe401JSONResponse) VisitGetMeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -1070,12 +2381,48 @@ func (response GetTopic404JSONResponse) VisitGetTopicResponse(w http.ResponseWri
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// AdminListPosts Alle Beiträge inklusive Entwürfe, zuletzt geänderte zuerst
+	// (GET /api/admin/posts)
+	AdminListPosts(ctx context.Context, request AdminListPostsRequestObject) (AdminListPostsResponseObject, error)
+	// AdminCreatePost Neuen Entwurf anlegen
+	// (POST /api/admin/posts)
+	AdminCreatePost(ctx context.Context, request AdminCreatePostRequestObject) (AdminCreatePostResponseObject, error)
+	// AdminGetPost Beitrag mit allen Sprachfassungen zum Bearbeiten laden
+	// (GET /api/admin/posts/{id})
+	AdminGetPost(ctx context.Context, request AdminGetPostRequestObject) (AdminGetPostResponseObject, error)
+	// AdminUpdatePost Texte, Themen und Einstellungen speichern
+	// (PUT /api/admin/posts/{id})
+	AdminUpdatePost(ctx context.Context, request AdminUpdatePostRequestObject) (AdminUpdatePostResponseObject, error)
+	// AdminPublishPost Veröffentlichen
+	// (POST /api/admin/posts/{id}/publish)
+	AdminPublishPost(ctx context.Context, request AdminPublishPostRequestObject) (AdminPublishPostResponseObject, error)
+	// AdminUnpublishPost Veröffentlichung zurücknehmen
+	// (POST /api/admin/posts/{id}/unpublish)
+	AdminUnpublishPost(ctx context.Context, request AdminUnpublishPostRequestObject) (AdminUnpublishPostResponseObject, error)
+	// AdminListUsers Redaktionskonten mit E-Mail-Adresse, Rolle und Status
+	// (GET /api/admin/users)
+	AdminListUsers(ctx context.Context, request AdminListUsersRequestObject) (AdminListUsersResponseObject, error)
+	// AdminCreateUser Redaktionskonto mit Rolle editor und Startpasswort anlegen
+	// (POST /api/admin/users)
+	AdminCreateUser(ctx context.Context, request AdminCreateUserRequestObject) (AdminCreateUserResponseObject, error)
+	// AdminUpdateUser Konto deaktivieren oder reaktivieren
+	// (PATCH /api/admin/users/{id})
+	AdminUpdateUser(ctx context.Context, request AdminUpdateUserRequestObject) (AdminUpdateUserResponseObject, error)
 	// GetAudit Einstieg in das KI-Audit mit allen freigegebenen Dimensionen
 	// (GET /api/audit)
 	GetAudit(ctx context.Context, request GetAuditRequestObject) (GetAuditResponseObject, error)
 	// GetAuditDimension Eine Audit-Dimension mit Vorteilen, Reifegraden und Prüffragen
 	// (GET /api/audit/dimensions/{slug})
 	GetAuditDimension(ctx context.Context, request GetAuditDimensionRequestObject) (GetAuditDimensionResponseObject, error)
+	// Login Anmelden, setzt das Sitzungscookie
+	// (POST /api/auth/login)
+	Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error)
+	// Logout Abmelden, löscht die Sitzung serverseitig
+	// (POST /api/auth/logout)
+	Logout(ctx context.Context, request LogoutRequestObject) (LogoutResponseObject, error)
+	// GetMe Angemeldete Person, Rolle und CSRF-Token
+	// (GET /api/auth/me)
+	GetMe(ctx context.Context, request GetMeRequestObject) (GetMeResponseObject, error)
 	// GetHealth Zustand der Anwendung und der Datenbank
 	// (GET /api/health)
 	GetHealth(ctx context.Context, request GetHealthRequestObject) (GetHealthResponseObject, error)
@@ -1132,6 +2479,260 @@ type strictHandler struct {
 	options     StrictHTTPServerOptions
 }
 
+// AdminListPosts operation middleware
+func (sh *strictHandler) AdminListPosts(w http.ResponseWriter, r *http.Request) {
+	var request AdminListPostsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminListPosts(ctx, request.(AdminListPostsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminListPosts")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminListPostsResponseObject); ok {
+		if err := validResponse.VisitAdminListPostsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminCreatePost operation middleware
+func (sh *strictHandler) AdminCreatePost(w http.ResponseWriter, r *http.Request) {
+	var request AdminCreatePostRequestObject
+
+	var body AdminCreatePostJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminCreatePost(ctx, request.(AdminCreatePostRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminCreatePost")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminCreatePostResponseObject); ok {
+		if err := validResponse.VisitAdminCreatePostResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminGetPost operation middleware
+func (sh *strictHandler) AdminGetPost(w http.ResponseWriter, r *http.Request, id Id) {
+	var request AdminGetPostRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminGetPost(ctx, request.(AdminGetPostRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminGetPost")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminGetPostResponseObject); ok {
+		if err := validResponse.VisitAdminGetPostResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminUpdatePost operation middleware
+func (sh *strictHandler) AdminUpdatePost(w http.ResponseWriter, r *http.Request, id Id) {
+	var request AdminUpdatePostRequestObject
+
+	request.Id = id
+
+	var body AdminUpdatePostJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminUpdatePost(ctx, request.(AdminUpdatePostRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminUpdatePost")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminUpdatePostResponseObject); ok {
+		if err := validResponse.VisitAdminUpdatePostResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminPublishPost operation middleware
+func (sh *strictHandler) AdminPublishPost(w http.ResponseWriter, r *http.Request, id Id) {
+	var request AdminPublishPostRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminPublishPost(ctx, request.(AdminPublishPostRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminPublishPost")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminPublishPostResponseObject); ok {
+		if err := validResponse.VisitAdminPublishPostResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminUnpublishPost operation middleware
+func (sh *strictHandler) AdminUnpublishPost(w http.ResponseWriter, r *http.Request, id Id) {
+	var request AdminUnpublishPostRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminUnpublishPost(ctx, request.(AdminUnpublishPostRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminUnpublishPost")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminUnpublishPostResponseObject); ok {
+		if err := validResponse.VisitAdminUnpublishPostResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminListUsers operation middleware
+func (sh *strictHandler) AdminListUsers(w http.ResponseWriter, r *http.Request) {
+	var request AdminListUsersRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminListUsers(ctx, request.(AdminListUsersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminListUsers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminListUsersResponseObject); ok {
+		if err := validResponse.VisitAdminListUsersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminCreateUser operation middleware
+func (sh *strictHandler) AdminCreateUser(w http.ResponseWriter, r *http.Request) {
+	var request AdminCreateUserRequestObject
+
+	var body AdminCreateUserJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminCreateUser(ctx, request.(AdminCreateUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminCreateUser")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminCreateUserResponseObject); ok {
+		if err := validResponse.VisitAdminCreateUserResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminUpdateUser operation middleware
+func (sh *strictHandler) AdminUpdateUser(w http.ResponseWriter, r *http.Request, id Id) {
+	var request AdminUpdateUserRequestObject
+
+	request.Id = id
+
+	var body AdminUpdateUserJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminUpdateUser(ctx, request.(AdminUpdateUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminUpdateUser")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminUpdateUserResponseObject); ok {
+		if err := validResponse.VisitAdminUpdateUserResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetAudit operation middleware
 func (sh *strictHandler) GetAudit(w http.ResponseWriter, r *http.Request, params GetAuditParams) {
 	var request GetAuditRequestObject
@@ -1178,6 +2779,85 @@ func (sh *strictHandler) GetAuditDimension(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetAuditDimensionResponseObject); ok {
 		if err := validResponse.VisitGetAuditDimensionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// Login operation middleware
+func (sh *strictHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var request LoginRequestObject
+
+	var body LoginJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.Login(ctx, request.(LoginRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "Login")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(LoginResponseObject); ok {
+		if err := validResponse.VisitLoginResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// Logout operation middleware
+func (sh *strictHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	var request LogoutRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.Logout(ctx, request.(LogoutRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "Logout")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(LogoutResponseObject); ok {
+		if err := validResponse.VisitLogoutResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetMe operation middleware
+func (sh *strictHandler) GetMe(w http.ResponseWriter, r *http.Request) {
+	var request GetMeRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMe(ctx, request.(GetMeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMe")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetMeResponseObject); ok {
+		if err := validResponse.VisitGetMeResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

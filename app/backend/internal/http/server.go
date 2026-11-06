@@ -9,28 +9,46 @@ import (
 	"time"
 
 	"ki-web/backend/internal/audit"
+	"ki-web/backend/internal/auth"
 	"ki-web/backend/internal/service"
 	"ki-web/backend/internal/web"
 )
 
 // Config enthält alles, was der Router braucht.
 type Config struct {
-	Public    *service.Public
-	Audit     *audit.Catalog
-	Site      *web.Site
-	MediaPath string // optional: liefert /media/* lokal aus (in Produktion übernimmt das Caddy)
-	Log       *slog.Logger
+	Public        *service.Public
+	Audit         *audit.Catalog
+	Accounts      *service.Accounts
+	Editorial     *service.Editorial
+	Site          *web.Site
+	EditorialSite *web.Editorial
+	MediaPath     string // optional: liefert /media/* lokal aus (in Produktion übernimmt das Caddy)
+	// SecureCookies setzt das Secure-Attribut am Sitzungscookie (bei HTTPS).
+	SecureCookies bool
+	// TrustProxy liest die IP-Adresse aus X-Forwarded-For (hinter Caddy).
+	TrustProxy bool
+	Log        *slog.Logger
 }
 
 // New baut den vollständigen HTTP-Handler aus API, Medien und Webseite.
 func New(cfg Config) http.Handler {
 	mux := http.NewServeMux()
-	registerAPI(mux, cfg.Public, cfg.Audit, cfg.Log)
+	registerAPI(mux, &apiServer{
+		svc:           cfg.Public,
+		audit:         cfg.Audit,
+		accounts:      cfg.Accounts,
+		editorial:     cfg.Editorial,
+		limiter:       auth.NewLimiter(loginMaxFailures, loginWindow),
+		secureCookies: cfg.SecureCookies,
+		log:           cfg.Log,
+	}, cfg.Log)
 	if cfg.MediaPath != "" {
 		mux.Handle("GET /media/", mediaHandler(cfg.MediaPath))
 	}
+	cfg.EditorialSite.Register(mux)
 	cfg.Site.Register(mux)
-	return recoverer(cfg.Log, logRequests(cfg.Log, mux))
+	g := &guard{accounts: cfg.Accounts, trustProxy: cfg.TrustProxy, log: cfg.Log}
+	return recoverer(cfg.Log, logRequests(cfg.Log, g.wrap(mux)))
 }
 
 // mediaHandler liefert hochgeladene Bilder aus. Dateinamen ändern sich nie, daher ein Jahr Cache.
