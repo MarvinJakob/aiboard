@@ -104,3 +104,44 @@ DELETE FROM sessions WHERE user_id = ?;
 
 -- name: DeleteExpiredSessions :execrows
 DELETE FROM sessions WHERE expires_at <= ?;
+
+-- ---------------------------------------------------------------------------
+-- Redaktion: Beitraege verwalten (Anforderung 5)
+-- ---------------------------------------------------------------------------
+
+-- name: ListAllPosts :many
+SELECT * FROM posts ORDER BY updated_at DESC, id DESC;
+
+-- name: GetPostByID :one
+SELECT * FROM posts WHERE id = ?;
+
+-- name: GetPostIDBySlug :one
+SELECT id FROM posts WHERE slug = ?;
+
+-- name: CreatePost :execlastid
+INSERT INTO posts (slug, status, featured, updated_at) VALUES (?, 'draft', ?, ?);
+
+-- name: UpdatePost :execrows
+UPDATE posts SET slug = ?, featured = ?, updated_at = ? WHERE id = ?;
+
+-- name: DeletePostTranslations :exec
+DELETE FROM post_translations WHERE post_id = ?;
+
+-- name: InsertPostTranslation :exec
+INSERT INTO post_translations (post_id, lang, title, summary, body_markdown) VALUES (?, ?, ?, ?, ?);
+
+-- name: DeletePostTopics :exec
+DELETE FROM post_topics WHERE post_id = ?;
+
+-- name: InsertPostTopic :exec
+INSERT INTO post_topics (post_id, topic_id) VALUES (?, ?);
+
+-- name: PublishPost :execrows
+UPDATE posts
+SET status = 'published',
+    published_at = COALESCE(published_at, sqlc.arg(published_at)),
+    updated_at = sqlc.arg(updated_at)
+WHERE id = sqlc.arg(id);
+
+-- name: UnpublishPost :execrows
+UPDATE posts SET status = 'draft', updated_at = ? WHERE id = ?;

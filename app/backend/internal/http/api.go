@@ -16,6 +16,7 @@ import (
 type apiServer struct {
 	svc           *service.Public
 	accounts      *service.Accounts
+	editorial     *service.Editorial
 	limiter       *auth.Limiter
 	secureCookies bool
 	log           *slog.Logger

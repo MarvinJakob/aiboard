@@ -256,6 +256,34 @@ svg { display: block; }
 .table a { font-weight: 650; }
 .empty-state { padding: 32px 18px; color: var(--text-2); }
 
+/* Beitragsliste und Editor */
+.row-meta { margin-left: 6px; color: var(--text-3); font-size: .75rem; font-weight: 650; letter-spacing: .04em; }
+.back { margin-top: 8px; }
+.back a { color: var(--text-2); font-weight: 600; text-decoration: none; }
+.back a:hover { color: var(--text); text-decoration: underline; }
+.editor { display: grid; gap: 0; padding-bottom: 24px; }
+.lang-tabs { display: flex; gap: 4px; padding: 4px; width: fit-content; border-radius: var(--radius-pill); background: var(--fill); }
+.lang-tabs .nav-btn { height: 40px; }
+.lang-tabs .nav-btn[aria-pressed="true"] { background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.card > .field-hint { display: block; margin-top: 12px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .9375rem; }
+fieldset.field { margin: 0; padding: 0; border: 0; }
+.checks { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.check { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-size: .9375rem; font-weight: 600; color: var(--text); cursor: pointer; }
+.check input { width: 20px; height: 20px; min-height: 0; accent-color: var(--accent); }
+.field .check { color: var(--text); }
+/* Werkzeugleiste schwebt als Glas-Kapsel über dem Inhalt (Design.md, Redaktionssystem) */
+.toolbar {
+  position: sticky; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 40;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+  margin-top: 24px; padding: 8px 8px 8px 20px; border-radius: 32px;
+}
+.toolbar-status { flex: 1 1 260px; min-width: 0; font-size: .875rem; }
+.toolbar-status .form-error, .toolbar-status .form-ok { margin: 0; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.toolbar-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.confirm-text { font-size: .875rem; font-weight: 650; }
+
 @media (max-width: 760px) {
   .brand-name { display: none; }
   .ed-user { display: none; }

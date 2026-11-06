@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"path"
+	"regexp"
 	"strings"
 
 	"ki-web/backend/internal/auth"
@@ -86,12 +87,17 @@ const (
 	accessAdmin                 // Benutzerverwaltung
 )
 
+// postPath erkennt die Bearbeitungsseite eines Beitrags, z. B. beitraege/12.
+var postPath = regexp.MustCompile(`^beitraege/[1-9][0-9]{0,17}$`)
+
 // route ordnet einen Pfad unterhalb von /redaktion einer Zugriffsstufe zu (ARCHITECTURE.md, Abschnitt 3).
 func route(rest string) access {
 	switch {
 	case rest == "anmelden":
 		return accessPublic
 	case rest == "":
+		return accessEditor
+	case rest == "beitraege/neu" || postPath.MatchString(rest):
 		return accessEditor
 	case rest == "benutzer":
 		return accessAdmin
