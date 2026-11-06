@@ -218,11 +218,16 @@ type EditorPost struct {
 
 	// PublishedAt Erste Veröffentlichung
 	PublishedAt *time.Time `json:"publishedAt,omitempty"`
+
+	// ScheduledAt Geplante automatische Veröffentlichung in UTC, nur bei Beiträgen „In Arbeit“
+	ScheduledAt *time.Time `json:"scheduledAt,omitempty"`
 	Slug        string     `json:"slug"`
-	Status      PostStatus `json:"status"`
-	Texts       []PostText `json:"texts"`
-	Topics      []string   `json:"topics"`
-	UpdatedAt   time.Time  `json:"updatedAt"`
+
+	// Status `draft` erscheint in der Redaktion als „In Arbeit“, `published` als „Veröffentlicht“
+	Status    PostStatus `json:"status"`
+	Texts     []PostText `json:"texts"`
+	Topics    []string   `json:"topics"`
+	UpdatedAt time.Time  `json:"updatedAt"`
 }
 
 // EditorPostList defines model for EditorPostList.
@@ -235,8 +240,13 @@ type EditorPostSummary struct {
 	Featured    bool       `json:"featured"`
 	Id          int64      `json:"id"`
 	PublishedAt *time.Time `json:"publishedAt,omitempty"`
+
+	// ScheduledAt Geplante automatische Veröffentlichung in UTC
+	ScheduledAt *time.Time `json:"scheduledAt,omitempty"`
 	Slug        string     `json:"slug"`
-	Status      PostStatus `json:"status"`
+
+	// Status `draft` erscheint in der Redaktion als „In Arbeit“, `published` als „Veröffentlicht“
+	Status PostStatus `json:"status"`
 
 	// Title Deutscher Titel, sonst der Titel einer anderen Sprache
 	Title        string    `json:"title"`
@@ -345,7 +355,7 @@ type PostList struct {
 	Items []PostSummary `json:"items"`
 }
 
-// PostStatus defines model for PostStatus.
+// PostStatus `draft` erscheint in der Redaktion als „In Arbeit“, `published` als „Veröffentlicht“
 type PostStatus string
 
 // PostSummary defines model for PostSummary.
@@ -377,6 +387,12 @@ type PostText struct {
 
 // Role `editor` verwaltet Beiträge, `admin` zusätzlich die Redaktionskonten
 type Role string
+
+// ScheduleInput defines model for ScheduleInput.
+type ScheduleInput struct {
+	// PublishAt Zeitpunkt der automatischen Veröffentlichung, mit Zeitzone (wird in UTC gespeichert)
+	PublishAt time.Time `json:"publishAt"`
+}
 
 // Topic defines model for Topic.
 type Topic struct {
@@ -521,6 +537,9 @@ type AdminCreatePostJSONRequestBody = PostInput
 // AdminUpdatePostJSONRequestBody defines body for AdminUpdatePost for application/json ContentType.
 type AdminUpdatePostJSONRequestBody = PostInput
 
+// AdminSchedulePostJSONRequestBody defines body for AdminSchedulePost for application/json ContentType.
+type AdminSchedulePostJSONRequestBody = ScheduleInput
+
 // AdminCreateUserJSONRequestBody defines body for AdminCreateUser for application/json ContentType.
 type AdminCreateUserJSONRequestBody = NewUser
 
@@ -547,6 +566,12 @@ type ServerInterface interface {
 	// AdminPublishPost Veröffentlichen
 	// (POST /api/admin/posts/{id}/publish)
 	AdminPublishPost(w http.ResponseWriter, r *http.Request, id Id)
+	// AdminUnschedulePost Geplanten Zeitpunkt entfernen
+	// (DELETE /api/admin/posts/{id}/schedule)
+	AdminUnschedulePost(w http.ResponseWriter, r *http.Request, id Id)
+	// AdminSchedulePost Automatische Veröffentlichung planen oder ändern
+	// (PUT /api/admin/posts/{id}/schedule)
+	AdminSchedulePost(w http.ResponseWriter, r *http.Request, id Id)
 	// AdminUnpublishPost Veröffentlichung zurücknehmen
 	// (POST /api/admin/posts/{id}/unpublish)
 	AdminUnpublishPost(w http.ResponseWriter, r *http.Request, id Id)
@@ -697,6 +722,58 @@ func (siw *ServerInterfaceWrapper) AdminPublishPost(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AdminPublishPost(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminUnschedulePost operation middleware
+func (siw *ServerInterfaceWrapper) AdminUnschedulePost(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminUnschedulePost(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminSchedulePost operation middleware
+func (siw *ServerInterfaceWrapper) AdminSchedulePost(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminSchedulePost(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1215,6 +1292,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/admin/posts/{id}", wrapper.AdminGetPost)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/admin/posts/{id}", wrapper.AdminUpdatePost)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/admin/posts/{id}/publish", wrapper.AdminPublishPost)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/admin/posts/{id}/schedule", wrapper.AdminUnschedulePost)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/admin/posts/{id}/schedule", wrapper.AdminSchedulePost)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/admin/posts/{id}/unpublish", wrapper.AdminUnpublishPost)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/admin/users", wrapper.AdminListUsers)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/admin/users", wrapper.AdminCreateUser)
@@ -1614,6 +1693,163 @@ func (response AdminPublishPost404JSONResponse) VisitAdminPublishPostResponse(w 
 type AdminPublishPost422JSONResponse struct{ UnprocessableJSONResponse }
 
 func (response AdminPublishPost422JSONResponse) VisitAdminPublishPostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUnschedulePostRequestObject struct {
+	Id Id `json:"id"`
+}
+
+type AdminUnschedulePostResponseObject interface {
+	VisitAdminUnschedulePostResponse(w http.ResponseWriter) error
+}
+
+type AdminUnschedulePost200JSONResponse EditorPost
+
+func (response AdminUnschedulePost200JSONResponse) VisitAdminUnschedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUnschedulePost401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AdminUnschedulePost401JSONResponse) VisitAdminUnschedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUnschedulePost403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AdminUnschedulePost403JSONResponse) VisitAdminUnschedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUnschedulePost404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AdminUnschedulePost404JSONResponse) VisitAdminUnschedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSchedulePostRequestObject struct {
+	Id   Id `json:"id"`
+	Body *AdminSchedulePostJSONRequestBody
+}
+
+type AdminSchedulePostResponseObject interface {
+	VisitAdminSchedulePostResponse(w http.ResponseWriter) error
+}
+
+type AdminSchedulePost200JSONResponse EditorPost
+
+func (response AdminSchedulePost200JSONResponse) VisitAdminSchedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSchedulePost400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response AdminSchedulePost400JSONResponse) VisitAdminSchedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSchedulePost401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AdminSchedulePost401JSONResponse) VisitAdminSchedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSchedulePost403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AdminSchedulePost403JSONResponse) VisitAdminSchedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSchedulePost404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AdminSchedulePost404JSONResponse) VisitAdminSchedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSchedulePost422JSONResponse struct{ UnprocessableJSONResponse }
+
+func (response AdminSchedulePost422JSONResponse) VisitAdminSchedulePostResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -2396,6 +2632,12 @@ type StrictServerInterface interface {
 	// AdminPublishPost Veröffentlichen
 	// (POST /api/admin/posts/{id}/publish)
 	AdminPublishPost(ctx context.Context, request AdminPublishPostRequestObject) (AdminPublishPostResponseObject, error)
+	// AdminUnschedulePost Geplanten Zeitpunkt entfernen
+	// (DELETE /api/admin/posts/{id}/schedule)
+	AdminUnschedulePost(ctx context.Context, request AdminUnschedulePostRequestObject) (AdminUnschedulePostResponseObject, error)
+	// AdminSchedulePost Automatische Veröffentlichung planen oder ändern
+	// (PUT /api/admin/posts/{id}/schedule)
+	AdminSchedulePost(ctx context.Context, request AdminSchedulePostRequestObject) (AdminSchedulePostResponseObject, error)
 	// AdminUnpublishPost Veröffentlichung zurücknehmen
 	// (POST /api/admin/posts/{id}/unpublish)
 	AdminUnpublishPost(ctx context.Context, request AdminUnpublishPostRequestObject) (AdminUnpublishPostResponseObject, error)
@@ -2612,6 +2854,65 @@ func (sh *strictHandler) AdminPublishPost(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(AdminPublishPostResponseObject); ok {
 		if err := validResponse.VisitAdminPublishPostResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminUnschedulePost operation middleware
+func (sh *strictHandler) AdminUnschedulePost(w http.ResponseWriter, r *http.Request, id Id) {
+	var request AdminUnschedulePostRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminUnschedulePost(ctx, request.(AdminUnschedulePostRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminUnschedulePost")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminUnschedulePostResponseObject); ok {
+		if err := validResponse.VisitAdminUnschedulePostResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminSchedulePost operation middleware
+func (sh *strictHandler) AdminSchedulePost(w http.ResponseWriter, r *http.Request, id Id) {
+	var request AdminSchedulePostRequestObject
+
+	request.Id = id
+
+	var body AdminSchedulePostJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminSchedulePost(ctx, request.(AdminSchedulePostRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminSchedulePost")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminSchedulePostResponseObject); ok {
+		if err := validResponse.VisitAdminSchedulePostResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

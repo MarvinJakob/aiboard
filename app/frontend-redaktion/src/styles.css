@@ -258,6 +258,9 @@ svg { display: block; }
 
 /* Beitragsliste und Editor */
 .row-meta { margin-left: 6px; color: var(--text-3); font-size: .75rem; font-weight: 650; letter-spacing: .04em; }
+/* Geplante Veröffentlichung (Ticket #23) */
+.row-schedule { display: block; margin-top: 6px; color: var(--text-2); font-size: .8125rem; white-space: nowrap; }
+.schedule-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 .back { margin-top: 8px; }
 .back a { color: var(--text-2); font-weight: 600; text-decoration: none; }
 .back a:hover { color: var(--text); text-decoration: underline; }

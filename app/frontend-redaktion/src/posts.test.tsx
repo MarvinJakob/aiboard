@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { EditorPost, PostInput } from './api/posts';
@@ -24,7 +24,8 @@ function postsBackend(initial: EditorPost[] = []) {
       return json(200, {
         items: [...posts.values()].map((p) => ({
           id: p.id, slug: p.slug, status: p.status, title: p.texts[0]?.title ?? '', featured: p.featured,
-          topics: p.topics, translations: p.texts.map((t) => t.lang), publishedAt: p.publishedAt, updatedAt: p.updatedAt,
+          topics: p.topics, translations: p.texts.map((t) => t.lang), publishedAt: p.publishedAt, scheduledAt: p.scheduledAt,
+          updatedAt: p.updatedAt,
         })),
       });
     }
@@ -38,12 +39,27 @@ function postsBackend(initial: EditorPost[] = []) {
       posts.set(p.id, p);
       return json(201, p);
     }
-    const m = r.path.match(/^\/api\/admin\/posts\/(\d+)(?:\/(publish|unpublish))?$/);
+    const m = r.path.match(/^\/api\/admin\/posts\/(\d+)(?:\/(publish|unpublish|schedule))?$/);
     if (!m) return undefined;
     const p = posts.get(Number(m[1]));
     if (!p) return json(404, { message: 'Beitrag nicht gefunden.' });
     if (r.method === 'GET') return json(200, p);
-    if (r.method === 'PUT') {
+    if (m[2] === 'schedule' && r.method === 'DELETE') {
+      delete p.scheduledAt;
+      return json(200, p);
+    }
+    if (m[2] === 'schedule') {
+      const at = (r.body as { publishAt: string }).publishAt;
+      if (p.status === 'published') return json(422, { message: 'Der Beitrag ist bereits veröffentlicht.' });
+      if (new Date(at).getTime() <= Date.now()) {
+        return json(422, { message: 'Der Zeitpunkt liegt in der Vergangenheit. Bitte wählen Sie einen Zeitpunkt in der Zukunft.' });
+      }
+      const incomplete = p.texts.find((t) => !t.title || !t.summary || !t.bodyMarkdown);
+      if (!p.texts.length || incomplete) return json(422, { message: 'Zum Veröffentlichen fehlt in der Fassung Deutsch: Beitragstext.' });
+      p.scheduledAt = new Date(at).toISOString();
+      return json(200, p);
+    }
+    if (r.method === 'PUT' && !m[2]) {
       const input = r.body as PostInput;
       Object.assign(p, { featured: input.featured, topics: input.topics, texts: input.texts, updatedAt: now() });
       if (input.slug) p.slug = input.slug;
@@ -53,6 +69,7 @@ function postsBackend(initial: EditorPost[] = []) {
       const incomplete = p.texts.find((t) => !t.title || !t.summary || !t.bodyMarkdown);
       if (!p.texts.length || incomplete) return json(422, { message: 'Zum Veröffentlichen fehlt in der Fassung Deutsch: Kurztext, Beitragstext.' });
       Object.assign(p, { status: 'published', publishedAt: p.publishedAt ?? now(), updatedAt: now() });
+      delete p.scheduledAt;
       return json(200, p);
     }
     if (m[2] === 'unpublish') {
@@ -94,7 +111,7 @@ describe('Anforderung 5: Redaktionssystem', () => {
     const rows = within(table).getAllByRole('row').slice(1);
     expect(rows).toHaveLength(2);
     expect(within(rows[0]).getByRole('link', { name: 'Erster Entwurf' })).toHaveAttribute('href', '/redaktion/beitraege/7');
-    expect(within(rows[0]).getByText('Entwurf')).toBeInTheDocument();
+    expect(within(rows[0]).getByText('In Arbeit')).toBeInTheDocument();
     expect(within(rows[0]).getByText('AI Audit')).toBeInTheDocument();
     expect(within(rows[1]).getByText('Veröffentlicht')).toBeInTheDocument();
   });
@@ -109,10 +126,10 @@ describe('Anforderung 5: Redaktionssystem', () => {
     await user.click(await screen.findByRole('checkbox', { name: 'AI in Data Analytics' }));
     await user.click(within(toolbar()).getByRole('button', { name: 'Speichern' }));
 
-    expect(await screen.findByText('Entwurf gespeichert.')).toBeInTheDocument();
+    expect(await screen.findByText('Gespeichert. Der Beitrag bleibt „In Arbeit“.')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/redaktion/beitraege/100');
     expect(posts.get(100)).toMatchObject({ status: 'draft', topics: ['data-analytics'] });
-    expect(screen.getByText('Entwurf', { selector: '.badge' })).toBeInTheDocument();
+    expect(screen.getByText('In Arbeit', { selector: '.badge' })).toBeInTheDocument();
 
     // Erneut öffnen über die Liste und weiterbearbeiten
     await user.click(screen.getByRole('link', { name: /Alle Beiträge/ }));
@@ -121,7 +138,7 @@ describe('Anforderung 5: Redaktionssystem', () => {
     expect(screen.getByLabelText('Titel')).toHaveValue('Mein Entwurf');
     await user.type(body, 'Weiter geschrieben.');
     await user.click(within(toolbar()).getByRole('button', { name: 'Speichern' }));
-    expect(await screen.findByText('Entwurf gespeichert.')).toBeInTheDocument();
+    expect(await screen.findByText('Gespeichert. Der Beitrag bleibt „In Arbeit“.')).toBeInTheDocument();
     expect(posts.get(100)?.texts[0].bodyMarkdown).toBe('Weiter geschrieben.');
   });
 
@@ -139,7 +156,7 @@ describe('Anforderung 5: Redaktionssystem', () => {
     expect(screen.getByLabelText('Titel')).toHaveValue('');
     await user.type(screen.getByLabelText('Titel'), 'First draft');
     await user.click(within(toolbar()).getByRole('button', { name: 'Speichern' }));
-    await screen.findByText('Entwurf gespeichert.');
+    await screen.findByText('Gespeichert. Der Beitrag bleibt „In Arbeit“.');
     expect(posts.get(7)?.topics).toEqual(['softwareentwicklung', 'data-analytics']);
     expect(posts.get(7)?.texts.map((t) => [t.lang, t.title])).toEqual([
       ['de', 'Erster Entwurf'],
@@ -201,7 +218,7 @@ describe('Anforderung 5: Redaktionssystem', () => {
 
     expect(await screen.findByText(/Veröffentlichung zurückgenommen/)).toBeInTheDocument();
     expect(posts.get(8)?.status).toBe('draft');
-    expect(screen.getByText('Entwurf', { selector: '.badge' })).toBeInTheDocument();
+    expect(screen.getByText('In Arbeit', { selector: '.badge' })).toBeInTheDocument();
     const unpublish = state.requests.find((r) => r.path.endsWith('/unpublish'));
     expect(unpublish?.csrf).toBe(EDITOR.csrfToken);
 
@@ -215,5 +232,104 @@ describe('Anforderung 5: Redaktionssystem', () => {
     fakeBackend(EDITOR, handler);
     renderAt('/beitraege/999');
     expect(await screen.findByRole('heading', { level: 1, name: 'Beitrag nicht gefunden' })).toBeInTheDocument();
+  });
+});
+
+describe('Ticket #23: Beitragsstatus und geplante Veröffentlichung', () => {
+  const inFuture = (hours: number) => new Date(Date.now() + hours * 3_600_000);
+  const scheduleField = () => screen.findByLabelText('Datum und Uhrzeit');
+  const local = (d: Date) => {
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  };
+  const display = (d: Date) => new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' }).format(d);
+
+  it('zeigt in Liste und Beitrag den Status „In Arbeit“ oder „Veröffentlicht“ und den geplanten Zeitpunkt', async () => {
+    const at = inFuture(24);
+    const { handler } = postsBackend([{ ...DRAFT, scheduledAt: at.toISOString() }, PUBLISHED]);
+    fakeBackend(EDITOR, handler);
+    const user = userEvent.setup();
+    renderAt('/');
+    const rows = within(await screen.findByRole('table')).getAllByRole('row').slice(1);
+    expect(within(rows[0]).getByText('In Arbeit', { selector: '.badge' })).toBeInTheDocument();
+    expect(within(rows[0]).getByText(/^Geplant:/)).toHaveTextContent(display(at));
+    expect(within(rows[1]).getByText('Veröffentlicht', { selector: '.badge' })).toBeInTheDocument();
+    expect(within(rows[1]).queryByText(/^Geplant:/)).not.toBeInTheDocument();
+
+    await user.click(within(rows[0]).getByRole('link', { name: 'Erster Entwurf' }));
+    expect(await screen.findByText('In Arbeit', { selector: '.badge' })).toBeInTheDocument();
+    expect(await scheduleField()).toHaveValue(local(at));
+  });
+
+  it('trägt einen Zeitpunkt ein, ändert und entfernt ihn', async () => {
+    const { posts, handler } = postsBackend([DRAFT]);
+    fakeBackend(EDITOR, handler);
+    const user = userEvent.setup();
+    renderAt('/beitraege/7');
+    const field = await scheduleField();
+    expect(screen.queryByRole('button', { name: 'Zeitpunkt entfernen' })).not.toBeInTheDocument();
+
+    const first = inFuture(48);
+    first.setSeconds(0, 0);
+    fireEvent.change(field, { target: { value: local(first) } });
+    await user.click(screen.getByRole('button', { name: 'Zeitpunkt speichern' }));
+    expect(await within(toolbar()).findByText(/^Geplant: Der Beitrag erscheint am/)).toBeInTheDocument();
+    // Gespeichert wird der Zeitpunkt in UTC, der Beitrag bleibt „In Arbeit“.
+    expect(posts.get(7)?.scheduledAt).toBe(first.toISOString());
+    expect(posts.get(7)?.status).toBe('draft');
+
+    const second = new Date(first.getTime() + 90 * 60_000);
+    fireEvent.change(field, { target: { value: local(second) } });
+    await user.click(screen.getByRole('button', { name: 'Zeitpunkt ändern' }));
+    await waitFor(() => expect(posts.get(7)?.scheduledAt).toBe(second.toISOString()));
+
+    await user.click(screen.getByRole('button', { name: 'Zeitpunkt entfernen' }));
+    expect(await within(toolbar()).findByText('Zeitpunkt entfernt. Der Beitrag bleibt „In Arbeit“.')).toBeInTheDocument();
+    expect(posts.get(7)?.scheduledAt).toBeUndefined();
+    expect(field).toHaveValue('');
+  });
+
+  it('lehnt einen Zeitpunkt in der Vergangenheit mit verständlicher Meldung ab', async () => {
+    const { posts, handler } = postsBackend([DRAFT]);
+    fakeBackend(EDITOR, handler);
+    const user = userEvent.setup();
+    renderAt('/beitraege/7');
+    fireEvent.change(await scheduleField(), { target: { value: local(inFuture(-2)) } });
+    await user.click(screen.getByRole('button', { name: 'Zeitpunkt speichern' }));
+    expect(await within(toolbar()).findByRole('alert')).toHaveTextContent('Der Zeitpunkt liegt in der Vergangenheit.');
+    expect(posts.get(7)?.scheduledAt).toBeUndefined();
+
+    fireEvent.change(await scheduleField(), { target: { value: '' } });
+    await user.click(screen.getByRole('button', { name: 'Zeitpunkt speichern' }));
+    expect(await within(toolbar()).findByRole('alert')).toHaveTextContent('Bitte Datum und Uhrzeit');
+  });
+
+  it('speichert ohne Beitragstext keinen Zeitpunkt und nennt den Grund', async () => {
+    const { posts, handler } = postsBackend([
+      { ...DRAFT, texts: [{ lang: 'de', title: 'Erster Entwurf', summary: 'Kurz', bodyMarkdown: '' }] },
+    ]);
+    fakeBackend(EDITOR, handler);
+    const user = userEvent.setup();
+    renderAt('/beitraege/7');
+    fireEvent.change(await scheduleField(), { target: { value: local(inFuture(5)) } });
+    await user.click(screen.getByRole('button', { name: 'Zeitpunkt speichern' }));
+    expect(await within(toolbar()).findByRole('alert')).toHaveTextContent('Beitragstext');
+    expect(posts.get(7)?.scheduledAt).toBeUndefined();
+  });
+
+  it('bietet die Planung nur für Beiträge „In Arbeit“ an', async () => {
+    const { handler } = postsBackend([PUBLISHED]);
+    fakeBackend(EDITOR, handler);
+    renderAt('/beitraege/8');
+    expect(await screen.findByText('Veröffentlicht', { selector: '.badge' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Datum und Uhrzeit')).not.toBeInTheDocument();
+  });
+
+  it('verlangt bei neuen Beiträgen zuerst das Speichern', async () => {
+    const { handler } = postsBackend();
+    fakeBackend(EDITOR, handler);
+    renderAt('/beitraege/neu');
+    expect(await screen.findByText(/Speichern Sie den Beitrag zuerst/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Datum und Uhrzeit')).not.toBeInTheDocument();
   });
 });

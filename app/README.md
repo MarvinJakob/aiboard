@@ -25,6 +25,12 @@
 
 Noch nicht enthalten: Medienverwaltung mit Bild-Upload und Titelbildern (`/redaktion/medien`, nicht Teil der Akzeptanzkriterien von Anforderung 5). Eine Entwicklungs-Migration legt Testbeiträge und Testkonten an (`DEV_SEED=true`), darunter ein Entwurf und Beiträge ohne englische Fassung.
 
+## Stand: Sprint 4
+
+| Ticket | Umgesetzt |
+|---|---|
+| [23 Beitragsstatus und geplante Veröffentlichung](https://github.com/MarvinJakob/aiboard/issues/23) | Beitragsliste und Editor zeigen „In Arbeit“ oder „Veröffentlicht“. Im Editor lässt sich für Beiträge „In Arbeit“ ein Zeitpunkt in Ortszeit eintragen, ändern und entfernen (`PUT`/`DELETE /api/admin/posts/{id}/schedule`). Gespeichert wird UTC. Zeitpunkte in der Vergangenheit und unvollständige Beiträge lehnt das Backend mit `422` ab. Ein Hintergrundjob prüft alle 15 Sekunden und veröffentlicht fällige Beiträge. Bis dahin liefern sie `404` und fehlen in der Sitemap. |
+
 ## Aufbau
 
 ```
@@ -162,6 +168,7 @@ Das Sitzungscookie erhält das Attribut `Secure`, wenn `PUBLIC_BASE_URL` mit `ht
 - **Beiträge:** Leere Sprachfassungen werden nicht gespeichert. Zum Speichern eines Entwurfs reicht ein Titel. Ein veröffentlichter Beitrag lässt sich nur vollständig speichern, damit die öffentliche Seite nie leer ist. Erneutes Veröffentlichen nach dem Zurücknehmen behält das erste Veröffentlichungsdatum. Fehlt das URL-Kürzel, entsteht es aus dem Titel (Umlaute werden umschrieben, bei Dopplungen folgt eine Nummer).
 - **Benutzerverwaltung:** Über die Oberfläche entstehen nur Konten mit der Rolle `editor`. Weitere Admin-Konten legt `server user create --role admin` an. Das eigene Konto lässt sich nicht deaktivieren, damit sich ein Admin nicht versehentlich aussperrt. Startpasswörter brauchen mindestens 10 Zeichen. Eine Pflicht zum Ändern des Startpassworts gibt es noch nicht.
 - **Anmeldeversuche:** Nach 10 Fehlversuchen von einer IP-Adresse sperrt das Backend weitere Versuche für 15 Minuten (`429`).
+- **Status „In Arbeit“:** Intern heißt der Status weiter `draft`, die Redaktion zeigt „In Arbeit“. Ein geplanter Beitrag bleibt bis zum Zeitpunkt `draft` und erhält dann den geplanten Zeitpunkt als Veröffentlichungsdatum. Manuelles Veröffentlichen entfernt einen geplanten Zeitpunkt. Solange ein Zeitpunkt geplant ist, lässt sich der Beitrag nur vollständig speichern.
 - **Schriften:** Es werden keine WOFF2-Dateien ausgeliefert, weil das Design-Konzept System-Schriften vorsieht.
 - **Impressum und Datenschutz** sind Platzhalter in `frontend/src/content/legal` und müssen vor dem Livegang ersetzt werden.
 - **KI-Audit-Inhalte:** Die Inhalte stehen nicht in der Datenbank, sondern in `backend/internal/audit/content.json` (ADR 0009). Eine Dimension erscheint nur mit `"released": true`. Die Texte folgen `content/KI Audit.docx`. Daraus abgeleitet sind die Kurzbeschreibungen und die Vorteile je Dimension, die das Dokument nicht ausdrücklich nennt. Sie müssen fachlich bestätigt werden.

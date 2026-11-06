@@ -3,7 +3,7 @@ import { useEditorPosts, useTopics, type EditorPostSummary } from '../api/posts'
 import { Loading, Page } from '../components/Layout';
 import { StatusBadge, formatDate } from '../components/PostParts';
 
-/** Beitragsliste der Redaktion mit Entwürfen und veröffentlichten Beiträgen (Anforderung 5). */
+/** Beitragsliste der Redaktion mit Beiträgen „In Arbeit“ und veröffentlichten Beiträgen (Anforderung 5, Ticket #23). */
 export function PostsPage() {
   const { data: posts, isPending, isError, refetch } = useEditorPosts();
   const { data: topics } = useTopics();
@@ -18,7 +18,10 @@ export function PostsPage() {
         </Link>
       }
     >
-      <p className="lead">Entwürfe sind nur hier sichtbar. Veröffentlichte Beiträge erscheinen sofort auf der Webseite.</p>
+      <p className="lead">
+        Beiträge „In Arbeit“ sind nur hier sichtbar, auch wenn ein Zeitpunkt geplant ist. Veröffentlichte Beiträge erscheinen
+        sofort auf der Webseite.
+      </p>
       {isPending && <Loading />}
       {isError && (
         <p className="form-error" role="alert">
@@ -44,7 +47,7 @@ export function PostsPage() {
               {posts.length === 0 && (
                 <tr>
                   <td colSpan={5} className="empty-state">
-                    Noch keine Beiträge. Legen Sie mit „Neuer Beitrag“ den ersten Entwurf an.
+                    Noch keine Beiträge. Legen Sie mit „Neuer Beitrag“ den ersten an.
                   </td>
                 </tr>
               )}
@@ -70,6 +73,9 @@ function Row({ post: p, topicLabel }: { post: EditorPostSummary; topicLabel: (sl
       </td>
       <td>
         <StatusBadge status={p.status} />
+        {p.status === 'draft' && p.scheduledAt && (
+          <span className="row-schedule">Geplant: {formatDate(p.scheduledAt)}</span>
+        )}
       </td>
       <td>{p.topics.map(topicLabel).join(', ') || '–'}</td>
       <td className="num">{formatDate(p.updatedAt)}</td>

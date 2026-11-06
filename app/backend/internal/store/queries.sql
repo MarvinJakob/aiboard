@@ -140,8 +140,31 @@ INSERT INTO post_topics (post_id, topic_id) VALUES (?, ?);
 UPDATE posts
 SET status = 'published',
     published_at = COALESCE(published_at, sqlc.arg(published_at)),
+    scheduled_at = NULL,
     updated_at = sqlc.arg(updated_at)
 WHERE id = sqlc.arg(id);
 
 -- name: UnpublishPost :execrows
 UPDATE posts SET status = 'draft', updated_at = ? WHERE id = ?;
+
+-- Geplante Veroeffentlichung (Ticket #23). Zeitpunkte in UTC, RFC 3339 ohne Sekundenbruchteile,
+-- damit der Textvergleich der zeitlichen Reihenfolge entspricht.
+
+-- name: SchedulePost :execrows
+UPDATE posts SET scheduled_at = ?, updated_at = ? WHERE id = ? AND status = 'draft';
+
+-- name: UnschedulePost :execrows
+UPDATE posts SET scheduled_at = NULL, updated_at = ? WHERE id = ?;
+
+-- name: ListDuePosts :many
+SELECT id, scheduled_at FROM posts
+WHERE status = 'draft' AND scheduled_at IS NOT NULL AND scheduled_at <= ?
+ORDER BY scheduled_at, id;
+
+-- name: PublishScheduledPost :execrows
+UPDATE posts
+SET status = 'published',
+    published_at = COALESCE(published_at, scheduled_at),
+    scheduled_at = NULL,
+    updated_at = sqlc.arg(updated_at)
+WHERE id = sqlc.arg(id) AND status = 'draft' AND scheduled_at IS NOT NULL;

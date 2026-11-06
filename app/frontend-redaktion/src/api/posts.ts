@@ -37,9 +37,13 @@ export const useTopics = () =>
     staleTime: 10 * 60_000,
   });
 
-type Action = { kind: 'create'; input: PostInput } | { kind: 'save'; id: number; input: PostInput } | { kind: 'publish' | 'unpublish'; id: number };
+type Action =
+  | { kind: 'create'; input: PostInput }
+  | { kind: 'save'; id: number; input: PostInput }
+  | { kind: 'publish' | 'unpublish' | 'unschedule'; id: number }
+  | { kind: 'schedule'; id: number; publishAt: string };
 
-/** Speichern, Veröffentlichen und Zurücknehmen. Danach sind Liste und Beitrag aktuell. */
+/** Speichern, Veröffentlichen, Zurücknehmen und Planen (Ticket #23). Danach sind Liste und Beitrag aktuell. */
 export const usePostAction = () => {
   const qc = useQueryClient();
   return useMutation({
@@ -53,6 +57,10 @@ export const usePostAction = () => {
           return unwrap(client.POST('/api/admin/posts/{id}/publish', { params: { path: { id: a.id } } }));
         case 'unpublish':
           return unwrap(client.POST('/api/admin/posts/{id}/unpublish', { params: { path: { id: a.id } } }));
+        case 'schedule':
+          return unwrap(client.PUT('/api/admin/posts/{id}/schedule', { params: { path: { id: a.id } }, body: { publishAt: a.publishAt } }));
+        case 'unschedule':
+          return unwrap(client.DELETE('/api/admin/posts/{id}/schedule', { params: { path: { id: a.id } } }));
       }
     },
     onSuccess: (post) => {
