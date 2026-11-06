@@ -1,0 +1,10 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "docker:pinDigests"],
+  "labels": ["abhaengigkeiten"],
+  "packageRules": [
+    { "matchManagers": ["npm"], "groupName": "npm (Minor und Patch)", "matchUpdateTypes": ["minor", "patch"] },
+    { "matchManagers": ["gomod"], "groupName": "Go-Module (Minor und Patch)", "matchUpdateTypes": ["minor", "patch"] }
+  ],
+  "postUpdateOptions": ["gomodTidy"]
+}

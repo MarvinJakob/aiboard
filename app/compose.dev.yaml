@@ -1,0 +1,16 @@
+# Ergänzungen für die lokale Entwicklung ohne TLS:
+#   docker compose -f compose.yaml -f compose.dev.yaml up --build
+# Die Seite ist dann unter http://localhost erreichbar, mit Testbeiträgen.
+
+services:
+  caddy:
+    environment:
+      DOMAIN: http://localhost
+    ports: !override ["80:80"]
+
+  backend:
+    image: ki-web:dev
+    build: .
+    environment:
+      PUBLIC_BASE_URL: http://localhost
+      DEV_SEED: "true"

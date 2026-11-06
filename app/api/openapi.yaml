@@ -1,0 +1,282 @@
+openapi: 3.0.3
+info:
+  title: KI Perspektiven API
+  version: 0.1.0
+  description: |
+    Verbindlicher Vertrag zwischen Frontend und Backend (siehe requirements/ARCHITECTURE.md, Abschnitt 5).
+    Stand Sprint 1: nur öffentliche Endpunkte. Sie liefern ausschließlich veröffentlichte Beiträge.
+
+    Sprachauswahl: Jede Ressource wird in der angefragten Sprache geliefert. Fehlt die Übersetzung,
+    liefert das Backend die vorhandene Fassung (zuerst Deutsch). Das Feld `lang` nennt immer die
+    tatsächlich gelieferte Sprache.
+servers:
+  - url: /
+paths:
+  /api/topics:
+    get:
+      operationId: listTopics
+      summary: Alle Themen mit Titel und Einführung
+      parameters:
+        - $ref: '#/components/parameters/Lang'
+      responses:
+        '200':
+          description: Themen in fester Reihenfolge
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/topics/{slug}:
+    get:
+      operationId: getTopic
+      summary: Ein Thema mit seinen veröffentlichten Beiträgen
+      parameters:
+        - $ref: '#/components/parameters/Slug'
+        - $ref: '#/components/parameters/Lang'
+      responses:
+        '200':
+          description: Thema
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/posts:
+    get:
+      operationId: listPosts
+      summary: Veröffentlichte Beiträge, neueste zuerst
+      parameters:
+        - $ref: '#/components/parameters/Lang'
+        - name: featured
+          in: query
+          required: false
+          description: |
+            `true` liefert die Beiträge für das Karussell der Startseite (höchstens drei).
+            An erster Stelle steht immer der zuletzt veröffentlichte Beitrag, danach folgen
+            die neuesten weiteren hervorgehobenen Beiträge.
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Beiträge
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/posts/{slug}:
+    get:
+      operationId: getPost
+      summary: Ein veröffentlichter Beitrag
+      description: Für Entwürfe und unbekannte Beiträge antwortet das Backend mit `404`.
+      parameters:
+        - $ref: '#/components/parameters/Slug'
+        - $ref: '#/components/parameters/Lang'
+      responses:
+        '200':
+          description: Beitrag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/health:
+    get:
+      operationId: getHealth
+      summary: Zustand der Anwendung und der Datenbank
+      responses:
+        '200':
+          description: Anwendung und Datenbank sind erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '503':
+          description: Datenbank ist nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+components:
+  parameters:
+    Lang:
+      name: lang
+      in: query
+      required: false
+      description: Gewünschte Sprache
+      schema:
+        $ref: '#/components/schemas/Lang'
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    BadRequest:
+      description: Ungültige Anfrage
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Nicht gefunden oder nicht öffentlich
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Lang:
+      type: string
+      enum: [de, en]
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+    Health:
+      type: object
+      required: [status, database]
+      properties:
+        status:
+          type: string
+          enum: [ok, unavailable]
+        database:
+          type: string
+          enum: [ok, unavailable]
+    TopicRef:
+      type: object
+      description: Kurzform eines Themas, z. B. für Themen-Chips
+      required: [slug, lang, title, label]
+      properties:
+        slug:
+          type: string
+        lang:
+          $ref: '#/components/schemas/Lang'
+        title:
+          type: string
+        label:
+          type: string
+          description: Kurze Bezeichnung für Chips
+    Topic:
+      type: object
+      required: [slug, lang, title, label, summary, intro, postCount]
+      properties:
+        slug:
+          type: string
+        lang:
+          $ref: '#/components/schemas/Lang'
+        title:
+          type: string
+        label:
+          type: string
+        summary:
+          type: string
+          description: Eine Zeile Beschreibung für Menü und Karten
+        intro:
+          type: string
+          description: Einführung auf der Themenseite
+        postCount:
+          type: integer
+          description: Anzahl der veröffentlichten Beiträge
+    TopicList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Topic'
+    TopicDetail:
+      allOf:
+        - $ref: '#/components/schemas/Topic'
+        - type: object
+          required: [posts, translations]
+          properties:
+            translations:
+              type: array
+              description: Sprachen, in denen das Thema vorliegt
+              items:
+                $ref: '#/components/schemas/Lang'
+            posts:
+              type: array
+              items:
+                $ref: '#/components/schemas/PostSummary'
+    Image:
+      type: object
+      required: [src, srcset, width, height, alt]
+      properties:
+        src:
+          type: string
+          description: URL der mittleren Variante (960 px)
+        srcset:
+          type: string
+          description: Varianten 480, 960 und 1600 px für `srcset`
+        width:
+          type: integer
+        height:
+          type: integer
+        alt:
+          type: string
+        altLang:
+          $ref: '#/components/schemas/Lang'
+    PostSummary:
+      type: object
+      required: [slug, lang, title, summary, publishedAt, featured, topics, translations]
+      properties:
+        slug:
+          type: string
+        lang:
+          $ref: '#/components/schemas/Lang'
+        title:
+          type: string
+        summary:
+          type: string
+          description: Kurztext
+        publishedAt:
+          type: string
+          format: date-time
+        featured:
+          type: boolean
+        topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopicRef'
+        translations:
+          type: array
+          description: Sprachen, in denen der Beitrag vorliegt
+          items:
+            $ref: '#/components/schemas/Lang'
+        cover:
+          $ref: '#/components/schemas/Image'
+    PostList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostSummary'
+    Post:
+      allOf:
+        - $ref: '#/components/schemas/PostSummary'
+        - type: object
+          required: [bodyMarkdown, readingMinutes, updatedAt]
+          properties:
+            bodyMarkdown:
+              type: string
+            readingMinutes:
+              type: integer
+            updatedAt:
+              type: string
+              format: date-time

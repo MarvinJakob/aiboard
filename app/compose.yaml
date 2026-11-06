@@ -1,0 +1,43 @@
+# Produktion auf dem Hetzner-Cloud-Server (ARCHITECTURE.md, Abschnitt 9).
+# Start: docker compose pull && docker compose up -d
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "5" }
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - app_media:/srv/media:ro
+    depends_on:
+      backend: { condition: service_healthy }
+    restart: unless-stopped
+    logging: *logging
+
+  backend:
+    image: ${REGISTRY}/ki-web:${VERSION}
+    environment:
+      DATABASE_PATH: /data/db/app.db
+      MEDIA_PATH: /data/media
+      PUBLIC_BASE_URL: https://${DOMAIN}
+    volumes:
+      - app_db:/data/db
+      - app_media:/data/media
+    healthcheck:
+      test: ["CMD", "/server", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    logging: *logging
+
+volumes:
+  caddy_data:
+  app_db:
+  app_media:

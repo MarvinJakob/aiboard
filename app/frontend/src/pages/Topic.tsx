@@ -1,0 +1,57 @@
+import { Link, useParams } from 'react-router';
+import { isNotFound, useTopic } from '../api/client';
+import { Art } from '../components/Art';
+import { PostList } from '../components/PostRow';
+import { EmptyPosts, LoadError, Loading, TranslationNotice } from '../components/Status';
+import { href, useLang } from '../lib/lang';
+import { useHead, usePageFocus } from '../lib/page';
+import { NotFound } from './NotFound';
+
+/** Themenseite mit Titel, Einführung und zugeordneten veröffentlichten Beiträgen (Anforderung 3). */
+export function TopicPage() {
+  const { slug = '' } = useParams();
+  const { lang, t } = useLang();
+  const h1 = usePageFocus<HTMLHeadingElement>();
+  const topic = useTopic(slug, lang);
+  useHead(topic.data?.title, topic.data?.intro);
+
+  if (topic.isPending) return <Loading />;
+  if (isNotFound(topic.error)) return <NotFound />;
+  if (topic.isError) return <LoadError onRetry={() => void topic.refetch()} />;
+
+  const tp = topic.data;
+  const fallback = tp.lang !== lang;
+  const contentLang = fallback ? tp.lang : undefined;
+
+  return (
+    <div className="container">
+      <nav className="crumbs" aria-label={t('crumbs')}>
+        <Link to={href(lang)}>{t('nav.home')}</Link>
+        <span aria-hidden="true">/</span>
+        <span>{t('nav.topics')}</span>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{tp.title}</span>
+      </nav>
+      <section className="topic-hero">
+        <div lang={contentLang}>
+          <p className="eyebrow">{t('topic.eyebrow')}</p>
+          <h1 className="page-title" tabIndex={-1} ref={h1}>
+            {tp.title}
+          </h1>
+          <p className="lead">{tp.intro}</p>
+          {fallback && <TranslationNotice text={t('fallbackTopic', { language: t(`langName.${tp.lang}`) })} />}
+        </div>
+        <Art topic={tp.slug} seed={1} />
+      </section>
+      <section className="section" aria-labelledby="topicPosts">
+        <div className="section-head">
+          <h2 className="section-title" id="topicPosts">
+            {t('topic.posts')}
+          </h2>
+          {tp.posts.length > 0 && <p className="count">{t('count', { count: tp.posts.length })}</p>}
+        </div>
+        {tp.posts.length > 0 ? <PostList posts={tp.posts} /> : <EmptyPosts text={t('empty.topicText')} />}
+      </section>
+    </div>
+  );
+}

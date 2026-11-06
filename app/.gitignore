@@ -1,0 +1,13 @@
+# Abhängigkeiten und Build-Artefakte
+node_modules/
+.build/
+backend/internal/web/dist/*
+!backend/internal/web/dist/.gitkeep
+*.exe
+
+# Daten, Medien und Geheimnisse
+*.db
+*.db-wal
+*.db-shm
+data/
+.env
