@@ -46,6 +46,14 @@ type PostTranslation struct {
 	BodyMarkdown string
 }
 
+type Session struct {
+	ID        string
+	UserID    int64
+	CsrfToken string
+	ExpiresAt string
+	CreatedAt string
+}
+
 type Topic struct {
 	ID        int64
 	Slug      string
@@ -59,4 +67,13 @@ type TopicTranslation struct {
 	Label   string
 	Summary string
 	Intro   string
+}
+
+type User struct {
+	ID           int64
+	Email        string
+	PasswordHash string
+	Role         string
+	Active       bool
+	CreatedAt    string
 }

@@ -26,6 +26,8 @@ services:
       DATABASE_PATH: /data/db/app.db
       MEDIA_PATH: /data/media
       PUBLIC_BASE_URL: https://${DOMAIN}
+      # Caddy setzt X-Forwarded-For; daraus liest das Backend die IP für die Begrenzung der Anmeldeversuche.
+      TRUST_PROXY: "true"
     volumes:
       - app_db:/data/db
       - app_media:/data/media

@@ -14,8 +14,8 @@ import (
 	"ki-web/backend/internal/service"
 )
 
-// dist enthält die Frontend-Builds. Vite schreibt die öffentliche Webseite nach dist/public.
-// Das Redaktionsfrontend folgt in Sprint 3 unter dist/redaktion.
+// dist enthält die Frontend-Builds. Vite schreibt die öffentliche Webseite nach dist/public und das
+// Redaktionsfrontend nach dist/redaktion (siehe editorial.go).
 //
 //go:embed all:dist
 var dist embed.FS

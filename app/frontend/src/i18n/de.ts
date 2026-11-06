@@ -8,6 +8,7 @@ export const de = {
     topics: 'Themen',
     blog: 'Blog',
     lang: 'Sprache',
+    account: 'Anmeldung für die Redaktion',
   },
   langName: { de: 'Deutsch', en: 'Englisch' },
   crumbs: 'Pfadnavigation',

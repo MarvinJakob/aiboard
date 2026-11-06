@@ -10,8 +10,19 @@ import (
 
 type Querier interface {
 	CountPublishedPostsByTopic(ctx context.Context) ([]CountPublishedPostsByTopicRow, error)
+	CreateSession(ctx context.Context, arg CreateSessionParams) error
+	// ---------------------------------------------------------------------------
+	// Konten und Sitzungen der Redaktion (Anforderungen 6 und 11)
+	// ---------------------------------------------------------------------------
+	CreateUser(ctx context.Context, arg CreateUserParams) (int64, error)
+	DeleteExpiredSessions(ctx context.Context, expiresAt string) (int64, error)
+	DeleteSession(ctx context.Context, id string) error
+	DeleteUserSessions(ctx context.Context, userID int64) error
 	GetPublishedPostBySlug(ctx context.Context, slug string) (Post, error)
+	GetSession(ctx context.Context, id string) (GetSessionRow, error)
 	GetTopicBySlug(ctx context.Context, slug string) (Topic, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
+	GetUserByID(ctx context.Context, id int64) (User, error)
 	ListMedia(ctx context.Context, mediaIds []int64) ([]ListMediaRow, error)
 	ListMediaTranslations(ctx context.Context, mediaIds []int64) ([]MediaTranslation, error)
 	ListPostTopics(ctx context.Context, postIds []int64) ([]PostTopic, error)
@@ -21,7 +32,9 @@ type Querier interface {
 	ListPublishedPostsByTopic(ctx context.Context, topicID int64) ([]Post, error)
 	ListTopicTranslations(ctx context.Context) ([]TopicTranslation, error)
 	ListTopics(ctx context.Context) ([]Topic, error)
+	ListUsers(ctx context.Context) ([]User, error)
 	Ping(ctx context.Context) (int64, error)
+	SetUserActive(ctx context.Context, arg SetUserActiveParams) (int64, error)
 }
 
 var _ Querier = (*Queries)(nil)
