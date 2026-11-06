@@ -65,3 +65,42 @@ WHERE id IN (sqlc.slice('media_ids'));
 SELECT media_id, lang, alt_text
 FROM media_translations
 WHERE media_id IN (sqlc.slice('media_ids'));
+
+-- ---------------------------------------------------------------------------
+-- Konten und Sitzungen der Redaktion (Anforderungen 6 und 11)
+-- ---------------------------------------------------------------------------
+
+-- name: CreateUser :execlastid
+INSERT INTO users (email, password_hash, role, active, created_at)
+VALUES (?, ?, ?, TRUE, ?);
+
+-- name: GetUserByEmail :one
+SELECT * FROM users WHERE email = ?;
+
+-- name: GetUserByID :one
+SELECT * FROM users WHERE id = ?;
+
+-- name: ListUsers :many
+SELECT * FROM users ORDER BY email;
+
+-- name: SetUserActive :execrows
+UPDATE users SET active = ? WHERE id = ?;
+
+-- name: CreateSession :exec
+INSERT INTO sessions (id, user_id, csrf_token, expires_at, created_at)
+VALUES (?, ?, ?, ?, ?);
+
+-- name: GetSession :one
+SELECT s.id, s.user_id, s.csrf_token, s.expires_at, u.email, u.role, u.active
+FROM sessions s
+JOIN users u ON u.id = s.user_id
+WHERE s.id = ?;
+
+-- name: DeleteSession :exec
+DELETE FROM sessions WHERE id = ?;
+
+-- name: DeleteUserSessions :exec
+DELETE FROM sessions WHERE user_id = ?;
+
+-- name: DeleteExpiredSessions :execrows
+DELETE FROM sessions WHERE expires_at <= ?;

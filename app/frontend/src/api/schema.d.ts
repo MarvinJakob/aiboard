@@ -92,6 +92,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Anmelden, setzt das Sitzungscookie
+         * @description Unbekannte E-Mail-Adressen, falsche Passwörter und deaktivierte Konten liefern dieselbe Antwort `401`.
+         *     Nach zu vielen Fehlversuchen von derselben IP-Adresse antwortet das Backend mit `429`.
+         */
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Abmelden, löscht die Sitzung serverseitig */
+        post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Angemeldete Person, Rolle und CSRF-Token */
+        get: operations["getMe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -168,10 +223,45 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        /**
+         * @description `editor` verwaltet Beiträge, `admin` zusätzlich die Redaktionskonten
+         * @enum {string}
+         */
+        Role: "editor" | "admin";
+        LoginRequest: {
+            email: string;
+            password: string;
+        };
+        Me: {
+            /** Format: int64 */
+            id: number;
+            email: string;
+            role: components["schemas"]["Role"];
+            /** @description Für den Header `X-CSRF-Token` bei schreibenden Aufrufen */
+            csrfToken: string;
+        };
     };
     responses: {
         /** @description Ungültige Anfrage */
         BadRequest: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Nicht angemeldet oder Sitzung abgelaufen */
+        Unauthorized: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Rolle reicht nicht aus oder CSRF-Token fehlt */
+        Forbidden: {
             headers: {
                 [name: string]: unknown;
             };
@@ -335,6 +425,86 @@ export interface operations {
                     "application/json": components["schemas"]["Health"];
                 };
             };
+        };
+    };
+    login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Angemeldet */
+            200: {
+                headers: {
+                    /** @description Sitzungscookie `ki_session` (HttpOnly, SameSite=Lax, bei HTTPS Secure) */
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            /** @description Zu viele Fehlversuche, später erneut versuchen */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Abgemeldet */
+            204: {
+                headers: {
+                    /** @description Leert das Sitzungscookie */
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Angemeldet */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
         };
     };
 }

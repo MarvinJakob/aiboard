@@ -4,7 +4,12 @@ info:
   version: 0.1.0
   description: |
     Verbindlicher Vertrag zwischen Frontend und Backend (siehe requirements/ARCHITECTURE.md, Abschnitt 5).
-    Stand Sprint 1: nur öffentliche Endpunkte. Sie liefern ausschließlich veröffentlichte Beiträge.
+    Öffentliche Endpunkte liefern ausschließlich veröffentlichte Beiträge.
+
+    Redaktion (ab Sprint 3): Die Anmeldung setzt ein HttpOnly-Sitzungscookie (`ki_session`). Alle Pfade
+    unter `/api/admin` verlangen eine gültige Sitzung (sonst `401`) und die passende Rolle (sonst `403`).
+    Schreibende Aufrufe mit Sitzung senden zusätzlich das CSRF-Token aus `GET /api/auth/me` im Header
+    `X-CSRF-Token` (sonst `403`). Einen Endpunkt zur Selbstregistrierung gibt es nicht.
 
     Sprachauswahl: Jede Ressource wird in der angefragten Sprache geliefert. Fehlt die Übersetzung,
     liefert das Backend die vorhandene Fassung (zuerst Deutsch). Das Feld `lang` nennt immer die
@@ -106,7 +111,85 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Health'
+  /api/auth/login:
+    post:
+      operationId: login
+      summary: Anmelden, setzt das Sitzungscookie
+      description: |
+        Unbekannte E-Mail-Adressen, falsche Passwörter und deaktivierte Konten liefern dieselbe Antwort `401`.
+        Nach zu vielen Fehlversuchen von derselben IP-Adresse antwortet das Backend mit `429`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Angemeldet
+          headers:
+            Set-Cookie:
+              description: Sitzungscookie `ki_session` (HttpOnly, SameSite=Lax, bei HTTPS Secure)
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          description: Zu viele Fehlversuche, später erneut versuchen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/auth/logout:
+    post:
+      operationId: logout
+      summary: Abmelden, löscht die Sitzung serverseitig
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      responses:
+        '204':
+          description: Abgemeldet
+          headers:
+            Set-Cookie:
+              description: Leert das Sitzungscookie
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/auth/me:
+    get:
+      operationId: getMe
+      summary: Angemeldete Person, Rolle und CSRF-Token
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: Angemeldet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: ki_session
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
   parameters:
     Lang:
       name: lang
@@ -124,6 +207,18 @@ components:
   responses:
     BadRequest:
       description: Ungültige Anfrage
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Nicht angemeldet oder Sitzung abgelaufen
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Rolle reicht nicht aus oder CSRF-Token fehlt
       content:
         application/json:
           schema:
@@ -280,3 +375,29 @@ components:
             updatedAt:
               type: string
               format: date-time
+    Role:
+      type: string
+      description: "`editor` verwaltet Beiträge, `admin` zusätzlich die Redaktionskonten"
+      enum: [editor, admin]
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    Me:
+      type: object
+      required: [id, email, role, csrfToken]
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+        csrfToken:
+          type: string
+          description: Für den Header `X-CSRF-Token` bei schreibenden Aufrufen

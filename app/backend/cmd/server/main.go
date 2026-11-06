@@ -3,6 +3,9 @@
 //	server              startet die Anwendung (Standard)
 //	server healthcheck  ruft /api/health auf (für den Docker-Healthcheck, das Image enthält kein curl)
 //	server backup [ZIEL] schreibt mit VACUUM INTO eine konsistente Kopie der Datenbank
+//	server user create --email ADRESSE [--role admin|editor]
+//	                    legt ein Konto an, z. B. das erste Admin-Konto bei der Inbetriebnahme.
+//	                    Das Passwort kommt aus USER_PASSWORD oder wird abgefragt.
 //
 // Konfiguration über Umgebungsvariablen, siehe .env.example.
 package main
@@ -33,6 +36,7 @@ type config struct {
 	baseURL      string
 	devSeed      bool
 	serveMedia   bool
+	trustProxy   bool
 }
 
 func env(key, def string) string {
@@ -58,6 +62,7 @@ func loadConfig() config {
 		baseURL:      env("PUBLIC_BASE_URL", "http://localhost:8080"),
 		devSeed:      envBool("DEV_SEED"),
 		serveMedia:   envBool("SERVE_MEDIA"),
+		trustProxy:   envBool("TRUST_PROXY"),
 	}
 }
 
@@ -81,8 +86,10 @@ func main() {
 			dest = os.Args[2]
 		}
 		err = backup(cfg, dest, log)
+	case "user":
+		err = userCommand(cfg, os.Args[2:], log)
 	default:
-		err = fmt.Errorf("unbekannter befehl %q (erlaubt: server, healthcheck, backup)", cmd)
+		err = fmt.Errorf("unbekannter befehl %q (erlaubt: server, healthcheck, backup, user)", cmd)
 	}
 	if err != nil {
 		log.Error("abbruch", "befehl", cmd, "fehler", err)
@@ -104,10 +111,16 @@ func runServer(cfg config, log *slog.Logger) error {
 	}
 
 	public := service.NewPublic(store.New(db))
+	accounts := service.NewAccounts(db)
+	go cleanupSessions(ctx, accounts, log)
 	hcfg := httpserver.Config{
-		Public: public,
-		Site:   web.New(public, cfg.baseURL, nil, log),
-		Log:    log,
+		Public:        public,
+		Accounts:      accounts,
+		Site:          web.New(public, cfg.baseURL, nil, log),
+		Editorial:     web.NewEditorial(accounts, nil, log),
+		SecureCookies: strings.HasPrefix(cfg.baseURL, "https://"),
+		TrustProxy:    cfg.trustProxy,
+		Log:           log,
 	}
 	if cfg.serveMedia {
 		hcfg.MediaPath = cfg.mediaPath
@@ -139,6 +152,24 @@ func runServer(cfg config, log *slog.Logger) error {
 		return srv.Shutdown(shutdownCtx)
 	}
 	return nil
+}
+
+// cleanupSessions löscht abgelaufene Sitzungen beim Start und danach täglich (ARCHITECTURE.md, Abschnitt 4).
+func cleanupSessions(ctx context.Context, accounts *service.Accounts, log *slog.Logger) {
+	t := time.NewTicker(24 * time.Hour)
+	defer t.Stop()
+	for {
+		if n, err := accounts.CleanupSessions(ctx); err != nil && ctx.Err() == nil {
+			log.Error("abgelaufene sitzungen löschen", "fehler", err)
+		} else if n > 0 {
+			log.Info("abgelaufene sitzungen gelöscht", "anzahl", n)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+		}
+	}
 }
 
 func healthcheck(cfg config) error {
