@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Navigate, NavLink, Outlet, useNavigate } from 'react-router';
 import { canEdit, canManageUsers, useLogout, useMe, type Me } from '../api/client';
+import { ThemeToggle } from './ThemeToggle';
 
 /**
  * Gemeinsames Layout aller geschützten Redaktionsseiten. Ohne gültige Sitzung führt es zur Anmeldung.
@@ -61,6 +62,7 @@ function Header({ me }: { me: Me }) {
           )}
         </div>
         <div className="nav-actions">
+          <ThemeToggle />
           <span className="ed-user" title={me.email}>
             {me.email}
             <span className="ed-role">{me.role === 'admin' ? 'Admin' : 'Redaktion'}</span>

@@ -12,6 +12,7 @@
   --header-h: 60px;
 
   /* Hell */
+  color-scheme: light;
   --bg: #eef1f6;
   --surface: #ffffff;
   --text: #0d1320;
@@ -44,27 +45,27 @@
   --glass-hl-color: rgba(255, 255, 255, .6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0a0c11; --surface: #151922; --text: #f1f3f7; --text-2: #aab2c0; --text-3: #949cab;
-    --border: rgba(255,255,255,.08); --border-strong: rgba(255,255,255,.18);
-    --fill: rgba(255,255,255,.07); --fill-hover: rgba(255,255,255,.1); --fill-active: rgba(255,255,255,.16);
-    --accent: #5ea3ff; --accent-text: #06101f; --note-bg: rgba(94,163,255,.12);
-    --shadow-card: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.6);
-    --shadow-card-hover: 0 2px 4px rgba(0,0,0,.35), 0 22px 44px -18px rgba(0,0,0,.75);
-    --blob-1: rgba(99,102,241,.26); --blob-2: rgba(20,184,166,.18); --blob-3: rgba(249,115,22,.14);
-    --thumb: rgba(255,255,255,.18); --field: rgba(255,255,255,.06);
-    --glass-tint: rgba(28,32,42,.48); --glass-tint-strong: rgba(28,32,42,.74);
-    --glass-edge: rgba(255,255,255,.14); --glass-rim: rgba(255,255,255,.26);
-    --glass-shadow: 0 12px 32px -12px rgba(0,0,0,.65), 0 2px 6px rgba(0,0,0,.3);
-    --glass-sheen: linear-gradient(135deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 38%, rgba(255,255,255,0) 64%, rgba(255,255,255,.06) 100%);
-    --glass-hl-color: rgba(255,255,255,.16);
-  }
+/* Dunkel: Das Startskript theme.js setzt data-theme aus der gespeicherten Wahl oder der Systemeinstellung. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0a0c11; --surface: #151922; --text: #f1f3f7; --text-2: #aab2c0; --text-3: #949cab;
+  --border: rgba(255,255,255,.08); --border-strong: rgba(255,255,255,.18);
+  --fill: rgba(255,255,255,.07); --fill-hover: rgba(255,255,255,.1); --fill-active: rgba(255,255,255,.16);
+  --accent: #5ea3ff; --accent-text: #06101f; --note-bg: rgba(94,163,255,.12);
+  --shadow-card: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.6);
+  --shadow-card-hover: 0 2px 4px rgba(0,0,0,.35), 0 22px 44px -18px rgba(0,0,0,.75);
+  --blob-1: rgba(99,102,241,.26); --blob-2: rgba(20,184,166,.18); --blob-3: rgba(249,115,22,.14);
+  --thumb: rgba(255,255,255,.18); --field: rgba(255,255,255,.06);
+  --glass-tint: rgba(28,32,42,.48); --glass-tint-strong: rgba(28,32,42,.74);
+  --glass-edge: rgba(255,255,255,.14); --glass-rim: rgba(255,255,255,.26);
+  --glass-shadow: 0 12px 32px -12px rgba(0,0,0,.65), 0 2px 6px rgba(0,0,0,.3);
+  --glass-sheen: linear-gradient(135deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 38%, rgba(255,255,255,0) 64%, rgba(255,255,255,.06) 100%);
+  --glass-hl-color: rgba(255,255,255,.16);
 }
 
 /* Erhöhter Kontrast: Sekundärtext und Ränder kräftiger */
 @media (prefers-contrast: more) {
-  :root { --text-2: var(--text); --text-3: var(--text); --border: var(--border-strong); }
+  :root, :root[data-theme="dark"] { --text-2: var(--text); --text-3: var(--text); --border: var(--border-strong); }
 }
 
 /* ==========================================================================
@@ -171,6 +172,14 @@ svg { display: block; }
 .chev { width: 16px; height: 16px; transition: transform var(--dur-base) var(--ease-spring); }
 [aria-expanded="true"] .chev { transform: rotate(180deg); }
 .nav-actions { display: flex; align-items: center; gap: 6px; }
+.icon-btn {
+  width: 44px; height: 44px; flex: none; display: grid; place-items: center;
+  border: 0; border-radius: 50%; background: transparent; cursor: pointer;
+}
+.icon-btn:hover:not(:disabled) { background: var(--fill); }
+.icon-btn svg { width: 22px; height: 22px; }
+/* Schalter für die dunkle Darstellung (Ticket #20) */
+.theme-toggle[aria-pressed="true"] { background: var(--fill); }
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; padding: 0 22px;
   border: 0; border-radius: var(--radius-pill); cursor: pointer; text-decoration: none;
@@ -191,10 +200,8 @@ svg { display: block; }
 .btn-danger:hover:not(:disabled) { background: var(--danger-bg); }
 .btn-small { height: 40px; padding: 0 16px; font-size: .875rem; }
 
-:root { --danger: #b42318; --danger-bg: rgba(180, 35, 24, .08); --danger-border: rgba(180, 35, 24, .4); --ok: #067647; --ok-bg: rgba(6, 118, 71, .1); }
-@media (prefers-color-scheme: dark) {
-  :root { --danger: #ff8a7a; --danger-bg: rgba(255, 138, 122, .12); --danger-border: rgba(255, 138, 122, .45); --ok: #6ce9a6; --ok-bg: rgba(108, 233, 166, .12); }
-}
+:root { --danger: #b42318; --danger-bg: rgba(180, 35, 24, .08); --danger-border: rgba(180, 35, 24, .4); --ok: #05603a; --ok-bg: rgba(5, 96, 58, .1); }
+:root[data-theme="dark"] { --danger: #ff8a7a; --danger-bg: rgba(255, 138, 122, .12); --danger-border: rgba(255, 138, 122, .45); --ok: #6ce9a6; --ok-bg: rgba(108, 233, 166, .12); }
 
 .ed-header { position: sticky; top: 0; z-index: 50; padding: max(12px, env(safe-area-inset-top)) 12px 0; }
 .ed-bar {
@@ -241,6 +248,7 @@ svg { display: block; }
 
 /* Anmeldung */
 .login { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+.login-theme, .login-theme[aria-pressed="true"] { position: fixed; top: max(16px, env(safe-area-inset-top)); right: 16px; background: var(--surface); box-shadow: var(--shadow-card); }
 .login-card { width: min(440px, 100%); padding: 28px; border-radius: 32px; }
 .login-card .brand { margin: -8px 0 16px -10px; width: fit-content; }
 .login-card h1 { font-size: 1.75rem; font-weight: 740; }
@@ -299,6 +307,12 @@ fieldset.field { margin: 0; padding: 0; border: 0; }
   .brand-name { display: none; }
   .ed-user { display: none; }
   .nav-btn { padding: 0 12px; }
+}
+@media (max-width: 600px) {
+  /* Zwei Zeilen: oben Marke und Konto, unten die Bereiche (Ticket #20: Platz für den Darstellungsschalter). */
+  .ed-bar { height: auto; flex-wrap: wrap; border-radius: var(--radius-l); }
+  .ed-bar .nav-main { order: 3; flex: 1 0 100%; justify-content: center; margin-inline: 0; }
+  .ed-bar .nav-actions { margin-left: auto; }
 }
 
 /* ==========================================================================

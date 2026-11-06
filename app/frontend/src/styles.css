@@ -12,6 +12,7 @@
   --header-h: 60px;
 
   /* Hell */
+  color-scheme: light;
   --bg: #eef1f6;
   --surface: #ffffff;
   --text: #0d1320;
@@ -44,27 +45,27 @@
   --glass-hl-color: rgba(255, 255, 255, .6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0a0c11; --surface: #151922; --text: #f1f3f7; --text-2: #aab2c0; --text-3: #949cab;
-    --border: rgba(255,255,255,.08); --border-strong: rgba(255,255,255,.18);
-    --fill: rgba(255,255,255,.07); --fill-hover: rgba(255,255,255,.1); --fill-active: rgba(255,255,255,.16);
-    --accent: #5ea3ff; --accent-text: #06101f; --note-bg: rgba(94,163,255,.12);
-    --shadow-card: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.6);
-    --shadow-card-hover: 0 2px 4px rgba(0,0,0,.35), 0 22px 44px -18px rgba(0,0,0,.75);
-    --blob-1: rgba(99,102,241,.26); --blob-2: rgba(20,184,166,.18); --blob-3: rgba(249,115,22,.14);
-    --thumb: rgba(255,255,255,.18); --field: rgba(255,255,255,.06);
-    --glass-tint: rgba(28,32,42,.48); --glass-tint-strong: rgba(28,32,42,.74);
-    --glass-edge: rgba(255,255,255,.14); --glass-rim: rgba(255,255,255,.26);
-    --glass-shadow: 0 12px 32px -12px rgba(0,0,0,.65), 0 2px 6px rgba(0,0,0,.3);
-    --glass-sheen: linear-gradient(135deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 38%, rgba(255,255,255,0) 64%, rgba(255,255,255,.06) 100%);
-    --glass-hl-color: rgba(255,255,255,.16);
-  }
+/* Dunkel: Das Startskript theme.js setzt data-theme aus der gespeicherten Wahl oder der Systemeinstellung. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0a0c11; --surface: #151922; --text: #f1f3f7; --text-2: #aab2c0; --text-3: #949cab;
+  --border: rgba(255,255,255,.08); --border-strong: rgba(255,255,255,.18);
+  --fill: rgba(255,255,255,.07); --fill-hover: rgba(255,255,255,.1); --fill-active: rgba(255,255,255,.16);
+  --accent: #5ea3ff; --accent-text: #06101f; --note-bg: rgba(94,163,255,.12);
+  --shadow-card: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.6);
+  --shadow-card-hover: 0 2px 4px rgba(0,0,0,.35), 0 22px 44px -18px rgba(0,0,0,.75);
+  --blob-1: rgba(99,102,241,.26); --blob-2: rgba(20,184,166,.18); --blob-3: rgba(249,115,22,.14);
+  --thumb: rgba(255,255,255,.18); --field: rgba(255,255,255,.06);
+  --glass-tint: rgba(28,32,42,.48); --glass-tint-strong: rgba(28,32,42,.74);
+  --glass-edge: rgba(255,255,255,.14); --glass-rim: rgba(255,255,255,.26);
+  --glass-shadow: 0 12px 32px -12px rgba(0,0,0,.65), 0 2px 6px rgba(0,0,0,.3);
+  --glass-sheen: linear-gradient(135deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 38%, rgba(255,255,255,0) 64%, rgba(255,255,255,.06) 100%);
+  --glass-hl-color: rgba(255,255,255,.16);
 }
 
 /* Erhöhter Kontrast: Sekundärtext und Ränder kräftiger */
 @media (prefers-contrast: more) {
-  :root { --text-2: var(--text); --text-3: var(--text); --border: var(--border-strong); }
+  :root, :root[data-theme="dark"] { --text-2: var(--text); --text-3: var(--text); --border: var(--border-strong); }
 }
 
 /* ==========================================================================
@@ -197,6 +198,9 @@ svg { display: block; }
 .icon-btn:hover:not(:disabled) { background: var(--fill); }
 .icon-btn:disabled { opacity: .38; cursor: default; }
 .icon-btn svg { width: 22px; height: 22px; }
+
+/* Schalter für die dunkle Darstellung (Ticket #20) */
+.theme-toggle[aria-pressed="true"] { background: var(--fill); }
 
 /* Sprachschalter */
 .lang-switch {
@@ -434,7 +438,12 @@ svg { display: block; }
   .footer-grid > :first-child { grid-column: 1 / -1; }
 }
 @media (max-width: 600px) {
-  .bar { gap: 2px; }
+  /* Zwei Zeilen: oben Marke und Einstellungen, unten die Navigation. So bleiben alle Einträge
+     ohne Umweg erreichbar, auch mit Darstellungsschalter (Ticket #20). */
+  :root { --header-h: 104px; }
+  .bar { gap: 2px; flex-wrap: wrap; align-content: center; border-radius: var(--radius-l); }
+  .nav-main { order: 3; flex: 1 0 100%; justify-content: center; margin-inline: 0; }
+  .nav-actions { margin-left: auto; }
   .brand { height: 44px; padding: 0 4px; }
   .brand-mark { width: 32px; height: 32px; }
   .nav-btn { height: 44px; padding: 0 12px; }
