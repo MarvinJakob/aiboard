@@ -61,6 +61,24 @@ SELECT id, storage_key, mime_type, width, height
 FROM media
 WHERE id IN (sqlc.slice('media_ids'));
 
+-- name: GetMedia :one
+SELECT id, storage_key, mime_type, width, height FROM media WHERE id = ?;
+
+-- name: CreateMedia :execlastid
+INSERT INTO media (storage_key, mime_type, width, height, created_at) VALUES (?, ?, ?, ?, ?);
+
+-- name: DeleteMedia :exec
+DELETE FROM media WHERE id = ?;
+
+-- name: DeleteMediaTranslations :exec
+DELETE FROM media_translations WHERE media_id = ?;
+
+-- name: InsertMediaTranslation :exec
+INSERT INTO media_translations (media_id, lang, alt_text) VALUES (?, ?, ?);
+
+-- name: SetPostCover :execrows
+UPDATE posts SET cover_media_id = ?, updated_at = ? WHERE id = ?;
+
 -- name: ListMediaTranslations :many
 SELECT media_id, lang, alt_text
 FROM media_translations

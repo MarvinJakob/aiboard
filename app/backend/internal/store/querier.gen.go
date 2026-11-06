@@ -11,6 +11,7 @@ import (
 
 type Querier interface {
 	CountPublishedPostsByTopic(ctx context.Context) ([]CountPublishedPostsByTopicRow, error)
+	CreateMedia(ctx context.Context, arg CreateMediaParams) (int64, error)
 	CreatePost(ctx context.Context, arg CreatePostParams) (int64, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) error
 	// ---------------------------------------------------------------------------
@@ -18,12 +19,15 @@ type Querier interface {
 	// ---------------------------------------------------------------------------
 	CreateUser(ctx context.Context, arg CreateUserParams) (int64, error)
 	DeleteExpiredSessions(ctx context.Context, expiresAt string) (int64, error)
+	DeleteMedia(ctx context.Context, id int64) error
+	DeleteMediaTranslations(ctx context.Context, mediaID int64) error
 	// Loeschen eines Beitrags (Ticket #24). Sprachfassungen und Themenzuordnungen entfernt ON DELETE CASCADE.
 	DeletePost(ctx context.Context, id int64) (int64, error)
 	DeletePostTopics(ctx context.Context, postID int64) error
 	DeletePostTranslations(ctx context.Context, postID int64) error
 	DeleteSession(ctx context.Context, id string) error
 	DeleteUserSessions(ctx context.Context, userID int64) error
+	GetMedia(ctx context.Context, id int64) (GetMediaRow, error)
 	GetPostByID(ctx context.Context, id int64) (Post, error)
 	GetPostIDBySlug(ctx context.Context, slug string) (int64, error)
 	GetPublishedPostBySlug(ctx context.Context, slug string) (Post, error)
@@ -31,6 +35,7 @@ type Querier interface {
 	GetTopicBySlug(ctx context.Context, slug string) (Topic, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int64) (User, error)
+	InsertMediaTranslation(ctx context.Context, arg InsertMediaTranslationParams) error
 	InsertPostTopic(ctx context.Context, arg InsertPostTopicParams) error
 	InsertPostTranslation(ctx context.Context, arg InsertPostTranslationParams) error
 	// ---------------------------------------------------------------------------
@@ -54,6 +59,7 @@ type Querier interface {
 	// Geplante Veroeffentlichung (Ticket #23). Zeitpunkte in UTC, RFC 3339 ohne Sekundenbruchteile,
 	// damit der Textvergleich der zeitlichen Reihenfolge entspricht.
 	SchedulePost(ctx context.Context, arg SchedulePostParams) (int64, error)
+	SetPostCover(ctx context.Context, arg SetPostCoverParams) (int64, error)
 	SetUserActive(ctx context.Context, arg SetUserActiveParams) (int64, error)
 	UnpublishPost(ctx context.Context, arg UnpublishPostParams) (int64, error)
 	UnschedulePost(ctx context.Context, arg UnschedulePostParams) (int64, error)

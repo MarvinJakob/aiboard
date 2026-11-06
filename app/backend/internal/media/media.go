@@ -1,7 +1,7 @@
 // Package media kapselt alles rund um Bilder (ARCHITECTURE.md, Abschnitt 7).
 //
-// Sprint 1 benötigt nur die URLs der Bildvarianten. Hochladen und Skalieren folgen mit dem
-// Redaktionssystem in Sprint 3.
+// media.go baut die URLs der Bildvarianten, store.go prüft, kodiert und speichert hochgeladene Bilder
+// (Ticket #25).
 package media
 
 import (

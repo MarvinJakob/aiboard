@@ -37,12 +37,14 @@ export function fakeBackend(me: Me | null = null, ...handlers: Handler[]) {
     'fetch',
     vi.fn(async (req: Request) => {
       const url = new URL(req.url);
-      const text = req.method === 'GET' ? '' : await req.clone().text();
+      // Uploads: siehe TestRequest in setup.ts
+      const form = (req as Request & { formBody?: FormData }).formBody;
+      const text = req.method === 'GET' || form ? '' : await req.clone().text();
       const r: FakeRequest = {
         method: req.method,
         path: url.pathname,
         csrf: req.headers.get('X-CSRF-Token'),
-        body: text ? JSON.parse(text) : undefined,
+        body: form ?? (text ? JSON.parse(text) : undefined),
       };
       state.requests.push(r);
       if (r.path === '/api/auth/me') {

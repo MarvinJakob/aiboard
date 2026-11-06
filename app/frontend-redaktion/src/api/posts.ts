@@ -40,7 +40,8 @@ export const useTopics = () =>
 type Action =
   | { kind: 'create'; input: PostInput }
   | { kind: 'save'; id: number; input: PostInput }
-  | { kind: 'publish' | 'unpublish' | 'unschedule'; id: number }
+  | { kind: 'publish' | 'unpublish' | 'unschedule' | 'removeCover'; id: number }
+  | { kind: 'setCover'; id: number; file: File }
   | { kind: 'schedule'; id: number; publishAt: string };
 
 /** Speichern, Veröffentlichen, Zurücknehmen und Planen (Ticket #23). Danach sind Liste und Beitrag aktuell. */
@@ -61,6 +62,21 @@ export const usePostAction = () => {
           return unwrap(client.PUT('/api/admin/posts/{id}/schedule', { params: { path: { id: a.id } }, body: { publishAt: a.publishAt } }));
         case 'unschedule':
           return unwrap(client.DELETE('/api/admin/posts/{id}/schedule', { params: { path: { id: a.id } } }));
+        case 'setCover':
+          // Titelbild als multipart/form-data (Ticket #25). Den Content-Type mit Boundary setzt der Browser.
+          return unwrap(
+            client.PUT('/api/admin/posts/{id}/cover', {
+              params: { path: { id: a.id } },
+              body: { file: a.file.name },
+              bodySerializer: () => {
+                const fd = new FormData();
+                fd.append('file', a.file, a.file.name);
+                return fd;
+              },
+            }),
+          );
+        case 'removeCover':
+          return unwrap(client.DELETE('/api/admin/posts/{id}/cover', { params: { path: { id: a.id } } }));
       }
     },
     onSuccess: (post) => {

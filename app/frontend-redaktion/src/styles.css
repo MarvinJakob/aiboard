@@ -269,6 +269,9 @@ svg { display: block; }
 /* Geplante Veröffentlichung (Ticket #23) */
 .row-schedule { display: block; margin-top: 6px; color: var(--text-2); font-size: .8125rem; white-space: nowrap; }
 .schedule-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+/* Titelbild (Ticket #25): feste Maße aus width/height, damit beim Laden nichts springt */
+.cover-preview { display: block; width: 100%; max-width: 640px; height: auto; margin-top: 16px; border-radius: var(--radius-m); background: var(--fill); }
+input[type="file"] { padding: 10px; }
 .back { margin-top: 8px; }
 .back a { color: var(--text-2); font-weight: 600; text-decoration: none; }
 .back a:hover { color: var(--text); text-decoration: underline; }

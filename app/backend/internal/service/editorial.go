@@ -10,6 +10,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"ki-web/backend/internal/media"
 	"ki-web/backend/internal/store"
 )
 
@@ -27,6 +28,7 @@ const (
 	maxTitleLen   = 200
 	maxSummaryLen = 600
 	maxBodyLen    = 200_000
+	maxAltLen     = 300
 )
 
 // ErrSlugTaken bedeutet: Ein anderer Beitrag nutzt das URL-Kürzel bereits.
@@ -38,6 +40,7 @@ type PostText struct {
 	Title        string
 	Summary      string
 	BodyMarkdown string
+	CoverAlt     string // Alternativtext des Titelbilds in dieser Sprache (Ticket #25)
 }
 
 func (t PostText) blank() bool {
@@ -66,8 +69,19 @@ type EditorPost struct {
 	Texts       []PostText
 	PublishedAt *time.Time
 	ScheduledAt *time.Time // geplante Veröffentlichung (Ticket #23), nur bei Entwürfen
+	Cover       *Cover     // Titelbild (Ticket #25)
 	UpdatedAt   time.Time
 }
+
+// Cover ist das Titelbild eines Beitrags in der Redaktion.
+type Cover struct {
+	MediaID       int64
+	Key, MimeType string
+	Width, Height int
+}
+
+// MediaFile nennt die Dateien eines Bildes, die nach einer Änderung gelöscht werden können.
+type MediaFile struct{ Key, MimeType string }
 
 // EditorPostSummary ist eine Zeile der Beitragsliste der Redaktion.
 type EditorPostSummary struct {
@@ -160,9 +174,30 @@ func (e *Editorial) load(ctx context.Context, q *store.Queries, id int64) (Edito
 	if err != nil {
 		return EditorPost{}, err
 	}
+	var cover *Cover
+	if row.CoverMediaID.Valid {
+		m, err := q.GetMedia(ctx, row.CoverMediaID.Int64)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return EditorPost{}, err
+		}
+		if err == nil {
+			cover = &Cover{MediaID: m.ID, Key: m.StorageKey, MimeType: m.MimeType, Width: int(m.Width), Height: int(m.Height)}
+			alts, err := q.ListMediaTranslations(ctx, []int64{m.ID})
+			if err != nil {
+				return EditorPost{}, err
+			}
+			for _, a := range alts {
+				for i := range texts {
+					if string(texts[i].Lang) == a.Lang {
+						texts[i].CoverAlt = a.AltText
+					}
+				}
+			}
+		}
+	}
 	return EditorPost{
 		ID: row.ID, Slug: row.Slug, Status: Status(row.Status), Featured: row.Featured,
-		Topics: orEmpty(topics[id]), Texts: texts,
+		Topics: orEmpty(topics[id]), Texts: texts, Cover: cover,
 		PublishedAt: optTime(row.PublishedAt), ScheduledAt: optTime(row.ScheduledAt), UpdatedAt: parseTime(row.UpdatedAt),
 	}, nil
 }
@@ -212,6 +247,7 @@ func (e *Editorial) write(ctx context.Context, id int64, in PostInput) (EditorPo
 	defer tx.Rollback()
 	q := e.q.WithTx(tx)
 
+	var coverID sql.NullInt64
 	if id != 0 {
 		cur, err := q.GetPostByID(ctx, id)
 		if errors.Is(err, sql.ErrNoRows) {
@@ -220,15 +256,16 @@ func (e *Editorial) write(ctx context.Context, id int64, in PostInput) (EditorPo
 		if err != nil {
 			return EditorPost{}, err
 		}
+		coverID = cur.CoverMediaID
 		if Status(cur.Status) == StatusPublished {
-			if err := publishable(texts); err != nil {
+			if err := publishable(texts, coverID.Valid); err != nil {
 				return EditorPost{}, err
 			}
 		}
 		// Ein geplanter Beitrag muss vollständig bleiben, sonst könnte er nicht erscheinen (Ticket #23).
 		if cur.ScheduledAt.Valid {
 			var verr *ValidationError
-			if err := publishable(texts); errors.As(err, &verr) {
+			if err := publishable(texts, coverID.Valid); errors.As(err, &verr) {
 				return EditorPost{}, invalid("Der Beitrag ist zur Veröffentlichung geplant. %s Entfernen Sie sonst zuerst den Zeitpunkt.", verr.Msg)
 			}
 		}
@@ -265,6 +302,11 @@ func (e *Editorial) write(ctx context.Context, id int64, in PostInput) (EditorPo
 			return EditorPost{}, err
 		}
 	}
+	if coverID.Valid {
+		if err := saveCoverAlts(ctx, q, coverID.Int64, texts); err != nil {
+			return EditorPost{}, err
+		}
+	}
 	if err := q.DeletePostTopics(ctx, id); err != nil {
 		return EditorPost{}, err
 	}
@@ -287,7 +329,7 @@ func (e *Editorial) Publish(ctx context.Context, id int64) (EditorPost, error) {
 	if err != nil {
 		return EditorPost{}, err
 	}
-	if err := publishable(p.Texts); err != nil {
+	if err := publishable(p.Texts, p.Cover != nil); err != nil {
 		return EditorPost{}, err
 	}
 	now := formatTime(e.now())
@@ -327,7 +369,7 @@ func (e *Editorial) Schedule(ctx context.Context, id int64, at time.Time) (Edito
 	if !at.After(e.now()) {
 		return EditorPost{}, invalid("Der Zeitpunkt liegt in der Vergangenheit. Bitte wählen Sie einen Zeitpunkt in der Zukunft.")
 	}
-	if err := publishable(p.Texts); err != nil {
+	if err := publishable(p.Texts, p.Cover != nil); err != nil {
 		return EditorPost{}, err
 	}
 	n, err := e.q.SchedulePost(ctx, store.SchedulePostParams{
@@ -371,7 +413,7 @@ func (e *Editorial) PublishDue(ctx context.Context) (published, skipped []int64,
 		if err != nil {
 			return published, skipped, err
 		}
-		if publishable(p.Texts) != nil {
+		if publishable(p.Texts, p.Cover != nil) != nil {
 			if _, err := e.q.UnschedulePost(ctx, store.UnschedulePostParams{UpdatedAt: formatTime(now), ID: d.ID}); err != nil {
 				return published, skipped, err
 			}
@@ -389,17 +431,149 @@ func (e *Editorial) PublishDue(ctx context.Context) (published, skipped []int64,
 	return published, skipped, nil
 }
 
-// Delete löscht einen Beitrag endgültig mit allen Sprachfassungen und Themenzuordnungen (Ticket #24).
-// Danach ist er öffentlich nicht mehr erreichbar und fehlt in der Sitemap.
-func (e *Editorial) Delete(ctx context.Context, id int64) error {
-	n, err := e.q.DeletePost(ctx, id)
+// SetCover macht ein gespeichertes Bild zum Titelbild (Ticket #25). Ein vorhandenes Titelbild wird
+// ersetzt; seine Alternativtexte gehen auf das neue Bild über. Zurück kommt neben dem Beitrag das alte
+// Bild, dessen Dateien der Aufrufer nach dem Speichern löschen kann.
+func (e *Editorial) SetCover(ctx context.Context, id int64, img media.Stored) (EditorPost, *MediaFile, error) {
+	tx, err := e.db.BeginTx(ctx, nil)
 	if err != nil {
+		return EditorPost{}, nil, err
+	}
+	defer tx.Rollback()
+	q := e.q.WithTx(tx)
+	cur, err := q.GetPostByID(ctx, id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return EditorPost{}, nil, ErrNotFound
+	}
+	if err != nil {
+		return EditorPost{}, nil, err
+	}
+	now := formatTime(e.now())
+	mediaID, err := q.CreateMedia(ctx, store.CreateMediaParams{
+		StorageKey: img.Key, MimeType: img.MimeType, Width: int64(img.Width), Height: int64(img.Height), CreatedAt: now,
+	})
+	if err != nil {
+		return EditorPost{}, nil, err
+	}
+	var old *MediaFile
+	if cur.CoverMediaID.Valid {
+		if old, err = e.dropMedia(ctx, q, cur.CoverMediaID.Int64, mediaID); err != nil {
+			return EditorPost{}, nil, err
+		}
+	}
+	if _, err := q.SetPostCover(ctx, store.SetPostCoverParams{
+		CoverMediaID: sql.NullInt64{Int64: mediaID, Valid: true}, UpdatedAt: now, ID: id,
+	}); err != nil {
+		return EditorPost{}, nil, err
+	}
+	p, err := e.load(ctx, q, id)
+	if err != nil {
+		return EditorPost{}, nil, err
+	}
+	return p, old, tx.Commit()
+}
+
+// RemoveCover entfernt das Titelbild samt Alternativtexten. Zurück kommt das entfernte Bild.
+func (e *Editorial) RemoveCover(ctx context.Context, id int64) (EditorPost, *MediaFile, error) {
+	tx, err := e.db.BeginTx(ctx, nil)
+	if err != nil {
+		return EditorPost{}, nil, err
+	}
+	defer tx.Rollback()
+	q := e.q.WithTx(tx)
+	cur, err := q.GetPostByID(ctx, id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return EditorPost{}, nil, ErrNotFound
+	}
+	if err != nil {
+		return EditorPost{}, nil, err
+	}
+	var old *MediaFile
+	if cur.CoverMediaID.Valid {
+		if _, err := q.SetPostCover(ctx, store.SetPostCoverParams{UpdatedAt: formatTime(e.now()), ID: id}); err != nil {
+			return EditorPost{}, nil, err
+		}
+		if old, err = e.dropMedia(ctx, q, cur.CoverMediaID.Int64, 0); err != nil {
+			return EditorPost{}, nil, err
+		}
+	}
+	p, err := e.load(ctx, q, id)
+	if err != nil {
+		return EditorPost{}, nil, err
+	}
+	return p, old, tx.Commit()
+}
+
+// dropMedia löscht ein Bild aus der Datenbank. Ist keepAltsFor gesetzt, übernimmt dieses Bild vorher
+// die Alternativtexte.
+func (e *Editorial) dropMedia(ctx context.Context, q *store.Queries, mediaID, keepAltsFor int64) (*MediaFile, error) {
+	m, err := q.GetMedia(ctx, mediaID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if keepAltsFor != 0 {
+		alts, err := q.ListMediaTranslations(ctx, []int64{mediaID})
+		if err != nil {
+			return nil, err
+		}
+		for _, a := range alts {
+			if err := q.InsertMediaTranslation(ctx, store.InsertMediaTranslationParams{MediaID: keepAltsFor, Lang: a.Lang, AltText: a.AltText}); err != nil {
+				return nil, err
+			}
+		}
+	}
+	if err := q.DeleteMedia(ctx, mediaID); err != nil {
+		return nil, err
+	}
+	return &MediaFile{Key: m.StorageKey, MimeType: m.MimeType}, nil
+}
+
+// saveCoverAlts ersetzt die Alternativtexte des Titelbilds durch die der gespeicherten Fassungen.
+func saveCoverAlts(ctx context.Context, q *store.Queries, mediaID int64, texts []PostText) error {
+	if err := q.DeleteMediaTranslations(ctx, mediaID); err != nil {
 		return err
 	}
-	if n == 0 {
-		return ErrNotFound
+	for _, t := range texts {
+		if t.CoverAlt == "" {
+			continue
+		}
+		if err := q.InsertMediaTranslation(ctx, store.InsertMediaTranslationParams{MediaID: mediaID, Lang: string(t.Lang), AltText: t.CoverAlt}); err != nil {
+			return err
+		}
 	}
 	return nil
+}
+
+// Delete löscht einen Beitrag endgültig mit allen Sprachfassungen und Themenzuordnungen (Ticket #24).
+// Danach ist er öffentlich nicht mehr erreichbar und fehlt in der Sitemap. Ein Titelbild wird mit
+// gelöscht (Ticket #25); zurück kommt es, damit der Aufrufer die Dateien entfernen kann.
+func (e *Editorial) Delete(ctx context.Context, id int64) (*MediaFile, error) {
+	tx, err := e.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+	q := e.q.WithTx(tx)
+	cur, err := q.GetPostByID(ctx, id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	if _, err := q.DeletePost(ctx, id); err != nil {
+		return nil, err
+	}
+	var old *MediaFile
+	if cur.CoverMediaID.Valid {
+		if old, err = e.dropMedia(ctx, q, cur.CoverMediaID.Int64, 0); err != nil {
+			return nil, err
+		}
+	}
+	return old, tx.Commit()
 }
 
 // ---------------------------------------------------------------------------
@@ -422,6 +596,7 @@ func normalizeTexts(in []PostText) ([]PostText, error) {
 		t.Title = strings.TrimSpace(t.Title)
 		t.Summary = strings.TrimSpace(t.Summary)
 		t.BodyMarkdown = strings.TrimRight(t.BodyMarkdown, " \t\r\n")
+		t.CoverAlt = strings.TrimSpace(t.CoverAlt)
 		if t.blank() {
 			continue
 		}
@@ -432,6 +607,8 @@ func normalizeTexts(in []PostText) ([]PostText, error) {
 			return nil, invalid("Der Kurztext (%s) darf höchstens %d Zeichen lang sein.", langName(t.Lang), maxSummaryLen)
 		case len(t.BodyMarkdown) > maxBodyLen:
 			return nil, invalid("Der Beitragstext (%s) ist zu lang.", langName(t.Lang))
+		case utf8.RuneCountInString(t.CoverAlt) > maxAltLen:
+			return nil, invalid("Der Alternativtext des Titelbilds (%s) darf höchstens %d Zeichen lang sein.", langName(t.Lang), maxAltLen)
 		case t.Title == "":
 			return nil, invalid("Bitte einen Titel (%s) angeben.", langName(t.Lang))
 		}
@@ -443,8 +620,9 @@ func normalizeTexts(in []PostText) ([]PostText, error) {
 	return out, nil
 }
 
-// publishable verlangt Titel, Kurztext und Beitragstext in jeder vorhandenen Sprache.
-func publishable(texts []PostText) error {
+// publishable verlangt Titel, Kurztext und Beitragstext in jeder vorhandenen Sprache und bei einem
+// Titelbild dessen Alternativtext in jeder dieser Sprachen (Ticket #25).
+func publishable(texts []PostText, cover bool) error {
 	if len(texts) == 0 {
 		return invalid("Zum Veröffentlichen braucht der Beitrag Titel, Kurztext und Beitragstext.")
 	}
@@ -461,6 +639,9 @@ func publishable(texts []PostText) error {
 				missing = append(missing, "Beitragstext")
 			}
 			return invalid("Zum Veröffentlichen fehlt in der Fassung %s: %s.", langName(t.Lang), strings.Join(missing, ", "))
+		}
+		if cover && strings.TrimSpace(t.CoverAlt) == "" {
+			return invalid("Zum Veröffentlichen fehlt in der Fassung %s der Alternativtext des Titelbilds.", langName(t.Lang))
 		}
 	}
 	return nil

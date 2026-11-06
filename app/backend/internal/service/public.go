@@ -391,6 +391,10 @@ func (s *Public) images(ctx context.Context, ids []int64) (map[int64]func(Lang) 
 		alts[tr.MediaID][Lang(tr.Lang)] = tr.AltText
 	}
 	for _, m := range rows {
+		// Ohne Alternativtext erscheint kein Bild öffentlich (Ticket #25), sondern weiter die Themengrafik.
+		if len(alts[m.ID]) == 0 {
+			continue
+		}
 		out[m.ID] = func(l Lang) Image {
 			alt, altLang, _ := pick(alts[m.ID], l)
 			return Image{

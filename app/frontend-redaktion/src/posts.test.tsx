@@ -15,6 +15,7 @@ const TOPICS = [
 /** Kleines Beitrags-Backend im Speicher mit denselben Regeln wie der Server. */
 function postsBackend(initial: EditorPost[] = []) {
   const posts = new Map(initial.map((p) => [p.id, structuredClone(p)]));
+  const uploads: string[] = [];
   let nextId = 100;
   const now = () => new Date('2026-11-06T10:00:00Z').toISOString();
   const handler: Handler = (r: FakeRequest) => {
@@ -39,11 +40,26 @@ function postsBackend(initial: EditorPost[] = []) {
       posts.set(p.id, p);
       return json(201, p);
     }
-    const m = r.path.match(/^\/api\/admin\/posts\/(\d+)(?:\/(publish|unpublish|schedule))?$/);
+    const m = r.path.match(/^\/api\/admin\/posts\/(\d+)(?:\/(publish|unpublish|schedule|cover))?$/);
     if (!m) return undefined;
     const p = posts.get(Number(m[1]));
     if (!p) return json(404, { message: 'Beitrag nicht gefunden.' });
     if (r.method === 'GET') return json(200, p);
+    if (m[2] === 'cover' && r.method === 'DELETE') {
+      delete p.cover;
+      p.texts = p.texts.map(({ coverAlt: _, ...t }) => t);
+      return json(200, p);
+    }
+    if (m[2] === 'cover') {
+      const file = (r.body as FormData).get('file') as File;
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        return json(422, { message: 'Dieser Dateityp wird nicht unterstützt. Erlaubt sind JPEG, PNG und WebP.' });
+      }
+      uploads.push(file.name);
+      const key = String(uploads.length).padStart(32, '0');
+      p.cover = { src: `/media/${key}-960.jpg`, srcset: `/media/${key}-480.jpg 480w`, width: 1600, height: 900, alt: p.texts[0]?.coverAlt ?? '' };
+      return json(200, p);
+    }
     if (r.method === 'DELETE' && !m[2]) {
       posts.delete(p.id);
       return new Response(null, { status: 204 });
@@ -72,6 +88,9 @@ function postsBackend(initial: EditorPost[] = []) {
     if (m[2] === 'publish') {
       const incomplete = p.texts.find((t) => !t.title || !t.summary || !t.bodyMarkdown);
       if (!p.texts.length || incomplete) return json(422, { message: 'Zum Veröffentlichen fehlt in der Fassung Deutsch: Kurztext, Beitragstext.' });
+      if (p.cover && p.texts.some((t) => !t.coverAlt)) {
+        return json(422, { message: 'Zum Veröffentlichen fehlt in der Fassung Deutsch der Alternativtext des Titelbilds.' });
+      }
       Object.assign(p, { status: 'published', publishedAt: p.publishedAt ?? now(), updatedAt: now() });
       delete p.scheduledAt;
       return json(200, p);
@@ -82,7 +101,7 @@ function postsBackend(initial: EditorPost[] = []) {
     }
     return undefined;
   };
-  return { posts, handler };
+  return { posts, handler, uploads };
 }
 
 const DRAFT: EditorPost = {
@@ -333,8 +352,107 @@ describe('Ticket #23: Beitragsstatus und geplante Veröffentlichung', () => {
     const { handler } = postsBackend();
     fakeBackend(EDITOR, handler);
     renderAt('/beitraege/neu');
-    expect(await screen.findByText(/Speichern Sie den Beitrag zuerst/)).toBeInTheDocument();
+    expect(await screen.findByText(/Danach können Sie einen Zeitpunkt festlegen/)).toBeInTheDocument();
     expect(screen.queryByLabelText('Datum und Uhrzeit')).not.toBeInTheDocument();
+  });
+});
+
+describe('Ticket #25: Titelbild für Beiträge', () => {
+  const jpeg = (name = 'foto.jpg', size = 1000, type = 'image/jpeg') => new File([new Uint8Array(size)], name, { type });
+  const COVER: EditorPost['cover'] = { src: '/media/abc-960.jpg', srcset: '/media/abc-480.jpg 480w', width: 1600, height: 900, alt: 'Ein Büro' };
+
+  it('lädt ein Bild hoch, zeigt die Vorschau und verlangt den Alternativtext', async () => {
+    const { posts, handler, uploads } = postsBackend([DRAFT]);
+    fakeBackend(EDITOR, handler);
+    const user = userEvent.setup();
+    renderAt('/beitraege/7');
+    expect(screen.queryByLabelText(/^Alternativtext des Titelbilds/)).not.toBeInTheDocument();
+
+    await user.upload(await screen.findByLabelText('Bild hochladen'), jpeg());
+    expect(await within(toolbar()).findByText(/^Titelbild gespeichert/)).toBeInTheDocument();
+    expect(uploads).toEqual(['foto.jpg']);
+    const preview = screen.getByRole('img', { name: /Vorschau des Titelbilds/ });
+    expect(preview).toHaveAttribute('width', '1600');
+    expect(preview).toHaveAttribute('height', '900');
+
+    // Ohne Alternativtext lässt sich nicht veröffentlichen.
+    await user.click(within(toolbar()).getByRole('button', { name: 'Veröffentlichen' }));
+    expect(await within(toolbar()).findByRole('alert')).toHaveTextContent('Alternativtext des Titelbilds');
+    expect(posts.get(7)?.status).toBe('draft');
+
+    await user.type(screen.getByLabelText('Alternativtext des Titelbilds (Deutsch)'), 'Ein Büro mit Pflanzen');
+    await user.click(within(toolbar()).getByRole('button', { name: 'Veröffentlichen' }));
+    await waitFor(() => expect(posts.get(7)?.status).toBe('published'));
+    expect(posts.get(7)?.texts[0].coverAlt).toBe('Ein Büro mit Pflanzen');
+  });
+
+  it('lehnt ungültige Dateitypen und zu große Dateien mit Meldung ab, ohne hochzuladen', async () => {
+    const { uploads, handler } = postsBackend([DRAFT]);
+    fakeBackend(EDITOR, handler);
+    const user = userEvent.setup({ applyAccept: false });
+    renderAt('/beitraege/7');
+    const input = await screen.findByLabelText('Bild hochladen');
+
+    await user.upload(input, jpeg('animation.gif', 100, 'image/gif'));
+    expect(await within(toolbar()).findByRole('alert')).toHaveTextContent('Erlaubt sind JPEG, PNG und WebP');
+    await user.upload(input, jpeg('riesig.jpg', 5 * 1024 * 1024 + 1));
+    expect(await within(toolbar()).findByRole('alert')).toHaveTextContent('größer als 5 MB');
+    expect(uploads).toEqual([]);
+  });
+
+  it('ersetzt und entfernt ein Titelbild', async () => {
+    const withCover = { ...DRAFT, cover: COVER, texts: [{ ...DRAFT.texts[0], coverAlt: 'Ein Büro' }] };
+    const { posts, handler, uploads } = postsBackend([withCover]);
+    fakeBackend(EDITOR, handler);
+    const user = userEvent.setup();
+    renderAt('/beitraege/7');
+    expect(await screen.findByRole('img', { name: 'Vorschau: Ein Büro' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Alternativtext des Titelbilds (Deutsch)')).toHaveValue('Ein Büro');
+
+    await user.upload(screen.getByLabelText('Bild ersetzen'), jpeg('neu.webp', 500, 'image/webp'));
+    expect(await within(toolbar()).findByText(/^Titelbild ersetzt/)).toBeInTheDocument();
+    expect(uploads).toEqual(['neu.webp']);
+
+    await user.click(screen.getByRole('button', { name: 'Bild entfernen' }));
+    expect(await within(toolbar()).findByText(/^Titelbild entfernt/)).toBeInTheDocument();
+    expect(posts.get(7)?.cover).toBeUndefined();
+    expect(screen.queryByRole('img', { name: /Vorschau/ })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Alternativtext des Titelbilds/)).not.toBeInTheDocument();
+  });
+
+  it('speichert ungesicherte Änderungen vor dem Hochladen', async () => {
+    const { posts, handler } = postsBackend([DRAFT]);
+    fakeBackend(EDITOR, handler);
+    const user = userEvent.setup();
+    renderAt('/beitraege/7');
+    const title = await screen.findByLabelText('Titel');
+    await user.clear(title);
+    await user.type(title, 'Neuer Titel');
+    await user.upload(screen.getByLabelText('Bild hochladen'), jpeg());
+    await within(toolbar()).findByText(/^Titelbild gespeichert/);
+    expect(posts.get(7)?.texts[0].title).toBe('Neuer Titel');
+    expect(screen.getByLabelText('Titel')).toHaveValue('Neuer Titel');
+  });
+
+  it('verlangt bei neuen Beiträgen zuerst das Speichern', async () => {
+    const { handler } = postsBackend();
+    fakeBackend(EDITOR, handler);
+    renderAt('/beitraege/neu');
+    expect(await screen.findByText(/ein Titelbild hochladen/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Bild hochladen')).not.toBeInTheDocument();
+  });
+
+  it('sendet das Bild als multipart/form-data mit CSRF-Token', async () => {
+    const { handler } = postsBackend([DRAFT]);
+    const state = fakeBackend(EDITOR, handler);
+    const user = userEvent.setup();
+    renderAt('/beitraege/7');
+    await user.upload(await screen.findByLabelText('Bild hochladen'), jpeg());
+    await within(toolbar()).findByText(/^Titelbild gespeichert/);
+    const req = state.requests.find((r) => r.path === '/api/admin/posts/7/cover');
+    expect(req?.method).toBe('PUT');
+    expect(req?.csrf).toBe(EDITOR.csrfToken);
+    expect(((req?.body as FormData).get('file') as File).name).toBe('foto.jpg');
   });
 });
 

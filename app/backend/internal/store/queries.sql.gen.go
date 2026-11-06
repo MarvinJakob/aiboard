@@ -47,6 +47,32 @@ func (q *Queries) CountPublishedPostsByTopic(ctx context.Context) ([]CountPublis
 	return items, nil
 }
 
+const createMedia = `-- name: CreateMedia :execlastid
+INSERT INTO media (storage_key, mime_type, width, height, created_at) VALUES (?, ?, ?, ?, ?)
+`
+
+type CreateMediaParams struct {
+	StorageKey string
+	MimeType   string
+	Width      int64
+	Height     int64
+	CreatedAt  string
+}
+
+func (q *Queries) CreateMedia(ctx context.Context, arg CreateMediaParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createMedia,
+		arg.StorageKey,
+		arg.MimeType,
+		arg.Width,
+		arg.Height,
+		arg.CreatedAt,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
 const createPost = `-- name: CreatePost :execlastid
 INSERT INTO posts (slug, status, featured, updated_at) VALUES (?, 'draft', ?, ?)
 `
@@ -130,6 +156,24 @@ func (q *Queries) DeleteExpiredSessions(ctx context.Context, expiresAt string) (
 	return result.RowsAffected()
 }
 
+const deleteMedia = `-- name: DeleteMedia :exec
+DELETE FROM media WHERE id = ?
+`
+
+func (q *Queries) DeleteMedia(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteMedia, id)
+	return err
+}
+
+const deleteMediaTranslations = `-- name: DeleteMediaTranslations :exec
+DELETE FROM media_translations WHERE media_id = ?
+`
+
+func (q *Queries) DeleteMediaTranslations(ctx context.Context, mediaID int64) error {
+	_, err := q.db.ExecContext(ctx, deleteMediaTranslations, mediaID)
+	return err
+}
+
 const deletePost = `-- name: DeletePost :execrows
 DELETE FROM posts WHERE id = ?
 `
@@ -177,6 +221,31 @@ DELETE FROM sessions WHERE user_id = ?
 func (q *Queries) DeleteUserSessions(ctx context.Context, userID int64) error {
 	_, err := q.db.ExecContext(ctx, deleteUserSessions, userID)
 	return err
+}
+
+const getMedia = `-- name: GetMedia :one
+SELECT id, storage_key, mime_type, width, height FROM media WHERE id = ?
+`
+
+type GetMediaRow struct {
+	ID         int64
+	StorageKey string
+	MimeType   string
+	Width      int64
+	Height     int64
+}
+
+func (q *Queries) GetMedia(ctx context.Context, id int64) (GetMediaRow, error) {
+	row := q.db.QueryRowContext(ctx, getMedia, id)
+	var i GetMediaRow
+	err := row.Scan(
+		&i.ID,
+		&i.StorageKey,
+		&i.MimeType,
+		&i.Width,
+		&i.Height,
+	)
+	return i, err
 }
 
 const getPostByID = `-- name: GetPostByID :one
@@ -309,6 +378,21 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const insertMediaTranslation = `-- name: InsertMediaTranslation :exec
+INSERT INTO media_translations (media_id, lang, alt_text) VALUES (?, ?, ?)
+`
+
+type InsertMediaTranslationParams struct {
+	MediaID int64
+	Lang    string
+	AltText string
+}
+
+func (q *Queries) InsertMediaTranslation(ctx context.Context, arg InsertMediaTranslationParams) error {
+	_, err := q.db.ExecContext(ctx, insertMediaTranslation, arg.MediaID, arg.Lang, arg.AltText)
+	return err
 }
 
 const insertPostTopic = `-- name: InsertPostTopic :exec
@@ -890,6 +974,24 @@ type SchedulePostParams struct {
 // damit der Textvergleich der zeitlichen Reihenfolge entspricht.
 func (q *Queries) SchedulePost(ctx context.Context, arg SchedulePostParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, schedulePost, arg.ScheduledAt, arg.UpdatedAt, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const setPostCover = `-- name: SetPostCover :execrows
+UPDATE posts SET cover_media_id = ?, updated_at = ? WHERE id = ?
+`
+
+type SetPostCoverParams struct {
+	CoverMediaID sql.NullInt64
+	UpdatedAt    string
+	ID           int64
+}
+
+func (q *Queries) SetPostCover(ctx context.Context, arg SetPostCoverParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, setPostCover, arg.CoverMediaID, arg.UpdatedAt, arg.ID)
 	if err != nil {
 		return 0, err
 	}
