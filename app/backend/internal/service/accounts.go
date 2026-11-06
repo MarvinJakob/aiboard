@@ -47,6 +47,8 @@ var (
 	ErrUnauthenticated = errors.New("nicht angemeldet")
 	// ErrEmailTaken bedeutet: Es gibt bereits ein Konto mit dieser E-Mail-Adresse.
 	ErrEmailTaken = errors.New("e-mail-adresse bereits vergeben")
+	// ErrSelf bedeutet: Das eigene Konto lässt sich nicht deaktivieren.
+	ErrSelf = errors.New("eigenes konto")
 )
 
 // ValidationError beschreibt eine ungültige Eingabe in verständlichen Worten.
@@ -223,4 +225,51 @@ func (a *Accounts) Logout(ctx context.Context, sessionID string) error {
 // CleanupSessions löscht abgelaufene Sitzungen und liefert ihre Anzahl.
 func (a *Accounts) CleanupSessions(ctx context.Context) (int64, error) {
 	return a.q.DeleteExpiredSessions(ctx, formatTime(a.now()))
+}
+
+// Users liefert alle Konten, sortiert nach E-Mail-Adresse.
+func (a *Accounts) Users(ctx context.Context) ([]User, error) {
+	rows, err := a.q.ListUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]User, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, toUser(r))
+	}
+	return out, nil
+}
+
+// SetActive deaktiviert oder reaktiviert ein Konto. Beim Deaktivieren werden in derselben Transaktion
+// alle Sitzungen des Kontos gelöscht (Anforderung 11). Das eigene Konto lässt sich nicht deaktivieren.
+func (a *Accounts) SetActive(ctx context.Context, actorID, userID int64, active bool) (User, error) {
+	if !active && actorID == userID {
+		return User{}, ErrSelf
+	}
+	tx, err := a.db.BeginTx(ctx, nil)
+	if err != nil {
+		return User{}, err
+	}
+	defer tx.Rollback()
+	q := a.q.WithTx(tx)
+	n, err := q.SetUserActive(ctx, store.SetUserActiveParams{Active: active, ID: userID})
+	if err != nil {
+		return User{}, err
+	}
+	if n == 0 {
+		return User{}, ErrNotFound
+	}
+	if !active {
+		if err := q.DeleteUserSessions(ctx, userID); err != nil {
+			return User{}, err
+		}
+	}
+	row, err := q.GetUserByID(ctx, userID)
+	if err != nil {
+		return User{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return User{}, err
+	}
+	return toUser(row), nil
 }

@@ -233,6 +233,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Redaktionskonten mit E-Mail-Adresse, Rolle und Status
+         * @description Nur für Admin-Konten. Passwörter und Hashes gibt die API nie zurück.
+         */
+        get: operations["adminListUsers"];
+        put?: never;
+        /** Redaktionskonto mit Rolle editor und Startpasswort anlegen */
+        post: operations["adminCreateUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Konto deaktivieren oder reaktivieren
+         * @description Beim Deaktivieren löscht das Backend alle Sitzungen des Kontos in derselben Transaktion.
+         *     Bereits geöffnete Sitzungen sind damit sofort ungültig. Das eigene Konto lässt sich nicht deaktivieren (`422`).
+         */
+        patch: operations["adminUpdateUser"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -376,6 +420,29 @@ export interface components {
             publishedAt?: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        /** @description Redaktionskonto ohne Passwortdaten */
+        User: {
+            /** Format: int64 */
+            id: number;
+            email: string;
+            role: components["schemas"]["Role"];
+            /** @description Deaktivierte Konten können sich nicht anmelden */
+            active: boolean;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        UserList: {
+            items: components["schemas"]["User"][];
+        };
+        NewUser: {
+            /** @description Eindeutige E-Mail-Adresse, Groß- und Kleinschreibung zählt nicht */
+            email: string;
+            /** @description Startpasswort mit mindestens 10 Zeichen */
+            password: string;
+        };
+        UserPatch: {
+            active: boolean;
         };
         EditorPostList: {
             items: components["schemas"]["EditorPostSummary"][];
@@ -823,6 +890,88 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+        };
+    };
+    adminListUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Konten, sortiert nach E-Mail-Adresse */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserList"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    adminCreateUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewUser"];
+            };
+        };
+        responses: {
+            /** @description Konto angelegt, es kann sich sofort anmelden */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    adminUpdateUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserPatch"];
+            };
+        };
+        responses: {
+            /** @description Geändert */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
         };
     };
 }
