@@ -138,7 +138,7 @@ svg { display: block; }
 .press { transition: transform var(--dur-fast) var(--ease-spring), background-color var(--dur-fast) ease, opacity var(--dur-fast) ease; }
 .press:active:not(:disabled) { transform: scale(.95); }
 
-/* Scroll-Kanten-Effekt unter der Kopfzeile */
+/* Scroll-Kante nur tönen: Ein Backdrop-Blur würde den vorbeiscrollenden Text verwischen (#72). */
 .scroll-edge {
   position: fixed; top: 0; left: 0; right: 0; height: 120px; z-index: 40; pointer-events: none;
   background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 70%, transparent), transparent);
