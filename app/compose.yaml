@@ -1,5 +1,6 @@
 # Produktion auf dem Hetzner-Cloud-Server (ARCHITECTURE.md, Abschnitt 9).
-# Start: docker compose pull && docker compose up -d
+# Deployment und Rollback mit deploy/deploy.sh, siehe docs/betrieb.md.
+# Entwicklungs-Testdaten (DEV_SEED) sind hier bewusst nicht gesetzt.
 
 x-logging: &logging
   driver: json-file
@@ -36,6 +37,9 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      # Nach dem Start alle 2 s prüfen, damit Deployments nicht 30 s auf den ersten Healthcheck warten
+      start_period: 60s
+      start_interval: 2s
     restart: unless-stopped
     logging: *logging
 
