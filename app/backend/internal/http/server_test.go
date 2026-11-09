@@ -28,7 +28,8 @@ const testIndex = `<!doctype html><html lang="de"><head><!--app-head--><title>KI
 const testEditorialIndex = `<!doctype html><html lang="de"><head><title>Redaktion</title></head><body><div id="redaktion"></div></body></html>`
 
 // newServer startet die Anwendung mit einer temporären SQLite-Datenbank je Test.
-func newServer(t *testing.T, devSeed bool) (*httptest.Server, *sql.DB) {
+// opts passen die Konfiguration an, z. B. für den Zugangsschutz (Ticket #49).
+func newServer(t *testing.T, devSeed bool, opts ...func(*httpserver.Config)) (*httptest.Server, *sql.DB) {
 	t.Helper()
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	db, err := store.Open(filepath.Join(t.TempDir(), "test.db"))
@@ -56,7 +57,7 @@ func newServer(t *testing.T, devSeed bool) (*httptest.Server, *sql.DB) {
 		"favicon.svg":           {Data: []byte("<svg/>")},
 		"assets/redaktion-1.js": {Data: []byte("console.log(2)")},
 	}
-	h := httpserver.New(httpserver.Config{
+	cfg := httpserver.Config{
 		Public:        public,
 		Audit:         catalog,
 		Accounts:      accounts,
@@ -66,8 +67,11 @@ func newServer(t *testing.T, devSeed bool) (*httptest.Server, *sql.DB) {
 		Media:         media.NewStore(mediaDir),
 		MediaPath:     mediaDir,
 		Log:           log,
-	})
-	srv := httptest.NewServer(h)
+	}
+	for _, o := range opts {
+		o(&cfg)
+	}
+	srv := httptest.NewServer(httpserver.New(cfg))
 	t.Cleanup(srv.Close)
 	mediaDirs.Store(srv.URL, mediaDir)
 	return srv, db

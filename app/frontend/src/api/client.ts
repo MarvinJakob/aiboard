@@ -31,8 +31,20 @@ const client = createClient<paths>({
   fetch: (req) => globalThis.fetch(req),
 });
 
+/**
+ * Führt zur Anmeldung, wenn die Sitzung bei aktivem Zugangsschutz (Ticket #49) abläuft, während die
+ * Seite offen ist. Danach geht es zur aktuellen Seite zurück. Als Objekt, damit Tests es ersetzen können.
+ */
+export const session = {
+  expired() {
+    const here = window.location.pathname + window.location.search;
+    window.location.assign('/redaktion/anmelden?weiter=' + encodeURIComponent(here));
+  },
+};
+
 async function unwrap<T>(p: Promise<{ data?: T; error?: unknown; response: Response }>): Promise<T> {
   const { data, error, response } = await p;
+  if (response.status === 401 && typeof window !== 'undefined') session.expired();
   if (error !== undefined || data === undefined) {
     const msg = (error as { message?: string } | undefined)?.message ?? response.statusText;
     throw new ApiError(response.status, msg);

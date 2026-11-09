@@ -28,6 +28,9 @@ services:
       PUBLIC_BASE_URL: https://${DOMAIN}
       # Caddy setzt X-Forwarded-For; daraus liest das Backend die IP für die Begrenzung der Anmeldeversuche.
       TRUST_PROXY: "true"
+      # Zugangsschutz vor dem Livegang (Ticket #49): Die Webseite sieht nur, wer angemeldet ist.
+      # Zum Livegang REQUIRE_LOGIN=false in die .env schreiben.
+      REQUIRE_LOGIN: ${REQUIRE_LOGIN:-true}
     volumes:
       - app_db:/data/db
       - app_media:/data/media

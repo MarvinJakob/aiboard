@@ -39,6 +39,7 @@ type config struct {
 	devSeed      bool
 	serveMedia   bool
 	trustProxy   bool
+	requireLogin bool
 }
 
 func env(key, def string) string {
@@ -65,6 +66,7 @@ func loadConfig() config {
 		devSeed:      envBool("DEV_SEED"),
 		serveMedia:   envBool("SERVE_MEDIA"),
 		trustProxy:   envBool("TRUST_PROXY"),
+		requireLogin: envBool("REQUIRE_LOGIN"),
 	}
 }
 
@@ -132,6 +134,7 @@ func runServer(cfg config, log *slog.Logger) error {
 		EditorialSite: web.NewEditorial(accounts, nil, log),
 		SecureCookies: strings.HasPrefix(cfg.baseURL, "https://"),
 		TrustProxy:    cfg.trustProxy,
+		RequireLogin:  cfg.requireLogin,
 		Log:           log,
 	}
 	if cfg.serveMedia {
@@ -148,7 +151,8 @@ func runServer(cfg config, log *slog.Logger) error {
 
 	errc := make(chan error, 1)
 	go func() {
-		log.Info("server gestartet", "adresse", cfg.addr, "basis_url", cfg.baseURL, "testinhalte", cfg.devSeed)
+		log.Info("server gestartet", "adresse", cfg.addr, "basis_url", cfg.baseURL, "testinhalte", cfg.devSeed,
+			"zugangsschutz", cfg.requireLogin)
 		errc <- srv.ListenAndServe()
 	}()
 
