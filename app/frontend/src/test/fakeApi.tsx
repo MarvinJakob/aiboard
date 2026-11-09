@@ -9,8 +9,8 @@ type L = 'de' | 'en';
 
 const topicData: Record<string, Record<L, Omit<Topic, 'lang' | 'postCount' | 'slug'>>> = {
   softwareentwicklung: {
-    de: { title: 'AI in der Softwareentwicklung', label: 'Softwareentwicklung', summary: 'Kurz SE', intro: 'Einführung Softwareentwicklung' },
-    en: { title: 'AI in Software Development', label: 'Software Development', summary: 'Short SE', intro: 'Intro software development' },
+    de: { title: 'KI in der Softwareentwicklung', label: 'Softwareentwicklung', summary: 'Wie Sie KI-Assistenten mit Markdown-Regeln, Zugriffsrechten, Tests und Reviews anleiten.', intro: 'Dateien wie `AGENTS.md` geben KI-Assistenten Ziele, Arbeitsabläufe und Grenzen mit. Das Modell kann solche Regeln aber missverstehen oder übergehen. Hier sehen Sie, wie Sie prüfbare Regeln schreiben, Freigaben an Aktionen binden und Grenzen technisch absichern.' },
+    en: { title: 'AI in Software Development', label: 'Software Development', summary: 'How to guide AI assistants with Markdown rules, access permissions, tests and reviews.', intro: 'Files such as `AGENTS.md` give AI assistants goals, workflows and boundaries. However, the model can misunderstand or disregard these rules. Here you can learn how to write verifiable rules, tie approvals to actions and enforce boundaries through technical controls.' },
   },
   'ai-audit': {
     de: { title: 'AI Audit für Unternehmen', label: 'AI Audit', summary: 'Kurz Audit', intro: 'Einführung Audit' },
