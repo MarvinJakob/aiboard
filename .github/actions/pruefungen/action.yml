@@ -1,0 +1,35 @@
+# Prüfungen aus app/README.md für den ausgecheckten Stand: Backend, öffentliches Frontend und Redaktionsfrontend.
+# Genutzt von .github/workflows/deploy.yml im Pull Request und unmittelbar vor jedem Deployment.
+name: Prüfungen (app/README.md)
+description: go vet, go test sowie Typprüfung und Tests beider Frontends
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-go@v6
+      with:
+        go-version-file: app/backend/go.mod
+        cache-dependency-path: app/backend/go.sum
+
+    - uses: actions/setup-node@v5
+      with:
+        node-version: 24
+        cache: npm
+        cache-dependency-path: |
+          app/frontend/package-lock.json
+          app/frontend-redaktion/package-lock.json
+
+    - name: Backend
+      shell: bash
+      working-directory: app/backend
+      run: go vet ./... && go test ./...
+
+    - name: Öffentliches Frontend
+      shell: bash
+      working-directory: app/frontend
+      run: npm ci && npm run typecheck && npm test
+
+    - name: Redaktionsfrontend
+      shell: bash
+      working-directory: app/frontend-redaktion
+      run: npm ci && npm run typecheck && npm test

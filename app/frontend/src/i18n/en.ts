@@ -108,9 +108,40 @@ export const en: Messages = {
   },
   footer: {
     tagline: 'Perspectives and experiences around artificial intelligence.',
-    privacyNote: 'We do not use tracking cookies. Your language choice is stored only in your browser.',
+    privacyNote: 'We do not use tracking cookies. We store language and appearance in your browser only at your request; you can switch this off in the cookie settings.',
     site: 'Website',
     imprint: 'Legal notice',
     privacy: 'Privacy',
+  },
+  cookies: {
+    open: 'Cookie settings',
+    title: 'Cookie settings',
+    introNone:
+      'This website uses no optional cookies, analytics or advertising services, so there is nothing that needs your consent. You only decide whether we may remember your language and appearance choice.',
+    introOptional:
+      'Optional cookies and similar technologies start only after your consent. Scrolling, browsing on or closing this dialog is not consent.',
+    inventoryTitle: 'What can be stored',
+    lang: 'Language (local storage, key "ki-perspektiven.lang"): remembers German or English. Provider: this website. Duration: until deleted. Necessary because you choose it explicitly.',
+    theme:
+      'Appearance (local storage, key "ki-perspektiven.theme"): remembers light or dark. Provider: this website. Duration: until deleted. Necessary because you choose it explicitly.',
+    consent:
+      'Your choice here (local storage, key "ki-perspektiven.consent"): choice, time and version, no identifier. Duration: at most 180 days. Necessary to apply your decision.',
+    session:
+      'Editorial sign-in (cookie "ki_session"): only after you explicitly sign in under /redaktion, not on public visits. Necessary for signing in.',
+    revoke:
+      'You can change your choice at any time via "Cookie settings" in the footer. Withdrawal takes effect on click and removes our stored entries. No data is transferred to third countries.',
+    details: 'More in the privacy policy',
+    none: 'Store no cookies',
+    necessary: 'Necessary cookies only',
+    all: 'Accept all cookies',
+    saved: {
+      none: 'Chosen: no cookies. Nothing is stored.',
+      necessary: 'Chosen: necessary cookies only. Kept for at most 180 days.',
+      all: 'Chosen: all cookies. Kept for at most 180 days.',
+    },
+    noneHint: 'This choice only lasts until the page is fully reloaded. You may need to choose again afterwards.',
+    sessionHint: 'You are signed in to the editorial area. This sign-in stays active.',
+    sessionLink: 'Go to the editorial area to sign out',
+    close: 'Close',
   },
 };

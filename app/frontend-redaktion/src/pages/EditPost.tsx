@@ -9,58 +9,17 @@ import {
   useTopics,
   type EditorPost,
   type Lang,
-  type PostInput,
   type PostText,
 } from '../api/posts';
 import { Loading, Page } from '../components/Layout';
 import { StatusBadge, formatDate, formatWithZone, resolveLocalInput, toLocalInput } from '../components/PostParts';
 
-interface Form {
-  slug: string;
-  featured: boolean;
-  topics: string[];
-  texts: Record<Lang, PostText>;
-}
+import { AMBIGUOUS, NONEXISTENT, coverProblem, hasText, toForm, toInput, type Form } from '../lib/postForm';
 
 interface Notice {
   text: string;
   undo?: boolean; // „Rückgängig“ nach dem Zurücknehmen anbieten
 }
-
-const emptyText = (lang: Lang): PostText => ({ lang, title: '', summary: '', bodyMarkdown: '', coverAlt: '' });
-
-/** Meldungen zur Zeitumstellung (Ticket #32). */
-const NONEXISTENT =
-  'Diese Uhrzeit gibt es an diesem Tag wegen der Umstellung auf Sommerzeit nicht. Bitte wählen Sie eine andere Uhrzeit.';
-const AMBIGUOUS = 'Diese Uhrzeit gibt es wegen der Zeitumstellung zweimal. Bitte wählen Sie, welche gemeint ist.';
-
-/** Grenzen für Titelbilder wie im Backend (Ticket #25). */
-const COVER_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const COVER_MAX_BYTES = 5 * 1024 * 1024;
-
-/** Prüft eine Bilddatei vor dem Hochladen. Das Backend prüft den Inhalt noch einmal. */
-export function coverProblem(file: File): string | null {
-  if (!COVER_TYPES.includes(file.type)) return 'Dieser Dateityp wird nicht unterstützt. Erlaubt sind JPEG, PNG und WebP.';
-  if (file.size > COVER_MAX_BYTES) return 'Die Datei ist größer als 5 MB. Bitte ein kleineres Bild wählen.';
-  return null;
-}
-
-function toForm(p?: EditorPost): Form {
-  const texts = { de: emptyText('de'), en: emptyText('en') };
-  for (const t of p?.texts ?? []) texts[t.lang] = { ...t, coverAlt: t.coverAlt ?? '' };
-  return { slug: p?.slug ?? '', featured: p?.featured ?? false, topics: p?.topics ?? [], texts };
-}
-
-function toInput(f: Form): PostInput {
-  return {
-    slug: f.slug.trim() || undefined,
-    featured: f.featured,
-    topics: f.topics,
-    texts: LANGS.map((l) => f.texts[l]).filter((t) => t.title.trim() || t.summary.trim() || t.bodyMarkdown.trim()),
-  };
-}
-
-const hasText = (t: PostText) => Boolean(t.title.trim() || t.summary.trim() || t.bodyMarkdown.trim());
 
 /** Beitrag anlegen oder bearbeiten (Anforderung 5). „neu“ legt beim ersten Speichern einen Beitrag „In Arbeit“ an. */
 export function EditPostPage() {

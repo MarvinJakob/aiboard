@@ -58,7 +58,31 @@ func New(cfg Config) http.Handler {
 	if cfg.RequireLogin {
 		h = (&gate{accounts: cfg.Accounts, log: cfg.Log}).wrap(h)
 	}
-	return recoverer(cfg.Log, logRequests(cfg.Log, h))
+	return recoverer(cfg.Log, logRequests(cfg.Log, hardenResponses(limitBody(h))))
+}
+
+// maxRequestBytes begrenzt jeden Anfragetext. Er liegt über dem größten Bild-Upload (media.MaxUploadBytes)
+// samt Multipart-Rahmen und schützt JSON-Endpunkte vor überlangen Anfragen.
+const maxRequestBytes = media.MaxUploadBytes + 1<<20
+
+// limitBody lässt höchstens maxRequestBytes aus dem Anfragetext lesen. Größere Anfragen scheitern beim Lesen.
+func limitBody(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(w, r.Body, maxRequestBytes)
+		next.ServeHTTP(w, r)
+	})
+}
+
+// hardenResponses setzt Sicherheits-Header, damit der Schutz auch ohne vorgeschalteten Proxy (z. B. in der
+// Entwicklung) gilt. Der Proxy in deploy/Caddyfile ergänzt CSP und HSTS.
+func hardenResponses(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("X-Frame-Options", "DENY")
+		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		next.ServeHTTP(w, r)
+	})
 }
 
 // mediaHandler liefert hochgeladene Bilder aus. Dateinamen ändern sich nie, daher ein Jahr Cache.
@@ -79,6 +103,7 @@ func mediaHandler(dir string) http.Handler {
 	}))
 }
 
+// statusWriter merkt sich den Antwortstatus für das Protokoll.
 type statusWriter struct {
 	http.ResponseWriter
 	status int
@@ -104,6 +129,7 @@ func logRequests(log *slog.Logger, next http.Handler) http.Handler {
 	})
 }
 
+// recoverer fängt Panics ab, protokolliert sie und antwortet mit 500, damit der Server weiterläuft.
 func recoverer(log *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
