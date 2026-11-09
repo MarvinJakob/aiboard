@@ -7,7 +7,7 @@ import { EDITOR, fakeBackend, json, renderAt, type FakeRequest, type Handler } f
 afterEach(() => vi.unstubAllGlobals());
 
 const TOPICS = [
-  { slug: 'softwareentwicklung', title: 'AI in der Softwareentwicklung', label: 'Softwareentwicklung' },
+  { slug: 'softwareentwicklung', title: 'KI in der Softwareentwicklung', label: 'Softwareentwicklung' },
   { slug: 'ai-audit', title: 'AI Audit für Unternehmen', label: 'AI Audit' },
   { slug: 'data-analytics', title: 'KI in Data Analytics', label: 'Data Analytics' },
 ].map((t) => ({ ...t, lang: 'de', summary: '', intro: '', postCount: 0 }));
@@ -173,7 +173,7 @@ describe('Anforderung 5: Redaktionssystem', () => {
     const audit = await screen.findByRole('checkbox', { name: 'AI Audit für Unternehmen' });
     expect(audit).toBeChecked();
     await user.click(audit);
-    await user.click(screen.getByRole('checkbox', { name: 'AI in der Softwareentwicklung' }));
+    await user.click(screen.getByRole('checkbox', { name: 'KI in der Softwareentwicklung' }));
     await user.click(screen.getByRole('checkbox', { name: 'KI in Data Analytics' }));
     await user.click(screen.getByRole('button', { name: /^Englisch/ }));
     expect(screen.getByLabelText('Titel')).toHaveValue('');

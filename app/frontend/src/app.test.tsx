@@ -22,7 +22,7 @@ describe('Ticket #73: Startseite nach mock/landing', () => {
       'KI verstehen.Sinnvoll einsetzen.',
       'KI in Deutschland in Zahlen',
       'Was ist KI – und was kann man damit machen?',
-      'Drei Schwerpunkte als Einstieg.',
+      'Vier Schwerpunkte als Einstieg.',
       'Wie bereit ist Ihr Unternehmen für KI?',
       'Neu im Blog.',
       'Hinter KI Perspektiven',
@@ -120,7 +120,7 @@ describe('Ticket #73: Startseite nach mock/landing', () => {
   it('zeigt ohne veröffentlichte Beiträge weiterhin die Themenkarten und keinen Blogabschnitt', async () => {
     installFakeApi([]);
     renderApp('/de');
-    expect(await screen.findByRole('link', { name: /AI in der Softwareentwicklung.*Zum Thema/s })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: /KI in der Softwareentwicklung.*Zum Thema/s })).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByText('Wird geladen …')).not.toBeInTheDocument());
     expect(screen.queryByRole('region', { name: 'Neu im Blog.' })).not.toBeInTheDocument();
   });
@@ -305,7 +305,7 @@ describe('Anforderung 8: KI-Audit-Übersicht', () => {
 
   it('erscheint nur beim Thema AI Audit', async () => {
     renderApp('/de/themen/softwareentwicklung');
-    await screen.findByRole('heading', { level: 1, name: 'AI in der Softwareentwicklung' });
+    await screen.findByRole('heading', { level: 1, name: 'KI in der Softwareentwicklung' });
     expect(screen.queryByRole('heading', { name: 'Die Dimensionen des KI-Audits' })).not.toBeInTheDocument();
   });
 });
@@ -432,7 +432,11 @@ describe('Ticket #21: AI Audit als eigener Navigationseintrag', () => {
     await user.click(await screen.findByRole('button', { name: 'Themen' }));
     const menu = document.querySelector('.popover') as HTMLElement;
     const links = await within(menu).findAllByRole('link');
-    expect(links.map((l) => l.getAttribute('href'))).toEqual(['/de/themen/softwareentwicklung', '/de/themen/data-analytics']);
+    expect(links.map((l) => l.getAttribute('href'))).toEqual([
+      '/de/themen/softwareentwicklung',
+      '/de/themen/data-analytics',
+      '/de/themen/prozessautomatisierung',
+    ]);
     expect(within(menu).queryByRole('link', { name: /AI Audit/ })).not.toBeInTheDocument();
     await user.click(within(menu).getByRole('link', { name: /KI in Data Analytics/ }));
     expect(router.state.location.pathname).toBe('/de/themen/data-analytics');

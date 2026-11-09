@@ -368,7 +368,7 @@ svg { display: block; }
 .landing .limit p { margin: 0; font-size: 15px; color: var(--text-2); }
 
 /* Themen */
-.landing .topics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.landing .topics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 .landing .topic {
   position: relative; display: flex; flex-direction: column; padding: 8px;
   border-radius: 28px; background: var(--surface); border: 1px solid var(--border); text-decoration: none;
@@ -453,7 +453,8 @@ svg { display: block; }
   .landing .audit-top { gap: 28px; }
   .landing .definition { position: static; }
   .landing .topics, .landing .posts { grid-template-columns: 1fr 1fr; }
-  .landing .topics > :last-child, .landing .posts > :last-child { grid-column: 1 / -1; }
+  /* Eine allein stehende letzte Karte nutzt die volle Breite (ungerade Anzahl). */
+  .landing .topics > :last-child:nth-child(odd), .landing .posts > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 @media (max-width: 760px) {
   .landing .section { padding-top: 72px; }
@@ -779,6 +780,27 @@ svg { display: block; }
 .dimension-card h4 { margin: 4px 0 0; font-family: var(--font-display); font-size: 1.1875rem; font-weight: 700; letter-spacing: -.015em; line-height: 1.25; }
 .dimension-card p { color: var(--text-2); font-size: .9375rem; }
 .dimension-card:hover .card-link svg { transform: translateX(4px); }
+
+/* Prozessautomatisierung: Vorteile von n8n auf der Themenseite (Ticket #77) */
+.advantage-list { list-style: none; padding: 0; margin-top: 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.advantage-item {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 20px;
+  border-radius: var(--radius-l); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-card);
+}
+.advantage-item h3 { font-family: var(--font-display); font-size: 1.1875rem; font-weight: 700; letter-spacing: -.015em; line-height: 1.25; }
+.advantage-item p { color: var(--text-2); font-size: .9375rem; }
+.advantage-icon {
+  display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 12px;
+  background: var(--note-bg); color: var(--accent);
+}
+.advantage-icon svg { width: 22px; height: 22px; }
+.advantage-note { max-width: 720px; margin-top: 20px; color: var(--text-2); font-size: .9375rem; }
+.topic-sources { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
+.topic-sources h3 { font-size: 1.0625rem; font-weight: 700; }
+.topic-sources ol { margin: 12px 0 0; padding-left: 22px; columns: 2; column-gap: 48px; font-size: .875rem; color: var(--text-2); }
+.topic-sources li { break-inside: avoid; margin-bottom: 8px; padding-left: 4px; border-radius: 6px; }
+.topic-sources li:focus { background: var(--fill); color: var(--text); }
+@media (max-width: 760px) { .topic-sources ol { columns: 1; } }
 
 /* KI-Audit: Dimensionsseite (Anforderung 9) */
 .dim-about { display: grid; grid-template-columns: 1.3fr .7fr; gap: clamp(28px, 4vw, 56px); align-items: start; margin-top: clamp(48px, 6vw, 72px); }
