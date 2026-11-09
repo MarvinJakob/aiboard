@@ -73,6 +73,14 @@ describe('Ticket #78: Startseite nach content/Landingpage.md', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'KI in Data Analytics' })).toBeInTheDocument();
   });
 
+  it.each(FOCUS_CARDS.map(([title, , link, path]) => [title, link, path]))('Karte „%s“ führt auf eine existierende Seite', async (_, link, path) => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de');
+    await user.click(await screen.findByRole('link', { name: link }));
+    expect(router.state.location.pathname).toBe(path);
+    expect(await screen.findByRole('heading', { level: 1 })).not.toHaveTextContent('Seite nicht gefunden');
+  });
+
   it('springt mit „Themen entdecken“ zum Fokus und führt zu KI-Audit und Einordnung', async () => {
     const user = userEvent.setup();
     const { router } = renderApp('/de');

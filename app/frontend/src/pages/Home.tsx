@@ -142,7 +142,7 @@ const TOPIC_ART: Record<string, { bg: string; art?: ReactNode }> = {
     ),
   },
   'modelle-und-kosten': {
-    bg: 'linear-gradient(135deg, #4f46e5, #0ea5e9 55%, #10b981)',
+    bg: 'linear-gradient(135deg, #ca8a04, #65a30d 55%, #34d399)',
     art: (
       <>
         <g fill="none" stroke="rgba(255,255,255,.6)" strokeWidth="2">

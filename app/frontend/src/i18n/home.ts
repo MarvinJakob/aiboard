@@ -44,7 +44,7 @@ interface HomeContent {
 // Belege für Zahlen und Studienaussagen der Textvorlage content/Landingpage.md (Stand 2026-11-09):
 // 1–3, 5: research/2026-11-09 Was ist KI und was man damit machen kann.md
 // 4: research/2026-11-05 Kosten von KI aus Nutzersicht.md, Quelle 15
-// 6: research/2026-11-09 Nützliche Skills für KI.md, Quelle 28 (Themenseite KI-Tipps und Tricks)
+// 6: content/KI Tipps und Tricks.md, Quelle 19 (= frontend/src/content/topics/ki-tipps-und-tricks.de.md)
 // 7: research/2026-11-09 Modelle und Kosten - Preis und Leistung vergleichen.md, Quelle 8 (gpt-6-luna und gpt-6-astra)
 const SOURCES: Omit<Source, 'note'>[] = [
   {
