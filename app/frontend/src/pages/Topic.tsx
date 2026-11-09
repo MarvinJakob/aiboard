@@ -2,6 +2,8 @@ import { Link, useParams } from 'react-router';
 import { isNotFound, useTopic } from '../api/client';
 import { Art } from '../components/Art';
 import { AuditOverview } from '../components/AuditOverview';
+import { AutomationBenefits } from '../components/AutomationBenefits';
+import { AUTOMATION_TOPIC } from '../i18n/automation';
 import { TopicContent } from '../components/TopicContent';
 import { AUDIT_TOPIC } from '../lib/audit';
 import { PostList } from '../components/PostRow';
@@ -13,7 +15,8 @@ import { NotFound } from './NotFound';
 
 /**
  * Themenseite mit Titel, Einführung und zugeordneten veröffentlichten Beiträgen (Anforderung 3).
- * Das Thema „AI Audit für Unternehmen“ zeigt zusätzlich die Audit-Übersicht (Anforderung 8).
+ * Das Thema „AI Audit für Unternehmen“ zeigt zusätzlich die Audit-Übersicht (Anforderung 8),
+ * das Thema „Prozessautomatisierung“ die Vorteile von n8n (Ticket #77).
  */
 export function TopicPage() {
   const { slug = '' } = useParams();
@@ -53,6 +56,7 @@ export function TopicPage() {
         <Art topic={tp.slug} seed={1} />
       </section>
       {tp.slug === AUDIT_TOPIC && <AuditOverview />}
+      {tp.slug === AUTOMATION_TOPIC && <AutomationBenefits />}
       {content && <TopicContent content={content} />}
       <section className="section" aria-labelledby="topicPosts">
         <div className="section-head">

@@ -21,7 +21,7 @@ Themenmenü und Footer verwenden die API und erhalten das neue Thema automatisch
 
 Die neuen Tests decken Vorlage, Abschnittsreihenfolge, Zahlen, Tabelle, Quellenziele, Tastaturfokus, Übersetzungshinweis, eigene Themenpalette, Beitragszuordnung, API, HTTP 200, Sitemap und Migration Up/Down/erneutes Up ab. Der Migrationstest bewahrt die Beitragszuordnung eines vorhandenen Themas und verlangt keine feste ID für das neue Thema.
 
-Ergebnisse: Backend-Vet und alle Go-Tests erfolgreich; öffentliches Frontend mit 150 erfolgreichen Tests, Redaktion mit 70 erfolgreichen Tests; beide Typprüfungen und Builds erfolgreich. `git diff --check` erfolgreich. Der Frontend-Build meldet das bestehende Bundle-Limit über 500 kB, der Redaktions-Build einen Hinweis zum unveränderten `theme.js`-Skript.
+Ergebnisse nach Integration von `main` mit Ticket #77 (Commit `ac4c701`): Backend-Vet und alle Go-Tests erfolgreich; öffentliches Frontend mit 157 erfolgreichen Tests, Redaktion mit 70 erfolgreichen Tests; beide Typprüfungen und Builds erfolgreich. `git diff --check` erfolgreich. Der Frontend-Build meldet das bestehende Bundle-Limit über 500 kB, der Redaktions-Build einen Hinweis zum unveränderten `theme.js`-Skript.
 
 Die erfolgreichen Testläufe liefen außerhalb der Windows-Sandbox: Im ersten Frontend-Lauf waren temporäre Vite-Dateien nicht lesbar. Ein bestehender Redaktionstest überschritt bei paralleler Ausführung fünf Sekunden; der vollständige Wiederholungslauf mit `npm test -- --maxWorkers=1 --testTimeout=15000` bestand. Die Testkonfiguration im Repository wurde nicht verändert.
 
@@ -44,4 +44,4 @@ Zum Wiederholen `/de/themen/ki-tipps-und-tricks` in den drei Breiten und beiden 
 
 ## Merge-Reihenfolge
 
-Die parallelen Tickets #77, #80 und #81 verwenden Migrationen `00005`, `00006` und `00007`. Dieses Ticket verwendet `00008`. Vor dem Merge von #82 müssen diese niedrigeren Migrationen in `main` liegen. Danach `main` in den Feature-Branch übernehmen, gemeinsame Renderer-Änderungen zusammenführen, alle Themen im Backend-Test berücksichtigen und die betroffenen Prüfungen wiederholen. Eine niedrigere Migration darf nicht erst nach der Auslieferung von `00008` eingeführt werden. Die getrennten Feature-Tickets bleiben unabhängig im Review.
+Die Tickets #77, #80 und #81 verwenden Migrationen `00005`, `00006` und `00007`. #77 ist bereits in `main` und wurde in diesen Feature-Branch integriert; beide Themenseiten und ihre Tests bleiben erhalten. Dieses Ticket verwendet `00008`. Vor dem Merge von #82 müssen auch #80 und #81 in `main` liegen. Danach `main` in den Feature-Branch übernehmen, gemeinsame Renderer-Änderungen zusammenführen, alle Themen im Backend-Test berücksichtigen und die betroffenen Prüfungen wiederholen. Eine niedrigere Migration darf nicht erst nach der Auslieferung von `00008` eingeführt werden. Die getrennten Feature-Tickets bleiben unabhängig im Review.
