@@ -34,6 +34,7 @@ Noch nicht enthalten: eine eigene Medienverwaltung (`/redaktion/medien`). Titelb
 | [21 AI Audit als eigener Navigationseintrag](https://github.com/MarvinJakob/aiboard/issues/21) | Eintrag „AI Audit“ in der Hauptnavigation neben „Themen“ und „Blog“, führt zur Audit-Übersicht in der aktuellen Sprache. Das Themenmenü zeigt das Audit nicht mehr. Auf der Übersicht und allen Dimensionsseiten ist „AI Audit“ aktiv, „Themen“ nicht. Die URLs unter `/{lang}/themen/ai-audit` bleiben unverändert. |
 | [24 Beitragsaktionen in der Beitragsübersicht](https://github.com/MarvinJakob/aiboard/issues/24) | Jede Zeile der Beitragsliste bietet „Veröffentlichen“ (nur für Entwürfe) und „Löschen“, beschriftet mit dem Beitragstitel. Fehlen Texte, bleibt der Beitrag unverändert und die Übersicht nennt den Grund. Löschen verlangt eine Bestätigung in der Zeile und nutzt `DELETE /api/admin/posts/{id}`. Sprachfassungen und Themenzuordnungen entfernt die Datenbank mit (`ON DELETE CASCADE`). |
 | [25 Titelbild für Beiträge](https://github.com/MarvinJakob/aiboard/issues/25) | Im Editor lässt sich pro Beitrag ein Titelbild (JPEG, PNG oder WebP bis 5 MB) hochladen, in der Vorschau ansehen, ersetzen und entfernen (`PUT`/`DELETE /api/admin/posts/{id}/cover`). Je Sprachfassung gibt es einen Alternativtext; ohne ihn lässt sich der Beitrag nicht veröffentlichen, und öffentlich erscheint das Bild erst mit Alternativtext. Das Backend erkennt den Typ am Inhalt, kodiert neu (ohne EXIF/GPS), vergibt den Dateinamen und legt die Varianten 480, 960, 1600 und `og` (1200 × 630) an. Die Beitragsseite zeigt das Bild unter der Überschrift mit festem Seitenverhältnis; `og:image` zeigt auf die `og`-Variante. |
+| [22 Anwendung auf Hetzner mit Docker deployen](https://github.com/MarvinJakob/aiboard/issues/22) | Die Anwendung läuft mit Docker Compose auf `docker-ce-ubuntu-2gb-nbg1-1` unter <https://78-47-14-178.sslip.io>. `deploy/deploy.sh` baut das Image eines Commits auf dem Server, startet es mit Healthcheck und kehrt per `rollback` zur vorherigen Version zurück. Die [Betriebsanleitung](docs/betrieb.md) beschreibt Voraussetzungen, Konfiguration, Deployment, Healthcheck, Logs, Rollback und Sicherung. Die automatische Sicherung ist noch nicht eingerichtet. |
 
 ## Aufbau
 
@@ -54,7 +55,8 @@ backend/                Go-Modul
   internal/web/         Auslieferung beider Frontends mit Zugriffskontrolle, Meta-Tags, Sitemap, robots.txt
   internal/media/       Bild-URLs, Prüfen, Neukodieren und Speichern hochgeladener Bilder
   migrations/           Schema und Startthemen; dev/ enthält Testbeiträge und Testkonten
-deploy/                 Caddyfile und Sicherungsskript
+deploy/                 Caddyfile, Deployment-Skript (deploy.sh) und Sicherungsskript
+docs/betrieb.md         Betriebsanleitung für den Hetzner-Server
 docs/adr/               Architekturentscheidungen
 docs/audit-abnahme.md   Regeln und Antwortsätze für die Abnahme des Quiz
 ```
@@ -180,6 +182,7 @@ Das Sitzungscookie erhält das Attribut `Secure`, wenn `PUBLIC_BASE_URL` mit `ht
 - **Zeitumstellung:** Der Editor nennt zu jedem Termin Zeitzone und UTC. Eine wegen der Sommerzeit nicht existierende Uhrzeit lehnt er ab, bei einer doppelt vorkommenden Uhrzeit muss die Redaktion wählen, welche gilt (Ticket #32).
 - **Schriften:** Es werden keine WOFF2-Dateien ausgeliefert, weil das Design-Konzept System-Schriften vorsieht.
 - **Impressum und Datenschutz** sind Platzhalter in `frontend/src/content/legal` und müssen vor dem Livegang ersetzt werden.
+- **Images und Domain im Betrieb:** Das Image wird auf dem Server gebaut und nicht aus einer Registry gezogen. `REGISTRY` legt nur den Namen fest. Statt einer eigenen Domain dient vorläufig `78-47-14-178.sslip.io`. Details in der [Betriebsanleitung](docs/betrieb.md).
 - **KI-Audit-Inhalte:** Die Inhalte stehen nicht in der Datenbank, sondern in `backend/internal/audit/content.json` (ADR 0009). Eine Dimension erscheint nur mit `"released": true`. Die Texte folgen `content/KI Audit.docx`. Daraus abgeleitet sind die Kurzbeschreibungen und die Vorteile je Dimension, die das Dokument nicht ausdrücklich nennt. Marvin Jakob hat die Texte aller acht Dimensionsseiten einschließlich der dokumentierten Abweichungen am 2026-11-06 fachlich freigegeben; Textstand und Nachweis stehen in [docs/audit-dimensionsfreigabe.md](docs/audit-dimensionsfreigabe.md) (Ticket #29).
 - **Reifegrad 0:** Ist Stufe 1 nicht erfüllt, zeigt das Quiz „Nicht angewendet“. Anforderung 10 nennt nur die drei Reifegrade, das Fachdokument sieht diesen Fall aber vor.
 - **Bedingte Prüffragen:** Fragen wie „Bei Agenten: …“ lassen sich mit „Trifft nicht zu“ beantworten und gelten dann als erfüllt (Fachdokument: begründete Nichtanwendbarkeit).
