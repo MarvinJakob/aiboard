@@ -90,6 +90,8 @@ func render(index []byte, m Meta) ([]byte, error) {
 // texts enthält die Seitentitel und Beschreibungen für Seiten ohne Datenbankinhalt.
 var texts = map[service.Lang]map[string]string{
 	service.DE: {
+		"profile.title":  "Marvin Jakob – Profil",
+		"profile.desc":   "Marvin Jakob: IT-Berater und Full-Stack-Entwickler. Mein Hintergrund und meine Fragen zu KI in Softwareentwicklung, Data Analytics und AI Audit.",
 		"home.desc":      "Einordnungen, Erfahrungen und Leitfäden für Teams, die künstliche Intelligenz verantwortungsvoll nutzen wollen.",
 		"blog.title":     "Blog",
 		"blog.desc":      "Alle veröffentlichten Beiträge rund um KI – die neuesten zuerst.",
@@ -101,6 +103,8 @@ var texts = map[service.Lang]map[string]string{
 		"notFound.desc":  "Diese Seite gibt es nicht oder sie ist nicht öffentlich.",
 	},
 	service.EN: {
+		"profile.title":  "Marvin Jakob – Profile",
+		"profile.desc":   "Marvin Jakob: IT consultant and full-stack developer. My background and questions about AI in software development, data analytics and AI audit.",
 		"home.desc":      "Perspectives, experiences and guides for teams who want to use artificial intelligence responsibly.",
 		"blog.title":     "Blog",
 		"blog.desc":      "All published articles about AI – newest first.",
