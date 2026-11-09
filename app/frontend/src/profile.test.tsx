@@ -123,3 +123,14 @@ describe('Ticket 42: Profil in der Hauptnavigation', () => {
     expect(translated).not.toHaveClass('is-active');
   });
 });
+
+it.each(['de', 'en'])('verlinkt das neue Skill-Thema aus der Profilnavigation in %s', async (lang) => {
+  const user = userEvent.setup();
+  const { router } = renderApp(`/${lang}/profil`);
+  await user.click(screen.getByRole('button', { name: lang === 'de' ? 'Themen' : 'Topics' }));
+  const menu = document.querySelector('.popover') as HTMLElement;
+  const link = await within(menu).findByRole('link', { name: lang === 'de' ? /KI-Tipps und Tricks/ : /AI Tips and Tricks/ });
+  await user.click(link);
+  expect(router.state.location.pathname).toBe(`/${lang}/themen/ki-tipps-und-tricks`);
+  expect(await screen.findByRole('heading', { level: 1, name: lang === 'de' ? 'KI-Tipps und Tricks' : 'AI Tips and Tricks' })).toBeInTheDocument();
+});

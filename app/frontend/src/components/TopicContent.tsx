@@ -42,11 +42,18 @@ function remarkSources() {
       if (!parent || index === undefined || parent.type === 'link' || parent.type === 'linkReference') return;
       const parts: (Text | Link)[] = [];
       let cursor = 0;
-      for (const match of node.value.matchAll(/\[(\d+)\]/g)) {
-        const number = Number(match[1]);
-        if (!numbers.has(number)) continue;
+      for (const match of node.value.matchAll(/\[(\d+)(?:[–-](\d+))?\]/g)) {
+        const first = Number(match[1]);
+        const last = Number(match[2] ?? match[1]);
+        if (last < first || last - first >= numbers.size) continue;
+        const range = Array.from({ length: last - first + 1 }, (_, i) => first + i);
+        if (!range.every((number) => numbers.has(number))) continue;
         parts.push({ type: 'text', value: node.value.slice(cursor, match.index) });
-        parts.push({ type: 'link', url: `#${sourceId(number)}`, children: [{ type: 'text', value: match[0] }] });
+        // Bereiche erhalten für jede einzelne Quelle einen erreichbaren Verweis.
+        range.forEach((number, i) => {
+          if (i) parts.push({ type: 'text', value: ' ' });
+          parts.push({ type: 'link', url: `#${sourceId(number)}`, children: [{ type: 'text', value: `[${number}]` }] });
+        });
         cursor = match.index + match[0].length;
       }
       if (!parts.length) return;

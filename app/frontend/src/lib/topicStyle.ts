@@ -17,6 +17,7 @@ const PALETTES: Record<string, Palette> = {
   audit: { c1: 'rgba(45,212,191,.9)', c2: 'rgba(74,222,128,.75)', c3: 'rgba(56,189,248,.8)', b1: '#042f2e', b2: '#0f5e6e', dot: '#0d9488' },
   data: { c1: 'rgba(251,146,60,.95)', c2: 'rgba(244,63,94,.85)', c3: 'rgba(250,204,21,.8)', b1: '#431407', b2: '#9a3412', dot: '#ea580c' },
   automation: { c1: 'rgba(56,189,248,.9)', c2: 'rgba(59,130,246,.85)', c3: 'rgba(52,211,153,.75)', b1: '#082f49', b2: '#1e40af', dot: '#0284c7' },
+  skills: { c1: 'rgba(244,114,182,.95)', c2: 'rgba(192,132,252,.9)', c3: 'rgba(251,191,36,.8)', b1: '#500724', b2: '#86198f', dot: '#db2777' },
   costs: { c1: 'rgba(250,204,21,.9)', c2: 'rgba(132,204,22,.85)', c3: 'rgba(52,211,153,.75)', b1: '#1a2e05', b2: '#3f6212', dot: '#65a30d' },
 };
 
@@ -25,6 +26,7 @@ const TOPICS: Record<string, { palette: keyof typeof PALETTES; icon: IconName }>
   'ai-audit': { palette: 'audit', icon: 'shield' },
   'data-analytics': { palette: 'data', icon: 'chart' },
   prozessautomatisierung: { palette: 'automation', icon: 'flow' },
+  'ki-tipps-und-tricks': { palette: 'skills', icon: 'bulb' },
   'modelle-und-kosten': { palette: 'costs', icon: 'coins' },
 };
 

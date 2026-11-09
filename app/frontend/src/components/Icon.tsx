@@ -1,4 +1,5 @@
 const PATHS = {
+  bulb: <><path d="M9 18h6M10 21h4M8 14a6 6 0 1 1 8 0c-1 .8-1 1.5-1 2H9c0-.5 0-1.2-1-2Z" /><path d="M10 8h4M12 8v8" /></>,
   chevDown: <path d="M6 9l6 6 6-6" />,
   chevLeft: <path d="M15 6l-6 6 6 6" />,
   chevRight: <path d="M9 6l6 6-6 6" />,
