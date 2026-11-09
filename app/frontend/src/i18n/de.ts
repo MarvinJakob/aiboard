@@ -8,6 +8,7 @@ export const de = {
     topics: 'Themen',
     blog: 'Blog',
     audit: 'AI Audit',
+    profile: 'Profil',
     lang: 'Sprache',
     account: 'Anmeldung für die Redaktion',
     theme: 'Dunkle Darstellung',
