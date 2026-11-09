@@ -148,6 +148,20 @@ const TOPIC_ART: Record<string, { bg: string; art?: ReactNode }> = {
       </>
     ),
   },
+  prozessautomatisierung: {
+    bg: 'linear-gradient(135deg, #0284c7, #2563eb 55%, #34d399)',
+    art: (
+      <>
+        <g fill="none" stroke="rgba(255,255,255,.6)" strokeWidth="2">
+          <rect x="70" y="60" width="44" height="34" rx="8" />
+          <rect x="186" y="96" width="44" height="34" rx="8" />
+          <path d="M114 77h26a12 12 0 0 1 12 12v12a12 12 0 0 0 12 12h22" />
+          <path d="m178 107 8 6-8 6" />
+        </g>
+        <circle cx="40" cy="30" r="60" fill="rgba(255,255,255,.12)" />
+      </>
+    ),
+  },
 };
 
 function Topics({
