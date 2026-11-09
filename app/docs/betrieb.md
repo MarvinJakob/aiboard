@@ -58,14 +58,16 @@ cd /opt/ki-web && docker compose exec -it backend /server user create --email AD
 
 ## Automatisches Deployment
 
-Jeder in `main` gemergte Pull Request wird automatisch bereitgestellt. Das übernimmt der Workflow [.github/workflows/deploy.yml](../../.github/workflows/deploy.yml):
+Nach jedem Merge in `main` wird der aktuelle Stand von `main` automatisch bereitgestellt. Das übernimmt der Workflow [.github/workflows/deploy.yml](../../.github/workflows/deploy.yml):
 
-1. **Prüfungen:** Bei jedem Pull Request in `main` (Öffnen, neue Commits) und noch einmal nach dem Merge laufen `go vet`, `go test` sowie Typprüfung und Tests beider Frontends wie in [README.md](../README.md#code-erzeugen-und-testen). Schlägt eine Prüfung fehl, wird nicht deployed.
-2. **Deployment:** Nur nach einem Merge ruft der Job `deploy/deploy.sh release <Merge-Commit>` auf, wie unter [Neue Version bereitstellen](#neue-version-bereitstellen) beschrieben. Geschlossene, nicht gemergte Pull Requests lösen nichts aus.
-3. **Healthcheck:** Ist die neue Version nicht gesund, startet `deploy.sh` wieder die bisherige Version und der Lauf schlägt fehl. Anschließend prüft der Workflow `DEPLOY_URL/api/health` von außen.
-4. **Protokoll:** Pull Request, Commit und Image-Version stehen im Protokoll und in der Zusammenfassung des Laufs unter *Actions*.
+1. **Prüfungen im Pull Request:** Bei jedem Pull Request in `main` (Öffnen, neue Commits) laufen `go vet`, `go test` sowie Typprüfung und Tests beider Frontends wie in [README.md](../README.md#code-erzeugen-und-testen). Die Schritte stehen in [.github/actions/pruefungen](../../.github/actions/pruefungen/action.yml).
+2. **Stand bestimmen:** Nach einem Merge checkt der Deploy-Job den aktuellen Stand von `main` aus, nicht den Merge-Commit des Pull Requests. Läuft genau dieser Commit schon auf dem Server (`deploy/deploy.sh current`), endet der Lauf ohne Build und Neustart erfolgreich. Geschlossene, nicht gemergte Pull Requests lösen nichts aus.
+3. **Prüfungen vor dem Deployment:** Der Deploy-Job führt dieselben Prüfungen für den auszuliefernden Stand aus. Schlägt eine Prüfung fehl, wird nicht deployed.
+4. **Deployment:** Der Job ruft `deploy/deploy.sh release <Commit>` auf, wie unter [Neue Version bereitstellen](#neue-version-bereitstellen) beschrieben.
+5. **Healthcheck:** Ist die neue Version nicht gesund, startet `deploy.sh` wieder die bisherige Version und der Lauf schlägt fehl. Anschließend prüft der Workflow `DEPLOY_URL/api/health` von außen.
+6. **Protokoll:** Pull Request, sein Merge-Commit, der bereitgestellte Stand von `main`, die Image-Version und ob das Deployment übersprungen wurde, stehen im Protokoll und in der Zusammenfassung des Laufs unter *Actions*.
 
-Läufe für die Umgebung `production` laufen nacheinander (`concurrency`). Ein laufendes Deployment wird nicht abgebrochen.
+**Mehrere Merges kurz nacheinander:** Läufe für die Umgebung `production` laufen nacheinander (`concurrency`). Ein laufendes Deployment wird nicht abgebrochen. Sie starten aber nicht unbedingt in der Reihenfolge der Merges, und GitHub behält nur den zuletzt wartenden Lauf, ältere wartende Läufe werden abgebrochen („Canceling since a higher priority waiting request for deploy-production exists“). Das ist gewollt: Jeder Lauf liefert den Stand von `main` zu seinem Start aus. Deshalb enthält das letzte Deployment immer alle Merges, und ein später startender Lauf eines früheren Merges kann keine ältere Version ausliefern. Ein abgebrochener Lauf muss nicht wiederholt werden.
 
 Einstellungen unter *Settings → Secrets and variables → Actions* des Repositorys:
 
@@ -125,7 +127,7 @@ app/deploy/deploy.sh switch VERSION
 app/deploy/deploy.sh status
 ```
 
-zeigt laufende und vorherige Version, den Commit des Images, den Zustand der Container und das Ergebnis von `https://DOMAIN/api/health`.
+zeigt laufende und vorherige Version, den Commit des Images, den Zustand der Container und das Ergebnis von `https://DOMAIN/api/health`. `app/deploy/deploy.sh current` gibt nur den Commit der laufenden Version aus.
 
 - Docker prüft das Backend alle 30 Sekunden mit `/server healthcheck`. Nach dem Start prüft es alle 2 Sekunden, bis der erste Check erfolgreich ist.
 - Beide Container haben `restart: unless-stopped`. Nach einem Neustart des Servers starten sie automatisch, Caddy erst, wenn das Backend gesund ist.
