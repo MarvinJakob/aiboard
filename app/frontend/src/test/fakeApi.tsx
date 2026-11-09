@@ -24,6 +24,10 @@ const topicData: Record<string, Record<L, Omit<Topic, 'lang' | 'postCount' | 'sl
     de: { title: 'Prozessautomatisierung', label: 'Prozessautomatisierung', summary: 'Kurz Automatisierung', intro: 'Einführung Prozessautomatisierung' },
     en: { title: 'Process Automation', label: 'Process Automation', summary: 'Short automation', intro: 'Intro process automation' },
   },
+  'ki-tipps-und-tricks': {
+    de: { title: 'KI-Tipps und Tricks', label: 'KI-Tipps und Tricks', summary: 'Welche Skills KI-Agenten wirklich helfen und wie belastbar der Nutzen ist.', intro: 'Skills halten wiederkehrende Arbeitsabläufe für KI-Agenten fest, etwa für Excel-Auswertungen oder die systematische Fehlersuche. Wir ordnen ein, was Studien zeigen, welche Skills sich für einen Test lohnen und wie Sie den Nutzen in Ihrem eigenen Arbeitsablauf prüfen.' },
+    en: { title: 'AI Tips and Tricks', label: 'AI Tips and Tricks', summary: 'Which skills actually help AI agents and how strong the evidence is.', intro: 'Skills capture recurring workflows for AI agents, such as analysing Excel files or investigating bugs systematically. We explain what studies show, which skills are worth testing and how to assess their value in your own workflow.' },
+  },
 };
 
 export interface FakePost {
