@@ -61,6 +61,6 @@ describe('Ticket #80: Themenseite Softwareentwicklung', () => {
 
   it('lässt Themen ohne statischen Inhalt unverändert', () => {
     expect(getTopicContent('ai-audit', 'de')).toBeUndefined();
-    expect(getTopicContent('data-analytics', 'en')).toBeUndefined();
+    expect(getTopicContent('prozessautomatisierung', 'de')).toBeUndefined();
   });
 });

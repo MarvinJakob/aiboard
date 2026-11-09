@@ -914,6 +914,9 @@ svg { display: block; }
   .scroll-edge { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--bg); -webkit-mask-image: none; mask-image: none; height: calc(var(--header-h) + 24px); }
 }
 
+/* Tabellen im Themeninhalt scrollen horizontal; Wörter in Zellen nicht mitten im Wort trennen (Ticket #81). */
+.topic-table th, .topic-table td { overflow-wrap: normal; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
   .blob { animation: none; }
