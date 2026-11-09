@@ -126,11 +126,11 @@ func TestHealth(t *testing.T) {
 	}
 }
 
-// Anforderung 3: drei Startthemen mit Titel und Einführung, auch ohne Beiträge.
+// Anforderung 3 und Ticket #77: vier Themen mit Titel und Einführung, auch ohne Beiträge.
 func TestTopicsAreSeeded(t *testing.T) {
 	srv, _ := newServer(t, false)
 	list := getJSON[api.TopicList](t, srv, "/api/topics?lang=de", 200)
-	want := []string{"KI in der Softwareentwicklung", "AI Audit für Unternehmen", "AI in Data Analytics"}
+	want := []string{"KI in der Softwareentwicklung", "AI Audit für Unternehmen", "AI in Data Analytics", "Prozessautomatisierung"}
 	if len(list.Items) != len(want) {
 		t.Fatalf("%d Themen, erwartet %d", len(list.Items), len(want))
 	}
@@ -144,6 +144,39 @@ func TestTopicsAreSeeded(t *testing.T) {
 		if d.Intro == "" || len(d.Posts) != 0 {
 			t.Errorf("Themenseite %s ohne Beiträge: %+v", tp.Slug, d)
 		}
+	}
+}
+
+// Ticket #77: Die Themenseite Prozessautomatisierung gibt es auf Deutsch und Englisch,
+// mit Seite, Sitemap-Eintrag und veröffentlichten Beiträgen zum Thema.
+func TestProcessAutomationTopic(t *testing.T) {
+	srv, db := newServer(t, false)
+	for lang, title := range map[string]string{"de": "Prozessautomatisierung", "en": "Process Automation"} {
+		d := getJSON[api.TopicDetail](t, srv, "/api/topics/prozessautomatisierung?lang="+lang, 200)
+		if d.Title != title || string(d.Lang) != lang || d.Intro == "" || d.Summary == "" || len(d.Posts) != 0 {
+			t.Errorf("%s: %+v", lang, d)
+		}
+		if !strings.Contains(d.Intro, "n8n") {
+			t.Errorf("%s: Einführung nennt n8n nicht: %q", lang, d.Intro)
+		}
+		if resp, body := get(t, srv, "/"+lang+"/themen/prozessautomatisierung"); resp.StatusCode != 200 || !strings.Contains(body, title) {
+			t.Errorf("%s: Seite %d", lang, resp.StatusCode)
+		}
+	}
+	if _, sitemap := get(t, srv, "/sitemap.xml"); !strings.Contains(sitemap, "/de/themen/prozessautomatisierung") {
+		t.Error("Themenseite fehlt in der Sitemap")
+	}
+
+	_, err := db.Exec(`INSERT INTO posts (id, slug, status, published_at, featured, updated_at)
+		VALUES (100, 'erster-workflow', 'published', '2026-11-06T08:00:00Z', FALSE, '2026-11-06T08:00:00Z');
+		INSERT INTO post_translations (post_id, lang, title, summary, body_markdown) VALUES (100, 'de', 'Erster Workflow', 'Kurz', 'Text');
+		INSERT INTO post_topics (post_id, topic_id) SELECT 100, id FROM topics WHERE slug = 'prozessautomatisierung';`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := getJSON[api.TopicDetail](t, srv, "/api/topics/prozessautomatisierung?lang=de", 200)
+	if got := strings.Join(slugs(d.Posts), ","); got != "erster-workflow" || d.PostCount != 1 {
+		t.Fatalf("Beiträge: %s (%d)", got, d.PostCount)
 	}
 }
 
