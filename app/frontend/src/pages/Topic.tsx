@@ -13,6 +13,10 @@ import { useHead, usePageFocus } from '../lib/page';
 import { getTopicContent } from '../lib/topicContent';
 import { NotFound } from './NotFound';
 
+/** Erlaubt nach „/“ einen Zeilenumbruch, etwa in „Preis-/Leistungsverhältnis“, ohne den Text zu verändern. */
+const breakAfterSlash = (text: string) =>
+  text.split(/(?<=\/)/).flatMap((part, i) => (i ? [<wbr key={i} />, part] : [part]));
+
 /**
  * Themenseite mit Titel, Einführung und zugeordneten veröffentlichten Beiträgen (Anforderung 3).
  * Das Thema „AI Audit für Unternehmen“ zeigt zusätzlich die Audit-Übersicht (Anforderung 8),
@@ -47,9 +51,9 @@ export function TopicPage() {
         <div lang={contentLang}>
           <p className="eyebrow">{t('topic.eyebrow')}</p>
           <h1 className="page-title" tabIndex={-1} ref={h1}>
-            {tp.title}
+            {breakAfterSlash(tp.title)}
           </h1>
-          {content?.subtitle && <p className="topic-subtitle">{content.subtitle}</p>}
+          {content?.subtitle && <p className="topic-subtitle">{breakAfterSlash(content.subtitle)}</p>}
           <p className="lead">{tp.intro}</p>
           {fallback && <TranslationNotice text={t('fallbackTopic', { language: t(`langName.${tp.lang}`) })} />}
         </div>

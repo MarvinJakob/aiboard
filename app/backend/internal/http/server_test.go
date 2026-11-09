@@ -127,11 +127,11 @@ func TestHealth(t *testing.T) {
 	}
 }
 
-// Anforderung 3 und Tickets #77/#82: fünf Themen mit Titel und Einführung, auch ohne Beiträge.
+// Anforderung 3 und Tickets #77/#82/#83: sechs Themen mit Titel und Einführung, auch ohne Beiträge.
 func TestTopicsAreSeeded(t *testing.T) {
 	srv, _ := newServer(t, false)
 	list := getJSON[api.TopicList](t, srv, "/api/topics?lang=de", 200)
-	want := []string{"KI in der Softwareentwicklung", "AI Audit für Unternehmen", "KI in Data Analytics", "Prozessautomatisierung", "KI-Tipps und Tricks"}
+	want := []string{"KI in der Softwareentwicklung", "AI Audit für Unternehmen", "KI in Data Analytics", "Prozessautomatisierung", "KI-Tipps und Tricks", "Modelle und Kosten: Wie finde ich das beste Preis-/Leistungsverhältnis?"}
 	if len(list.Items) != len(want) {
 		t.Fatalf("%d Themen, erwartet %d", len(list.Items), len(want))
 	}
@@ -264,6 +264,55 @@ func TestProcessAutomationTopic(t *testing.T) {
 	}
 	d := getJSON[api.TopicDetail](t, srv, "/api/topics/prozessautomatisierung?lang=de", 200)
 	if got := strings.Join(slugs(d.Posts), ","); got != "erster-workflow" || d.PostCount != 1 {
+		t.Fatalf("Beiträge: %s (%d)", got, d.PostCount)
+	}
+}
+
+// Ticket #83: Die Themenseite Modelle und Kosten gibt es auf Deutsch und Englisch,
+// mit Metadaten aus content/Modelle und Kosten.md, Sitemap-Eintrag und veröffentlichten Beiträgen.
+func TestModelsAndCostsTopic(t *testing.T) {
+	srv, db := newServer(t, false)
+	want := map[string][4]string{
+		"de": {"Modelle und Kosten: Wie finde ich das beste Preis-/Leistungsverhältnis?", "Modelle und Kosten",
+			"Warum das günstigste Modell nicht automatisch die beste Wahl ist und wie Sie Preis und Leistung selbst vergleichen.",
+			"Ein niedriger Preis je Token sagt wenig darüber aus, was ein brauchbares Ergebnis kostet. Diese Seite zeigt, welche Kosten in die Rechnung gehören, was öffentliche Vergleiche leisten und wie Sie mit eigenen Testaufgaben das passende Modell finden."},
+		"en": {"Models and Costs: How do I find the best price-performance ratio?", "Models and Costs",
+			"Why the cheapest model is not automatically the best choice and how to compare price and performance yourself.",
+			"A low price per token says little about what a usable result costs. This page shows which costs belong in the calculation, what public comparisons can and cannot do, and how to find the right model with your own test tasks."},
+	}
+	for lang, w := range want {
+		list := getJSON[api.TopicList](t, srv, "/api/topics?lang="+lang, 200)
+		var found bool
+		for _, tp := range list.Items {
+			if tp.Slug == "modelle-und-kosten" {
+				found = tp.Label == w[1] && tp.Summary == w[2]
+			}
+		}
+		if !found {
+			t.Errorf("%s: Thema fehlt in /api/topics oder hat falsche Metadaten", lang)
+		}
+		d := getJSON[api.TopicDetail](t, srv, "/api/topics/modelle-und-kosten?lang="+lang, 200)
+		if d.Title != w[0] || d.Label != w[1] || d.Summary != w[2] || d.Intro != w[3] || string(d.Lang) != lang || len(d.Posts) != 0 {
+			t.Errorf("%s: %+v", lang, d)
+		}
+		if resp, body := get(t, srv, "/"+lang+"/themen/modelle-und-kosten"); resp.StatusCode != 200 || !strings.Contains(body, w[0]) {
+			t.Errorf("%s: Seite %d", lang, resp.StatusCode)
+		}
+	}
+	if _, sitemap := get(t, srv, "/sitemap.xml"); !strings.Contains(sitemap, "/de/themen/modelle-und-kosten") || !strings.Contains(sitemap, "/en/themen/modelle-und-kosten") {
+		t.Error("Themenseite fehlt in der Sitemap")
+	}
+
+	_, err := db.Exec(`INSERT INTO posts (id, slug, status, published_at, featured, updated_at)
+		VALUES (100, 'modellwahl', 'published', '2026-11-06T08:00:00Z', FALSE, '2026-11-06T08:00:00Z');
+		INSERT INTO posts (id, slug, status, updated_at) VALUES (101, 'entwurf', 'draft', '2026-11-06T08:00:00Z');
+		INSERT INTO post_translations (post_id, lang, title, summary, body_markdown) VALUES (100, 'de', 'Modellwahl', 'Kurz', 'Text'), (101, 'de', 'Entwurf', 'Kurz', 'Text');
+		INSERT INTO post_topics (post_id, topic_id) SELECT id, (SELECT id FROM topics WHERE slug = 'modelle-und-kosten') FROM posts WHERE id IN (100, 101);`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := getJSON[api.TopicDetail](t, srv, "/api/topics/modelle-und-kosten?lang=de", 200)
+	if got := strings.Join(slugs(d.Posts), ","); got != "modellwahl" || d.PostCount != 1 {
 		t.Fatalf("Beiträge: %s (%d)", got, d.PostCount)
 	}
 }

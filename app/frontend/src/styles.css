@@ -511,14 +511,23 @@ svg { display: block; }
 .topic-hero { display: grid; grid-template-columns: 1.1fr .9fr; align-items: center; gap: clamp(28px, 4vw, 56px); padding-top: 24px; }
 .topic-hero > .art { aspect-ratio: 4 / 3; border-radius: var(--radius-xl); box-shadow: var(--shadow-card-hover); }
 .topic-hero > div { min-width: 0; overflow-wrap: anywhere; }
+/* Lange Komposita wie „Preis-/Leistungsverhältnis“ an Silbengrenzen statt mitten im Wort umbrechen. */
+.topic-hero .page-title, .topic-subtitle { hyphens: auto; }
 .topic-subtitle { margin-top: 16px; font-size: clamp(1.25rem, 2.5vw, 1.65rem); font-weight: 600; line-height: 1.35; }
 .topic-content { max-width: 760px; margin: clamp(40px, 6vw, 72px) auto 0; overflow-wrap: anywhere; }
 .prose--topic > p:first-child { padding: 20px 24px; border-left: 4px solid var(--accent); border-radius: var(--radius-s); background: var(--surface); }
+.prose--topic .topic-hook { padding: 20px 24px; border-left: 4px solid var(--accent); border-radius: var(--radius-s); background: var(--surface); }
+.prose--topic .topic-hook > p:first-child { font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 700; line-height: 1.25; letter-spacing: -.02em; }
+.prose--topic .topic-hook > p + p { margin-top: .6em; }
 .prose--topic code { font-size: .9em; overflow-wrap: anywhere; }
+.prose--topic pre { margin: 1.4em 0; padding: 16px 20px; border: 1px solid var(--border-strong); border-radius: var(--radius-s); background: var(--surface); font-size: .95rem; line-height: 1.6; white-space: pre-wrap; }
 .topic-table { max-width: 100%; margin: 1.4em 0; overflow-x: auto; border: 1px solid var(--border-strong); border-radius: var(--radius-s); background: var(--surface); }
 .topic-table table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 1rem; line-height: 1.55; }
 .topic-table th, .topic-table td { padding: 12px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border-strong); }
 .topic-table th { background: var(--fill); }
+/* Zellen nicht mitten im Wort umbrechen; die Tabelle scrollt stattdessen. Rechtsbündige Zahlen bleiben einzeilig. */
+.topic-table th, .topic-table td { overflow-wrap: normal; hyphens: auto; }
+.topic-table [style*="text-align: right"], .topic-table code { white-space: nowrap; }
 .prose--topic [id^="topic-source-"] { scroll-margin-top: 110px; }
 .prose--topic [id^="topic-source-"]:focus { outline: 3px solid var(--accent); outline-offset: 3px; }
 .prose--topic .task-list-item { list-style: none; }

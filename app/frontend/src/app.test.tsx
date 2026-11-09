@@ -433,7 +433,11 @@ describe('Ticket #21: AI Audit als eigener Navigationseintrag', () => {
     const menu = document.querySelector('.popover') as HTMLElement;
     const links = await within(menu).findAllByRole('link');
     expect(links.map((l) => l.getAttribute('href'))).toEqual([
-      '/de/themen/softwareentwicklung', '/de/themen/data-analytics', '/de/themen/prozessautomatisierung', '/de/themen/ki-tipps-und-tricks',
+      '/de/themen/softwareentwicklung',
+      '/de/themen/data-analytics',
+      '/de/themen/prozessautomatisierung',
+      '/de/themen/ki-tipps-und-tricks',
+      '/de/themen/modelle-und-kosten',
     ]);
     expect(within(menu).queryByRole('link', { name: /AI Audit/ })).not.toBeInTheDocument();
     await user.click(within(menu).getByRole('link', { name: /KI in Data Analytics/ }));
