@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Icon } from '../components/Icon';
 import { Rich } from '../components/Rich';
-import { SourceList } from '../components/SourceList';
 import { AI_USES_PATH, home, type FocusTopic } from '../i18n/home';
 import { auditPath } from '../lib/audit';
 import { jumpTo } from '../lib/jump';
@@ -13,8 +12,8 @@ import { useHead, usePageFocus } from '../lib/page';
 const FOCUS_ID = 'fokus-title';
 
 /**
- * Startseite nach der Textvorlage content/Landingpage.md (Ticket #78): Hook, Aktuell im Fokus und Grundlagen,
- * danach die Quellen zu den belegten Zahlen. Alle Texte stehen in i18n/home.ts; die Themenkarten sind statisch,
+ * Startseite nach der Textvorlage content/Landingpage.md (Ticket #78): Hook, Aktuell im Fokus und Grundlagen.
+ * Ohne Quellenverweise (Ticket #91); die Belege stehen als Kommentar in i18n/home.ts. Die Themenkarten sind statisch,
  * weil jede Karte einen eigenen Aufhänger und Linktext aus der Vorlage hat, den die Themen-API nicht kennt.
  */
 export function Home() {
@@ -27,7 +26,7 @@ export function Home() {
     <div className="landing">
       <section className="container landing-hero" aria-labelledby="hero-title">
         <p className="hook">
-          <Rich text={c.hook} />
+          {c.hook}
         </p>
         <h1 className="display" id="hero-title" tabIndex={-1} ref={h1}>
           {c.display1}
@@ -47,7 +46,6 @@ export function Home() {
 
       <Focus />
       <Basics />
-      <SourceList title={c.sourcesTitle} sources={c.sources} />
     </div>
   );
 }
@@ -158,7 +156,7 @@ const TOPIC_ART: Record<string, { bg: string; art?: ReactNode }> = {
 
 /**
  * Themenkarte mit fett gesetztem Aufhänger. Nur der Textlink führt zur Themenseite; per CSS deckt er die
- * ganze Karte ab. So bleiben die Quellenverweise im Aufhänger eigene Links statt verschachtelter Links.
+ * ganze Karte ab. So bleibt die Karte ohne verschachtelte interaktive Elemente und hat einen klaren Linktext.
  */
 function TopicCard({ topic }: { topic: FocusTopic }) {
   const { lang } = useLang();
@@ -175,9 +173,7 @@ function TopicCard({ topic }: { topic: FocusTopic }) {
       <div className="topic-body">
         <h3>{topic.title}</h3>
         <p className="topic-hook">
-          <strong>
-            <Rich text={topic.hook} />
-          </strong>
+          <strong>{topic.hook}</strong>
         </p>
         <p>
           <Rich text={topic.text} />
@@ -199,15 +195,13 @@ function Basics() {
         <div>
           <p className="eyebrow">{c.basicsEyebrow}</p>
           <h2 id="ki-title">{c.basicsTitle}</h2>
-          <p className="lead">
-            <Rich text={c.basicsText} />
-          </p>
+          <p className="lead">{c.basicsText}</p>
         </div>
         <div className="check">
           <h3>{c.checkTitle}</h3>
           {c.checkText.map((p, i) => (
             <p className="muted" key={i}>
-              <Rich text={p} />
+              {p}
             </p>
           ))}
         </div>
@@ -215,9 +209,7 @@ function Basics() {
 
       <div className="limits-intro">
         <h3>{c.limitsTitle}</h3>
-        <p className="muted">
-          <Rich text={c.limitsText} />
-        </p>
+        <p className="muted">{c.limitsText}</p>
       </div>
       <ul className="limits">
         {c.limits.map((l, i) => (
@@ -227,7 +219,7 @@ function Basics() {
                 <Icon name={(['alert', 'clock', 'target'] as const)[i]} />
                 {l.title}
               </strong>{' '}
-              <Rich text={l.text} />
+              {l.text}
             </p>
           </li>
         ))}

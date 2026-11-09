@@ -7,13 +7,6 @@ export interface Source {
 }
 
 /**
- * Fließtext mit Quellenverweisen: Texte stehen unverändert, eine Zahl wird zum hochgestellten Verweis
- * auf diese Quellennummer, `{ code }` zu Inline-Code. So bleibt der Wortlaut der Textvorlage erhalten
- * und der Verweis steht direkt hinter der belegten Aussage.
- */
-export type RichText = (string | number | { code: string })[];
-
-/**
  * Quellen einer Sprache: übernimmt die gemeinsame Liste und ergänzt je Quellennummer
  * übersetzte Angaben (`local`) und einen Hinweis, was die Quelle belegt (`notes`).
  */

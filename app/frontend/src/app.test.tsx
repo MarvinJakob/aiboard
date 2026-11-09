@@ -15,8 +15,8 @@ const FOCUS_CARDS = [
   ['Prozessautomatisierung', 'Welche Aufgabe würden Sie nie wieder von Hand erledigen?', 'Humans in the Loop mit n8n', '/de/themen/prozessautomatisierung'],
   ['Softwareentwicklung', 'Ein Verbot im Prompt verhindert noch keinen Zugriff.', 'KI-Assistenten mit Guardrails anleiten', '/de/themen/softwareentwicklung'],
   ['Data Analytics', 'Was genau ist eigentlich „der Umsatz im letzten Monat“?', 'Daten verstehen und auswerten', '/de/themen/data-analytics'],
-  ['KI-Tipps und Tricks', '50,5 statt 33,9 Prozent.6', 'Skills, die Sie kennen sollten', '/de/themen/ki-tipps-und-tricks'],
-  ['Modelle und Kosten', '4,50 oder 450 US-Dollar?7', 'Das beste Preis-Leistungs-Verhältnis finden', '/de/themen/modelle-und-kosten'],
+  ['KI-Tipps und Tricks', '50,5 statt 33,9 Prozent.', 'Skills, die Sie kennen sollten', '/de/themen/ki-tipps-und-tricks'],
+  ['Modelle und Kosten', '4,50 oder 450 US-Dollar?', 'Das beste Preis-Leistungs-Verhältnis finden', '/de/themen/modelle-und-kosten'],
 ] as const;
 
 describe('Ticket #78: Startseite nach content/Landingpage.md', () => {
@@ -34,10 +34,9 @@ describe('Ticket #78: Startseite nach content/Landingpage.md', () => {
       'H2 Was ist KI – und was kann man damit machen?',
       'H3 KI hilft dort, wo sich Ergebnisse prüfen lassen.',
       'H3 Wer versteht, wie KI funktioniert, erkennt ihre Grenzen.',
-      'H2 Quellen',
     ]);
     expect(screen.getByText(/^Jedes vierte Unternehmen in Deutschland nutzt bereits KI\./)).toHaveTextContent(
-      'Jedes vierte Unternehmen in Deutschland nutzt bereits KI.1 Die spannende Frage ist: wofür – und wie gut?',
+      'Jedes vierte Unternehmen in Deutschland nutzt bereits KI. Die spannende Frage ist: wofür – und wie gut?',
     );
     expect(
       screen.getByText('Einordnungen und Erfahrungen für Unternehmen, die künstliche Intelligenz verantwortungsvoll nutzen wollen. Ohne Hype, mit Substanz.'),
@@ -57,7 +56,7 @@ describe('Ticket #78: Startseite nach content/Landingpage.md', () => {
     cards.forEach((card, i) => {
       const [title, hook, link, path] = FOCUS_CARDS[i];
       expect(within(card).getByRole('heading', { level: 3 })).toHaveTextContent(title);
-      expect(card.querySelector('strong')).toHaveTextContent(hook);
+      expect(card.querySelector('strong')!.textContent).toBe(hook);
       expect(card.querySelectorAll('p')).toHaveLength(2);
       expect(card.querySelectorAll('p')[1].textContent!.length).toBeGreaterThan(100);
       expect(within(card).getByRole('link', { name: link })).toHaveAttribute('href', path);
@@ -112,26 +111,16 @@ describe('Ticket #78: Startseite nach content/Landingpage.md', () => {
     ]);
   });
 
-  it('belegt Zahlen und Studien mit Quellenverweisen, ohne die Seite zu wechseln', async () => {
-    const user = userEvent.setup();
-    const { router } = renderApp('/de');
+  it.each([
+    ['de', 'Quellen'],
+    ['en', 'Sources'],
+  ])('Ticket #91: zeigt auf /%s keine Quellenverweise und keine Quellenliste', async (lang, title) => {
+    renderApp(`/${lang}`);
     await screen.findByRole('heading', { level: 1 });
-    const sources = screen.getByRole('region', { name: 'Quellen' });
-    expect(within(sources).getAllByRole('listitem')).toHaveLength(7);
-    for (const [n, url] of [
-      [1, 'destatis.de'],
-      [4, 'metr.org'],
-      [6, 'arxiv.org/abs/2602.12670'],
-      [7, 'developers.openai.com/api/docs/pricing'],
-    ] as const) {
-      expect(screen.getAllByRole('link', { name: `Quelle ${n}` }).length).toBeGreaterThan(0);
-      expect(within(document.getElementById(`quelle-${n}`)!).getByRole('link')).toHaveAttribute('href', expect.stringContaining(url));
-    }
-
-    await user.click(screen.getByRole('link', { name: 'Quelle 4' }));
-    expect(document.getElementById('quelle-4')).toHaveFocus();
-    expect(router.state.location.pathname).toBe('/de');
-    expect(router.state.location.hash).toBe('');
+    const main = screen.getByRole('main');
+    expect(main.querySelector('sup, .fn, [id^="quelle-"]')).toBeNull();
+    expect(within(main).queryByRole('link', { name: /^(Quelle|Source) \d+$/ })).not.toBeInTheDocument();
+    expect(within(main).queryByRole('heading', { name: title })).not.toBeInTheDocument();
   });
 
   it('ist vollständig auf Englisch verfügbar', async () => {
@@ -145,7 +134,6 @@ describe('Ticket #78: Startseite nach content/Landingpage.md', () => {
     expect(within(focus).getByRole('link', { name: 'Find the best value for money' })).toHaveAttribute('href', '/en/themen/modelle-und-kosten');
     expect(screen.getByRole('heading', { level: 2, name: 'What is AI – and what can you do with it?' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Read the detailed overview' })).toHaveAttribute('href', '/en/ki-einsatzfelder');
-    expect(screen.getAllByRole('link', { name: 'Source 1' }).length).toBeGreaterThan(0);
     expect(document.title).toBe('KI Perspektiven');
   });
 });
