@@ -32,6 +32,10 @@ desktop.ini
 ~$*
 .~lock.*
 
+# Private SSH-Schlüssel
+.ssh/
+.token/
+
 # Lokale Einstellungen der Werkzeuge
-.claude/settings.local.json
-.claude/worktrees/
+.claude/
+.worktrees/

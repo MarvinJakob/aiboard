@@ -9,7 +9,9 @@ Dieses Repository enthält die Webseite „KI Perspektiven“, einen klickbaren 
 | [AGENTS.md](AGENTS.md) | Arbeitsregeln für das Repository, etwa für Recherchen und Anforderungen. |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Technisches Konzept: Frontend und Backend, API, Datenmodell und Betrieb. |
 | [DESIGN.md](DESIGN.md) | Gestaltungskonzept mit Farben, Typografie, Komponenten und Vorgaben zur Barrierefreiheit. |
-| [mock/index.html](mock/index.html) | Klickbarer HTML-Entwurf zur Vorschau des Designs. |
+| [mock/design/index.html](mock/design/index.html) | Klickbarer HTML-Entwurf zur Vorschau des Designs. |
+| [mock/profil/index.html](mock/profil/index.html) | Profilentwurf für Marvin Jakob mit AI-Schwerpunkten und Projekterfahrung. |
+| [ressources/profil/](ressources/profil/) | Porträtbilder für den Profilentwurf. |
 | [app/README.md](app/README.md) | Einstieg in die lokale Entwicklung: Anwendung starten, Tests ausführen, Code erzeugen und Konfiguration nachschlagen. |
 | [app/docs/adr/](app/docs/adr/) | Dokumentierte Architekturentscheidungen und ihre Begründungen. |
 | [LICENSE](LICENSE) | Lizenz des Repositorys. |

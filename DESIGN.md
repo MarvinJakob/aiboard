@@ -1,6 +1,6 @@
 # Design-Konzept: KI-Webseite im Liquid-Glass-Stil
 
-> **Stand:** 2026-11-05 · **Arbeitstitel:** „KI Perspektiven“ (Platzhalter für Name und Logo) · **Mock:** [mock/index.html](mock/index.html)
+> **Stand:** 2026-11-05 · **Arbeitstitel:** „KI Perspektiven“ (Platzhalter für Name und Logo) · **Mock:** [mock/design/index.html](mock/design/index.html)
 
 Dieses Dokument beschreibt Gestaltung und Bedienlogik der neuen KI-Webseite. Es überträgt die acht Design-Prinzipien aus Apples Human Interface Guidelines (HIG) auf eine Webseite und legt fest, wie das Liquid-Glass-Layout im Browser umgesetzt wird. Fachliche Grundlage sind die Anforderungen 1 bis 7 im Ordner [requirements](requirements).
 
@@ -295,7 +295,8 @@ Gedrückte Bedienelemente skalieren kurz auf 95 %. Bei `prefers-reduced-motion: 
 
 ## 11 Mock
 
-- **Datei:** [mock/index.html](mock/index.html). Sie ist eigenständig, ohne Build und ohne externe Abhängigkeiten. Ein Doppelklick öffnet sie im Browser.
+- **Datei:** [mock/design/index.html](mock/design/index.html). Sie ist eigenständig, ohne Build und ohne externe Abhängigkeiten. Ein Doppelklick öffnet sie im Browser.
+- **Profilentwurf:** [mock/profil/index.html](mock/profil/index.html) zeigt Marvin Jakob, seine fachlichen Schwerpunkte und ausgewählte Projekte.
 - **Ansichten:**
 
 | Ansicht | URL |

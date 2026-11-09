@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Marvin Jakob verbindet Softwareentwicklung, Cloud-Architektur und Business Analyse zu einer praxisnahen Perspektive auf angewandte AI.">
+  <title>Marvin Jakob · Profil · KI Perspektiven</title>
+  <style>
+    :root {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", sans-serif;
+      color-scheme: light;
+      --bg: #eef1f6; --surface: #fff; --text: #0d1320; --muted: #4a5466;
+      --accent: #0a5fd6; --accent-ink: #fff; --line: #d8dee8; --fill: #e5ebf4;
+      --glass: rgba(255,255,255,.8); --edge: rgba(255,255,255,.9);
+      --indigo: #eeedff; --teal: #e5f4ef; --orange: #fff0e3;
+      --shadow: 0 12px 40px -24px #17284c55;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #0a0c11; --surface: #151922; --text: #f1f3f7; --muted: #b4bdcc;
+        --accent: #80b7ff; --accent-ink: #0a172a; --line: #364052; --fill: #242e40;
+        --glass: rgba(21,25,34,.88); --edge: #485164;
+        --indigo: #292642; --teal: #18372f; --orange: #3a2a20;
+      }
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0a0c11; --surface: #151922; --text: #f1f3f7; --muted: #b4bdcc;
+      --accent: #80b7ff; --accent-ink: #0a172a; --line: #364052; --fill: #242e40;
+      --glass: rgba(21,25,34,.88); --edge: #485164;
+      --indigo: #292642; --teal: #18372f; --orange: #3a2a20;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 110px; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-size: 17px; line-height: 1.6; }
+    body::before { content: ""; position: absolute; inset: 0 0 auto; height: 850px; z-index: -1; background: radial-gradient(ellipse at 15% 20%, #8b94ed25, transparent 55%), radial-gradient(ellipse at 100% 25%, #70bcca22, transparent 55%); }
+    a { color: inherit; text-underline-offset: 5px; }
+    button, select { font: inherit; }
+    a, button, select, summary { -webkit-tap-highlight-color: transparent; }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
+    .skip { position: fixed; left: 20px; top: -100px; z-index: 10; background: var(--surface); padding: 12px 20px; border-radius: 12px; }
+    .skip:focus { top: 12px; }
+    .wrap { max-width: 1120px; margin-inline: auto; }
+    .header { position: sticky; top: 16px; z-index: 5; padding: 0 24px; margin-top: 16px; }
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; padding: 8px 12px 8px 20px; border-radius: 999px; background: var(--glass); border: 1px solid var(--edge); backdrop-filter: blur(22px) saturate(180%); box-shadow: var(--shadow); }
+    .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 750; letter-spacing: -.03em; white-space: nowrap; min-height: 44px; }
+    .brand-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; color: white; background: #0d1320; font-size: 14px; letter-spacing: -.05em; }
+    .nav { display: flex; align-items: center; gap: 4px; }
+    .nav a { padding: 10px 18px; min-height: 44px; text-decoration: none; border-radius: 999px; font-size: 14px; font-weight: 650; }
+    .nav a:hover, .nav a[aria-current] { background: var(--fill); }
+    .nav a[aria-current] { color: var(--accent); }
+    main { max-width: 1120px; margin: 0 auto; padding: 48px 0 0; }
+    .breadcrumb { display: flex; gap: 10px; align-items: center; color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+    .breadcrumb a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; }
+    .hero { display: grid; grid-template-columns: 1.3fr 1fr; gap: 64px; align-items: center; padding-bottom: 64px; }
+    .eyebrow { display: flex; align-items: center; gap: 10px; color: var(--accent); font-size: 12px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 20px; }
+    .eyebrow::before { content: ""; width: 24px; height: 2px; background: currentColor; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2, h3 { text-wrap: balance; }
+    h1 { font-size: clamp(44px, 5.6vw, 72px); line-height: 1.04; letter-spacing: -.055em; margin-bottom: 24px; font-weight: 750; }
+    .hero-line { font-size: clamp(26px, 3vw, 38px); line-height: 1.2; letter-spacing: -.035em; font-weight: 650; margin-bottom: 24px; max-width: 520px; }
+    .hero-line span { color: var(--accent); }
+    .intro { color: var(--muted); max-width: 515px; margin-bottom: 28px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
+    .tag { border: 1px solid var(--line); padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 650; }
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: 28px; min-height: 48px; padding: 12px 22px; background: var(--accent); color: var(--accent-ink); border-radius: 999px; font-weight: 650; font-size: 14px; text-decoration: none; transition: transform .16s; }
+    .button:hover { transform: translateY(-2px); }
+    .portrait { margin: 0; position: relative; }
+    .portrait img { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1.08; object-fit: cover; object-position: center; border-radius: 120px 32px 32px 32px; }
+    .portrait figcaption { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--muted); padding: 16px 4px 0; }
+    .portrait figcaption strong { color: var(--text); font-weight: 650; }
+    .facts { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding-block: 28px; margin-bottom: 88px; }
+    .fact { padding: 0 32px; border-right: 1px solid var(--line); }
+    .fact:first-child { padding-left: 0; }
+    .fact:last-child { border: 0; }
+    .fact strong { display: block; font-size: 23px; letter-spacing: -.035em; font-weight: 700; }
+    .fact span { display: block; font-size: 13px; color: var(--muted); margin-top: 4px; }
+    section { scroll-margin-top: 20px; }
+    .section-head { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: end; margin-bottom: 32px; }
+    .section-head .eyebrow { margin-bottom: 16px; }
+    h2 { font-size: clamp(28px, 3.3vw, 40px); line-height: 1.15; letter-spacing: -.04em; margin-bottom: 0; }
+    .section-head > p { color: var(--muted); font-size: 15px; margin-bottom: 0; }
+    .expertise { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card { padding: 28px; border-radius: 28px; background: var(--surface); border: 1px solid var(--line); }
+    .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+    .symbol { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 16px; background: var(--indigo); font: 700 20px ui-monospace, monospace; }
+    .card:nth-child(2) .symbol { background: var(--teal); }
+    .card:nth-child(3) .symbol { background: var(--orange); }
+    .number { font-size: 12px; color: var(--muted); }
+    h3 { font-size: 21px; line-height: 1.3; letter-spacing: -.025em; margin-bottom: 14px; }
+    .card p { font-size: 15px; color: var(--muted); margin-bottom: 24px; }
+    .card .application { padding-top: 20px; border-top: 1px solid var(--line); margin-bottom: 0; }
+    .application strong { display: block; color: var(--text); margin-bottom: 5px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+    .approach { margin: 24px 0 88px; padding: 24px 28px; border-left: 3px solid var(--accent); }
+    .approach p { max-width: 850px; font-size: 20px; line-height: 1.5; letter-spacing: -.015em; margin: 0; }
+    .projects { margin-bottom: 88px; }
+    .project { border-top: 1px solid var(--line); }
+    .project:last-child { border-bottom: 1px solid var(--line); }
+    .project summary { display: grid; grid-template-columns: 140px 1fr 32px; align-items: center; gap: 24px; padding: 24px 0; cursor: pointer; list-style: none; }
+    .project summary::-webkit-details-marker { display: none; }
+    .project summary::after { content: "+"; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; height: 32px; font-size: 22px; font-weight: 400; }
+    .project[open] summary::after { content: "−"; }
+    .period { color: var(--muted); font-size: 13px; }
+    .project-title { display: block; font-size: 18px; line-height: 1.4; font-weight: 650; letter-spacing: -.02em; }
+    .project-role { display: block; font-size: 13px; color: var(--muted); font-weight: 400; margin-top: 4px; }
+    .project-body { padding: 0 56px 28px 164px; max-width: 940px; }
+    .project-body p { color: var(--muted); font-size: 15px; margin-bottom: 16px; }
+    .project-body .tags { margin: 0; }
+    .about { background: var(--surface); border-radius: 32px; padding: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 64px; border: 1px solid var(--line); margin-bottom: 64px; }
+    .about h2 { margin-bottom: 24px; }
+    .about p { color: var(--muted); font-size: 15px; margin-bottom: 0; }
+    .credentials { margin: 0; }
+    .credentials div { padding: 16px 0; border-bottom: 1px solid var(--line); }
+    .credentials div:first-child { padding-top: 0; }
+    .credentials div:last-child { padding-bottom: 0; border: 0; }
+    .credentials dt { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+    .credentials dd { margin: 0; font-size: 15px; font-weight: 600; }
+    .explore { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 64px; }
+    .explore h2 { font-size: 28px; }
+    .explore a { color: var(--accent); font-size: 15px; font-weight: 650; padding-block: 12px; }
+    footer { border-top: 1px solid var(--line); padding: 28px 24px; }
+    .footer-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+    .footer-row p { font-size: 12px; color: var(--muted); margin: 0; }
+    .display-control { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--muted); }
+    select { min-height: 44px; padding: 8px 32px 8px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); font-size: 13px; }
+    @media (max-width: 1200px) { main { margin-inline: 32px; } }
+    @media (max-width: 800px) {
+      .hero { gap: 32px; grid-template-columns: 1.2fr 1fr; }
+      .portrait img { border-top-left-radius: 72px; }
+      .section-head { gap: 32px; }
+      .expertise { grid-template-columns: 1fr; }
+      .card { display: grid; grid-template-columns: 56px 1fr; column-gap: 20px; }
+      .card-top { grid-row: 1 / 4; flex-direction: column; justify-content: start; gap: 16px; margin: 0; }
+      .card h3, .card p { grid-column: 2; }
+      .about { gap: 32px; }
+      .fact { padding-inline: 20px; }
+      .fact strong { font-size: 20px; }
+    }
+    @media (max-width: 600px) {
+      .header { top: 8px; margin-top: 8px; padding-inline: 12px; }
+      .bar { padding: 6px 8px 6px 12px; min-height: 58px; gap: 8px; }
+      .brand-name { display: none; }
+      .nav a { padding-inline: 12px; font-size: 13px; }
+      main { margin-inline: 20px; padding-top: 24px; }
+      .breadcrumb { margin-bottom: 20px; }
+      .hero { grid-template-columns: 1fr; gap: 36px; padding-bottom: 36px; }
+      .hero-line { font-size: 30px; }
+      .hero .tags { margin-bottom: 24px; }
+      .portrait img { aspect-ratio: 1.15; border-radius: 72px 24px 24px 24px; object-position: center 42%; }
+      .facts { grid-template-columns: 1fr; gap: 20px; margin-bottom: 56px; }
+      .fact, .fact:first-child { padding: 0; border: 0; }
+      .section-head { grid-template-columns: 1fr; gap: 20px; }
+      .card { display: block; padding: 24px; }
+      .card-top { flex-direction: row; justify-content: space-between; margin-bottom: 24px; }
+      .symbol { width: 40px; height: 40px; border-radius: 12px; }
+      .approach { padding: 16px 20px; margin-bottom: 56px; }
+      .approach p { font-size: 18px; }
+      .projects { margin-bottom: 56px; }
+      .project summary { grid-template-columns: 1fr 32px; gap: 8px 12px; }
+      .period { grid-column: 1; }
+      .project-heading { grid-column: 1; }
+      .project summary::after { grid-column: 2; grid-row: 1 / 3; }
+      .project-body { padding: 0 0 24px; }
+      .about { padding: 28px; grid-template-columns: 1fr; gap: 28px; margin-bottom: 40px; }
+      .explore { align-items: start; flex-direction: column; gap: 12px; padding-bottom: 40px; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition: none !important; } }
+    @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) { .bar { background: var(--surface); backdrop-filter: none; border-color: var(--text); } }
+    @supports not (backdrop-filter: blur(1px)) { .bar { background: var(--surface); } }
+    @media (forced-colors: active) { .button, .brand-icon, .symbol { border: 1px solid ButtonText; } .bar { background: Canvas; border-color: CanvasText; } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#inhalt">Zum Inhalt springen</a>
+  <header class="header">
+    <div class="bar wrap">
+      <a class="brand" href="../design/index.html#/" aria-label="KI Perspektiven – Startseite"><span class="brand-icon" aria-hidden="true">ki.</span><span class="brand-name">KI Perspektiven</span></a>
+      <nav class="nav" aria-label="Hauptnavigation">
+        <a href="../design/index.html#/thema/software">Themen</a>
+        <a href="../design/index.html#/blog">Blog</a>
+        <a href="./index.html" aria-current="page">Profil</a>
+      </nav>
+    </div>
+  </header>
+  <main id="inhalt" tabindex="-1">
+    <nav class="breadcrumb" aria-label="Brotkrumen"><a href="../design/index.html#/">Startseite</a><span aria-hidden="true">/</span><span>Marvin Jakob</span></nav>
+    <section class="hero" aria-labelledby="profil-titel">
+      <div>
+        <p class="eyebrow">Die Person hinter der Perspektive</p>
+        <h1 id="profil-titel">Marvin Jakob.</h1>
+        <p class="hero-line">Technologie verstehen.<br><span>AI in die Praxis bringen.</span></p>
+        <p class="intro">AI entfaltet ihren Wert dort, wo sie ein konkretes Problem löst. Marvin verbindet Softwareentwicklung, Cloud-Architektur und Business Analyse – mit einem klaren Blick dafür, was Unternehmen in der Praxis brauchen.</p>
+        <div class="tags" aria-label="Schwerpunkte"><span class="tag">Applied AI</span><span class="tag">Software Engineering</span><span class="tag">Business Analyse</span></div>
+        <a class="button" href="#expertise">Meine Expertise entdecken <span aria-hidden="true">↗</span></a>
+      </div>
+      <figure class="portrait">
+        <img src="../../ressources/profil/MarvinJakob.jpg" alt="Illustratives Porträt von Marvin Jakob vor einem farbigen Hintergrund" width="1024" height="1024" fetchpriority="high">
+        <figcaption><strong>Entwickler. Analytiker. Gestalter.</strong><span>Marvin Jakob</span></figcaption>
+      </figure>
+    </section>
+    <div class="facts" aria-label="Erfahrung auf einen Blick">
+      <div class="fact"><strong>Seit 2011</strong><span>Projekterfahrung in der Softwareentwicklung</span></div>
+      <div class="fact"><strong>Technik &amp; Fachlichkeit</strong><span>Von der Anforderung bis zum Betrieb</span></div>
+      <div class="fact"><strong>Cloud &amp; Daten</strong><span>Architektur, Schnittstellen und Integration</span></div>
+    </div>
+    <section id="expertise" aria-labelledby="expertise-titel">
+      <div class="section-head">
+        <div><p class="eyebrow">Warum Marvin für AI steht</p><h2 id="expertise-titel">AI braucht mehr<br>als ein gutes Modell.</h2></div>
+        <p>Marvins Perspektive auf angewandte AI beruht auf drei Stärken: Er versteht die Technologie, die Daten und die Abläufe dahinter. Diese Verbindung ist die Grundlage, um AI sinnvoll in Unternehmen einzusetzen.</p>
+      </div>
+      <div class="expertise">
+        <article class="card">
+          <div class="card-top"><span class="symbol" aria-hidden="true">&lt;/&gt;</span><span class="number">01 / Engineering</span></div>
+          <h3>AI in bestehende<br>Systeme integrieren.</h3>
+          <p>Java, Spring Boot, Microservices und REST-APIs gehören zu Marvins Projekterfahrung. Er kennt die Arbeit an Schnittstellen, Cloud-Infrastrukturen und produktiven Anwendungen.</p>
+          <p class="application"><strong>Der Mehrwert für AI</strong>Eine technische Grundlage, um AI-Funktionen in nutzbare Software und bestehende Abläufe einzubinden.</p>
+        </article>
+        <article class="card">
+          <div class="card-top"><span class="symbol" aria-hidden="true">◎</span><span class="number">02 / Business</span></div>
+          <h3>Mit dem richtigen<br>Problem beginnen.</h3>
+          <p>Als Business Analyst und Projektleiter analysiert Marvin Anforderungen, modelliert Prozesse und stimmt Lösungen mit Fachbereichen ab. Der Ausgangspunkt ist der konkrete Bedarf.</p>
+          <p class="application"><strong>Der Mehrwert für AI</strong>Anwendungsfälle anhand ihres Nutzens und ihrer Umsetzbarkeit bewerten und verständlich beschreiben.</p>
+        </article>
+        <article class="card">
+          <div class="card-top"><span class="symbol" aria-hidden="true">≋</span><span class="number">03 / Data &amp; Operations</span></div>
+          <h3>Daten und Betrieb<br>zusammendenken.</h3>
+          <p>Telematik-Auswertung, Monitoring und der Betrieb einer Dispositionsplattform prägen Marvins Erfahrung. Dazu kommen Datenmodellierung, Testautomatisierung und Cloud-Migration.</p>
+          <p class="application"><strong>Der Mehrwert für AI</strong>Datenflüsse, Qualität und Betriebsanforderungen früh in die Planung einer AI-Anwendung einbeziehen.</p>
+        </article>
+      </div>
+      <aside class="approach" aria-label="Fachlicher Ansatz"><p>Der Maßstab für sinnvolle AI: ein klares Problem, geeignete Daten und eine Lösung, die im Arbeitsalltag funktioniert.</p></aside>
+    </section>
+    <section class="projects" id="projekte" aria-labelledby="projekte-titel">
+      <div class="section-head">
+        <div><p class="eyebrow">Erfahrung, auf der das aufbaut</p><h2 id="projekte-titel">Aus der Praxis.</h2></div>
+        <p>Ausgewählte Software- und Digitalisierungsprojekte aus Marvins Werdegang. Sie zeigen das fachliche und technische Fundament seiner Perspektive auf AI.</p>
+      </div>
+      <details class="project" open>
+        <summary><span class="period">2023 – 2024</span><span class="project-heading"><span class="project-title">Eine Dispositionsplattform in die Cloud bringen</span><span class="project-role">Luft- und Raumfahrt · IT Service Owner &amp; Projektleiter</span></span></summary>
+        <div class="project-body"><p>Betrieb, Weiterentwicklung und Cloud-Migration eines Personaldispositionssystems. Marvin koordinierte Provider und Projektarbeit und arbeitete am Aufbau stabiler Prozesse. Diese Erfahrung schärft den Blick für die Anforderungen an produktive Systeme.</p><div class="tags"><span class="tag">Azure</span><span class="tag">ITSM</span><span class="tag">Governance &amp; IT-Sicherheit</span></div></div>
+      </details>
+      <details class="project">
+        <summary><span class="period">2020 – 2022</span><span class="project-heading"><span class="project-title">Monitoring von der Konzeption bis zum Betrieb</span><span class="project-role">Rechenzentren · Full Stack Entwickler &amp; Technischer Lead</span></span></summary>
+        <div class="project-body"><p>Planung und Implementierung von Monitoring-Systemen für Gebäudeautomatisierung und Energieaudit. Zu Marvins Aufgaben gehörten die Bewertung von Anforderungen, die Koordination internationaler Entwicklungsteams, REST-Services sowie Tests und Inbetriebnahme.</p><div class="tags"><span class="tag">Java &amp; Spring Boot</span><span class="tag">Angular</span><span class="tag">SQL</span></div></div>
+      </details>
+      <details class="project">
+        <summary><span class="period">2019 – 2020</span><span class="project-heading"><span class="project-title">Telematik-Daten nutzbar machen</span><span class="project-role">Entsorgungslogistik · Softwarearchitekt, Entwickler &amp; Product Owner</span></span></summary>
+        <div class="project-body"><p>Konzeption und Entwicklung einer Microservice-Infrastruktur zur Auswertung und Darstellung von Telematik-Daten. Marvin verband Anforderungsanalyse und Priorisierung mit Softwarearchitektur, API-Entwicklung und Integration.</p><div class="tags"><span class="tag">Microservices</span><span class="tag">MongoDB &amp; MSSQL</span><span class="tag">API-Integration</span></div></div>
+      </details>
+    </section>
+    <section class="about" aria-labelledby="basis-titel">
+      <div><p class="eyebrow">Fachliches Fundament</p><h2 id="basis-titel">Technische Tiefe.<br>Gemeinsames Verständnis.</h2><p>Marvin bringt Entwicklung und Fachbereiche zusammen. Seine Arbeit verbindet analytisches Denken mit Kommunikation, strukturierten Anforderungen und agiler Projektarbeit – damit aus einer Idee eine umsetzbare Lösung wird.</p></div>
+      <dl class="credentials"><div><dt>Studium</dt><dd>Softwaretechnik &amp; Praktische Informatik<br><span>Duales Studium</span></dd></div><div><dt>Ausbildung</dt><dd>Fachinformatiker für Anwendungsentwicklung</dd></div><div><dt>Zertifizierung laut Lebenslauf</dt><dd>AWS Certified Cloud Practitioner</dd></div><div><dt>Arbeitsfelder</dt><dd>Business Analyse · Softwarearchitektur · Agiles Projektmanagement</dd></div></dl>
+    </section>
+    <section class="explore" aria-labelledby="weiter-titel"><h2 id="weiter-titel">Mehr Perspektiven auf AI.</h2><a href="../design/index.html#/blog">Zum Blog <span aria-hidden="true">↗</span></a></section>
+  </main>
+  <footer><div class="footer-row wrap"><p>KI Perspektiven · Profilentwurf · November 2026</p><div class="display-control"><label for="darstellung">Darstellung</label><select id="darstellung"><option value="system">System</option><option value="light">Hell</option><option value="dark">Dunkel</option></select></div></div></footer>
+  <script>
+    const themeSelect = document.getElementById('darstellung');
+    themeSelect.addEventListener('change', () => {
+      if (themeSelect.value === 'system') delete document.documentElement.dataset.theme;
+      else document.documentElement.dataset.theme = themeSelect.value;
+    });
+  </script>
+</body>
+</html>
