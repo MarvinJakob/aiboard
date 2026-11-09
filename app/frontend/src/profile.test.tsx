@@ -5,23 +5,29 @@ import { installFakeApi, renderApp } from './test/fakeApi';
 
 beforeEach(() => { installFakeApi(); });
 
-describe('Ticket 41: Profilseite', () => {
+describe('Tickets 41 und 60: Profilseite nach dem Mock', () => {
   it.each([
-    ['de', 'Was meine Perspektive prägt', 'Meine Fragen zu KI', 'Profil'],
-    ['en', 'What shapes my perspective', 'My questions about AI', 'Profile'],
+    ['de', 'Aus der Praxis.', 'AI braucht mehr als ein gutes Modell.', 'Profil'],
+    ['en', 'From practice.', 'AI needs more than a good model.', 'Profile'],
   ])('zeigt auf %s die Vorstellung, Stationen und drei Themen', async (lang, experience, topics, title) => {
     renderApp(`/${lang}/profil`);
     expect(await screen.findByRole('heading', { level: 1, name: 'Marvin Jakob' })).toBeInTheDocument();
     const career = screen.getByRole('region', { name: experience });
-    expect(within(career).getAllByRole('heading', { level: 3 })).toHaveLength(2);
+    expect(career.querySelectorAll('details')).toHaveLength(3);
+    expect(career.querySelector('details')).toHaveAttribute('open');
+    expect(career).toHaveTextContent('2020 – 2022');
     expect(career).toHaveTextContent('2023');
     expect(career).toHaveTextContent('2019');
     expect(career).toHaveTextContent('IT Service Owner');
     expect(career).toHaveTextContent('Product Owner');
     const interests = screen.getByRole('region', { name: topics });
+    expect(within(interests).getAllByRole('heading', { level: 3 })).toHaveLength(3);
     expect(within(interests).getAllByRole('link').map((link) => link.getAttribute('href'))).toEqual([
-      `/${lang}/themen/softwareentwicklung`, `/${lang}/themen/data-analytics`, `/${lang}/themen/ai-audit`,
+      `/${lang}/themen/softwareentwicklung`, `/${lang}/themen/ai-audit`, `/${lang}/themen/data-analytics`,
     ]);
+    expect(screen.getByRole('img', { name: /Marvin Jakob/ })).toHaveAttribute('width', '1024');
+    expect(screen.getByText('AWS Certified Cloud Practitioner')).toBeInTheDocument();
+    expect(within(screen.getByRole('article')).getByRole('link', { name: lang === 'de' ? 'Zum Blog' : 'Go to blog' })).toHaveAttribute('href', `/${lang}/blog`);
     expect(document.title).toBe(`Marvin Jakob – ${title} · KI Perspektiven`);
     expect(document.querySelector('meta[name="description"]')).toHaveAttribute('content', expect.stringContaining('Marvin Jakob:'));
   });
@@ -31,12 +37,35 @@ describe('Ticket 41: Profilseite', () => {
     const { router } = renderApp('/de/profil');
     await user.click(screen.getByRole('button', { name: 'English' }));
     expect(router.state.location.pathname).toBe('/en/profil');
-    expect(screen.getByText(/^I am Marvin Jakob/)).toBeInTheDocument();
+    expect(screen.getByText(/^AI creates value/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Explore my expertise' })).toBeInTheDocument();
+    expect(screen.getByRole('img')).toHaveAttribute('alt', 'Illustrated portrait of Marvin Jakob against a colourful background');
     expect(document.title).toBe('Marvin Jakob – Profile · KI Perspektiven');
     expect(document.querySelector('meta[name="description"]')).toHaveAttribute('content', expect.stringContaining('IT consultant'));
     await user.click(screen.getByRole('button', { name: 'Deutsch' }));
     expect(router.state.location.pathname).toBe('/de/profil');
-    expect(screen.getByText(/^Ich bin Marvin Jakob/)).toBeInTheDocument();
+    expect(screen.getByText(/^AI entfaltet ihren Wert/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Meine Expertise entdecken' })).toBeInTheDocument();
+  });
+
+  it('verlinkt die fokussierbare Expertise-Überschrift und schaltet Projektdetails um', async () => {
+    const user = userEvent.setup();
+    renderApp('/de/profil');
+    const discover = screen.getByRole('link', { name: 'Meine Expertise entdecken' });
+    const target = document.querySelector(discover.getAttribute('href')!);
+    expect(target).toBe(screen.getByRole('heading', { name: 'AI braucht mehr als ein gutes Modell.' }));
+    expect(target).toHaveAttribute('tabindex', '-1');
+    const projects = screen.getByRole('region', { name: 'Aus der Praxis.' });
+    const summary = within(projects).getByText('Monitoring von der Konzeption bis zum Betrieb').closest('summary')!;
+    const details = summary.closest('details')!;
+    expect(details).not.toHaveAttribute('open');
+    // jsdom simuliert die native Tastaturaktivierung von summary nicht.
+    // Enter/Leertaste werden zusätzlich im echten Browser geprüft.
+    await user.click(summary);
+    expect(details).toHaveAttribute('open');
+    expect(within(details).getByText(/Planung und Implementierung/)).toBeVisible();
+    await user.click(summary);
+    expect(details).not.toHaveAttribute('open');
   });
 
   it.each(['de', 'en'])('öffnet alle Themenlinks in %s', async (lang) => {
