@@ -120,7 +120,7 @@ describe('Ticket #73: Startseite nach mock/landing', () => {
   it('zeigt ohne veröffentlichte Beiträge weiterhin die Themenkarten und keinen Blogabschnitt', async () => {
     installFakeApi([]);
     renderApp('/de');
-    expect(await screen.findByRole('link', { name: /AI in der Softwareentwicklung.*Zum Thema/s })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: /KI in der Softwareentwicklung.*Zum Thema/s })).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByText('Wird geladen …')).not.toBeInTheDocument());
     expect(screen.queryByRole('region', { name: 'Neu im Blog.' })).not.toBeInTheDocument();
   });
@@ -305,7 +305,7 @@ describe('Anforderung 8: KI-Audit-Übersicht', () => {
 
   it('erscheint nur beim Thema AI Audit', async () => {
     renderApp('/de/themen/softwareentwicklung');
-    await screen.findByRole('heading', { level: 1, name: 'AI in der Softwareentwicklung' });
+    await screen.findByRole('heading', { level: 1, name: 'KI in der Softwareentwicklung' });
     expect(screen.queryByRole('heading', { name: 'Die Dimensionen des KI-Audits' })).not.toBeInTheDocument();
   });
 });
