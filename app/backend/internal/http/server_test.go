@@ -8,9 +8,11 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
-	"sync"
+	"regexp"
 	"strings"
+	"sync"
 	"testing"
 	"testing/fstest"
 
@@ -125,11 +127,11 @@ func TestHealth(t *testing.T) {
 	}
 }
 
-// Anforderung 3 und Ticket #77: vier Themen mit Titel und Einführung, auch ohne Beiträge.
+// Anforderung 3 und Tickets #77/#82/#83: sechs Themen mit Titel und Einführung, auch ohne Beiträge.
 func TestTopicsAreSeeded(t *testing.T) {
 	srv, _ := newServer(t, false)
 	list := getJSON[api.TopicList](t, srv, "/api/topics?lang=de", 200)
-	want := []string{"AI in der Softwareentwicklung", "AI Audit für Unternehmen", "AI in Data Analytics", "Prozessautomatisierung"}
+	want := []string{"KI in der Softwareentwicklung", "AI Audit für Unternehmen", "KI in Data Analytics", "Prozessautomatisierung", "KI-Tipps und Tricks", "Modelle und Kosten: Wie finde ich das beste Preis-/Leistungsverhältnis?"}
 	if len(list.Items) != len(want) {
 		t.Fatalf("%d Themen, erwartet %d", len(list.Items), len(want))
 	}
@@ -142,6 +144,93 @@ func TestTopicsAreSeeded(t *testing.T) {
 		d := getJSON[api.TopicDetail](t, srv, "/api/topics/"+tp.Slug+"?lang=de", 200)
 		if d.Intro == "" || len(d.Posts) != 0 {
 			t.Errorf("Themenseite %s ohne Beiträge: %+v", tp.Slug, d)
+		}
+	}
+}
+
+// Ticket #82: echte Migration, Metadaten, Seiten, Sitemap und Sichtbarkeit zugeordneter Beiträge.
+func TestSkillsTopic(t *testing.T) {
+	srv, db := newServer(t, true)
+	source, err := os.ReadFile("../../../../content/KI Tipps und Tricks.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	metadata := func(key string) string {
+		t.Helper()
+		match := regexp.MustCompile(`\*\*` + key + `:\*\* (.+)`).FindStringSubmatch(string(source))
+		if len(match) != 2 {
+			t.Fatalf("Metadatum %s fehlt", key)
+		}
+		return strings.TrimSpace(match[1])
+	}
+	const slug = "ki-tipps-und-tricks"
+	for _, lang := range []string{"de", "en"} {
+		list := getJSON[api.TopicList](t, srv, "/api/topics?lang="+lang, 200)
+		found := false
+		for _, item := range list.Items {
+			if item.Slug == slug {
+				found = true
+			}
+		}
+		if !found {
+			t.Fatalf("Neues Thema fehlt in /api/topics (%s)", lang)
+		}
+		d := getJSON[api.TopicDetail](t, srv, "/api/topics/"+slug+"?lang="+lang, 200)
+		if string(d.Lang) != lang || len(d.Translations) != 2 || d.PostCount != 0 || len(d.Posts) != 0 {
+			t.Fatalf("Metadaten: %+v", d)
+		}
+		if lang == "de" {
+			if d.Title != metadata("Titel") || d.Label != metadata("Label") || d.Summary != metadata("Kurzbeschreibung") || d.Intro != metadata("Einführung") {
+				t.Fatalf("Abweichung von Textvorlage: %+v", d)
+			}
+		} else if d.Title != "AI Tips and Tricks" || d.Label != "AI Tips and Tricks" || d.Summary == "" || !strings.HasPrefix(d.Intro, "Skills capture recurring workflows") {
+			t.Fatalf("Englische Metadaten: %+v", d)
+		}
+		resp, page := get(t, srv, "/"+lang+"/themen/"+slug)
+		if resp.StatusCode != 200 || !strings.Contains(page, d.Title) || !strings.Contains(page, `hreflang="`+lang+`"`) {
+			t.Fatalf("Themenseite %s: %d %s", lang, resp.StatusCode, page)
+		}
+		_, sitemap := get(t, srv, "/sitemap.xml")
+		if !strings.Contains(sitemap, "/"+lang+"/themen/"+slug) {
+			t.Fatalf("Thema fehlt in Sitemap (%s)", lang)
+		}
+	}
+	_, err = db.Exec(`INSERT INTO post_topics (post_id, topic_id)
+		SELECT posts.id, topics.id FROM posts CROSS JOIN topics
+		WHERE posts.slug IN ('ki-veraendert-softwareteams', 'entwurf-ki-in-der-datenanalyse') AND topics.slug = ?`, slug)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := getJSON[api.TopicDetail](t, srv, "/api/topics/"+slug+"?lang=de", 200)
+	if d.PostCount != 1 || strings.Join(slugs(d.Posts), ",") != "ki-veraendert-softwareteams" {
+		t.Fatalf("Veröffentlichte Beiträge und Entwurfsfilter: %+v", d)
+	}
+}
+
+// Ticket #81: neue Metadaten in beiden Sprachen, Slug und zugeordnete Beiträge bleiben erhalten.
+func TestDataAnalyticsTopicMetadata(t *testing.T) {
+	srv, db := newServer(t, false)
+	_, err := db.Exec(`INSERT INTO posts (id, slug, status, published_at, updated_at) VALUES (100, 'daten-beitrag', 'published', '2026-11-09T10:00:00Z', '2026-11-09T10:00:00Z');
+		INSERT INTO post_translations (post_id, lang, title, summary, body_markdown) VALUES (100, 'de', 'Datenbeitrag', 'Kurz', 'Text');
+		INSERT INTO post_topics (post_id, topic_id) VALUES (100, (SELECT id FROM topics WHERE slug = 'data-analytics'));`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string][4]string{
+		"de": {"KI in Data Analytics", "Data Analytics",
+			"Wie aus einer schnellen KI-Antwort eine belastbare Analyse wird: Kennzahlen klären, Ergebnisse prüfen.",
+			"KI beantwortet Datenfragen in Alltagssprache, schreibt Analysecode und unterstützt Prognosen. Belastbar werden die Ergebnisse erst, wenn Kennzahlen eindeutig definiert sind und Antworten mit den Quelldaten abgeglichen werden. Diese Seite zeigt Einsatzfelder, Grenzen und einen Pilot."},
+		"en": {"AI in Data Analytics", "Data Analytics",
+			"How a quick AI answer becomes a reliable analysis: clarify metrics, check results.",
+			"AI answers data questions in everyday language, writes analysis code and supports forecasts. The results only become reliable once metrics are clearly defined and answers are checked against the source data. This page covers use cases, limits and a pilot."},
+	}
+	for lang, w := range want {
+		d := getJSON[api.TopicDetail](t, srv, "/api/topics/data-analytics?lang="+lang, 200)
+		if got := [4]string{d.Title, d.Label, d.Summary, d.Intro}; got != w || d.Slug != "data-analytics" || string(d.Lang) != lang {
+			t.Errorf("%s: %+v", lang, d)
+		}
+		if len(d.Posts) != 1 || d.Posts[0].Slug != "daten-beitrag" {
+			t.Errorf("%s: Beitrag fehlt: %+v", lang, d.Posts)
 		}
 	}
 }
@@ -175,6 +264,55 @@ func TestProcessAutomationTopic(t *testing.T) {
 	}
 	d := getJSON[api.TopicDetail](t, srv, "/api/topics/prozessautomatisierung?lang=de", 200)
 	if got := strings.Join(slugs(d.Posts), ","); got != "erster-workflow" || d.PostCount != 1 {
+		t.Fatalf("Beiträge: %s (%d)", got, d.PostCount)
+	}
+}
+
+// Ticket #83: Die Themenseite Modelle und Kosten gibt es auf Deutsch und Englisch,
+// mit Metadaten aus content/Modelle und Kosten.md, Sitemap-Eintrag und veröffentlichten Beiträgen.
+func TestModelsAndCostsTopic(t *testing.T) {
+	srv, db := newServer(t, false)
+	want := map[string][4]string{
+		"de": {"Modelle und Kosten: Wie finde ich das beste Preis-/Leistungsverhältnis?", "Modelle und Kosten",
+			"Warum das günstigste Modell nicht automatisch die beste Wahl ist und wie Sie Preis und Leistung selbst vergleichen.",
+			"Ein niedriger Preis je Token sagt wenig darüber aus, was ein brauchbares Ergebnis kostet. Diese Seite zeigt, welche Kosten in die Rechnung gehören, was öffentliche Vergleiche leisten und wie Sie mit eigenen Testaufgaben das passende Modell finden."},
+		"en": {"Models and Costs: How do I find the best price-performance ratio?", "Models and Costs",
+			"Why the cheapest model is not automatically the best choice and how to compare price and performance yourself.",
+			"A low price per token says little about what a usable result costs. This page shows which costs belong in the calculation, what public comparisons can and cannot do, and how to find the right model with your own test tasks."},
+	}
+	for lang, w := range want {
+		list := getJSON[api.TopicList](t, srv, "/api/topics?lang="+lang, 200)
+		var found bool
+		for _, tp := range list.Items {
+			if tp.Slug == "modelle-und-kosten" {
+				found = tp.Label == w[1] && tp.Summary == w[2]
+			}
+		}
+		if !found {
+			t.Errorf("%s: Thema fehlt in /api/topics oder hat falsche Metadaten", lang)
+		}
+		d := getJSON[api.TopicDetail](t, srv, "/api/topics/modelle-und-kosten?lang="+lang, 200)
+		if d.Title != w[0] || d.Label != w[1] || d.Summary != w[2] || d.Intro != w[3] || string(d.Lang) != lang || len(d.Posts) != 0 {
+			t.Errorf("%s: %+v", lang, d)
+		}
+		if resp, body := get(t, srv, "/"+lang+"/themen/modelle-und-kosten"); resp.StatusCode != 200 || !strings.Contains(body, w[0]) {
+			t.Errorf("%s: Seite %d", lang, resp.StatusCode)
+		}
+	}
+	if _, sitemap := get(t, srv, "/sitemap.xml"); !strings.Contains(sitemap, "/de/themen/modelle-und-kosten") || !strings.Contains(sitemap, "/en/themen/modelle-und-kosten") {
+		t.Error("Themenseite fehlt in der Sitemap")
+	}
+
+	_, err := db.Exec(`INSERT INTO posts (id, slug, status, published_at, featured, updated_at)
+		VALUES (100, 'modellwahl', 'published', '2026-11-06T08:00:00Z', FALSE, '2026-11-06T08:00:00Z');
+		INSERT INTO posts (id, slug, status, updated_at) VALUES (101, 'entwurf', 'draft', '2026-11-06T08:00:00Z');
+		INSERT INTO post_translations (post_id, lang, title, summary, body_markdown) VALUES (100, 'de', 'Modellwahl', 'Kurz', 'Text'), (101, 'de', 'Entwurf', 'Kurz', 'Text');
+		INSERT INTO post_topics (post_id, topic_id) SELECT id, (SELECT id FROM topics WHERE slug = 'modelle-und-kosten') FROM posts WHERE id IN (100, 101);`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := getJSON[api.TopicDetail](t, srv, "/api/topics/modelle-und-kosten?lang=de", 200)
+	if got := strings.Join(slugs(d.Posts), ","); got != "modellwahl" || d.PostCount != 1 {
 		t.Fatalf("Beiträge: %s (%d)", got, d.PostCount)
 	}
 }
@@ -268,6 +406,44 @@ func TestTopicShowsAssignedPosts(t *testing.T) {
 	getJSON[api.Error](t, srv, "/api/topics/gibt-es-nicht", 404)
 	if resp, _ := get(t, srv, "/de/themen/gibt-es-nicht"); resp.StatusCode != 404 {
 		t.Fatalf("unbekanntes Thema: %d", resp.StatusCode)
+	}
+}
+
+// Ticket #80: Metadaten stimmen mit der verbindlichen deutschen Textvorlage überein.
+func TestSoftwareGuardrailsMetadata(t *testing.T) {
+	srv, _ := newServer(t, true)
+	source, err := os.ReadFile("../../../../content/KI in der Softwareentwicklung.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := getJSON[api.TopicDetail](t, srv, "/api/topics/softwareentwicklung?lang=de", 200)
+	for name, value := range map[string]string{"Titel": d.Title, "Label": d.Label, "Kurzbeschreibung": d.Summary, "Einführung": d.Intro} {
+		prefix := "- **" + name + ":** "
+		found := false
+		for _, line := range strings.Split(string(source), "\n") {
+			if !strings.HasPrefix(line, prefix) {
+				continue
+			}
+			expected := strings.TrimSpace(strings.TrimPrefix(line, prefix))
+			if name == "Titel" {
+				expected = strings.Split(expected, " (bisher:")[0]
+			}
+			if value != expected {
+				t.Errorf("%s: %q, erwartet %q", name, value, expected)
+			}
+			found = true
+		}
+		if !found {
+			t.Fatalf("%s fehlt in der Vorlage", name)
+		}
+	}
+	en := getJSON[api.TopicDetail](t, srv, "/api/topics/softwareentwicklung?lang=en", 200)
+	if en.Lang != "en" || en.Summary != "How to guide AI assistants with Markdown rules, access permissions, tests and reviews." || !strings.Contains(en.Intro, "verifiable rules") {
+		t.Fatalf("Englische Metadaten: %+v", en)
+	}
+	resp, html := get(t, srv, "/de/themen/softwareentwicklung")
+	if resp.StatusCode != 200 || !strings.Contains(html, "<title>KI in der Softwareentwicklung · KI Perspektiven</title>") {
+		t.Fatalf("Metadaten bei Direktaufruf: %d, %s", resp.StatusCode, html)
 	}
 }
 

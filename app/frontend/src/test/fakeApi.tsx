@@ -9,20 +9,28 @@ type L = 'de' | 'en';
 
 const topicData: Record<string, Record<L, Omit<Topic, 'lang' | 'postCount' | 'slug'>>> = {
   softwareentwicklung: {
-    de: { title: 'AI in der Softwareentwicklung', label: 'Softwareentwicklung', summary: 'Kurz SE', intro: 'Einführung Softwareentwicklung' },
-    en: { title: 'AI in Software Development', label: 'Software Development', summary: 'Short SE', intro: 'Intro software development' },
+    de: { title: 'KI in der Softwareentwicklung', label: 'Softwareentwicklung', summary: 'Wie Sie KI-Assistenten mit Markdown-Regeln, Zugriffsrechten, Tests und Reviews anleiten.', intro: 'Dateien wie `AGENTS.md` geben KI-Assistenten Ziele, Arbeitsabläufe und Grenzen mit. Das Modell kann solche Regeln aber missverstehen oder übergehen. Hier sehen Sie, wie Sie prüfbare Regeln schreiben, Freigaben an Aktionen binden und Grenzen technisch absichern.' },
+    en: { title: 'AI in Software Development', label: 'Software Development', summary: 'How to guide AI assistants with Markdown rules, access permissions, tests and reviews.', intro: 'Files such as `AGENTS.md` give AI assistants goals, workflows and boundaries. However, the model can misunderstand or disregard these rules. Here you can learn how to write verifiable rules, tie approvals to actions and enforce boundaries through technical controls.' },
   },
   'ai-audit': {
     de: { title: 'AI Audit für Unternehmen', label: 'AI Audit', summary: 'Kurz Audit', intro: 'Einführung Audit' },
     en: { title: 'AI Audit for Companies', label: 'AI Audit', summary: 'Short audit', intro: 'Intro audit' },
   },
   'data-analytics': {
-    de: { title: 'AI in Data Analytics', label: 'Data Analytics', summary: 'Kurz Data', intro: 'Einführung Data Analytics' },
-    en: { title: 'AI in Data Analytics', label: 'Data Analytics', summary: 'Short data', intro: 'Intro data analytics' },
+    de: { title: 'KI in Data Analytics', label: 'Data Analytics', summary: 'Wie aus einer schnellen KI-Antwort eine belastbare Analyse wird: Kennzahlen klären, Ergebnisse prüfen.', intro: 'KI beantwortet Datenfragen in Alltagssprache, schreibt Analysecode und unterstützt Prognosen. Belastbar werden die Ergebnisse erst, wenn Kennzahlen eindeutig definiert sind und Antworten mit den Quelldaten abgeglichen werden. Diese Seite zeigt Einsatzfelder, Grenzen und einen Pilot.' },
+    en: { title: 'AI in Data Analytics', label: 'Data Analytics', summary: 'How a quick AI answer becomes a reliable analysis: clarify metrics, check results.', intro: 'AI answers data questions in everyday language, writes analysis code and supports forecasts. The results only become reliable once metrics are clearly defined and answers are checked against the source data. This page covers use cases, limits and a pilot.' },
   },
   prozessautomatisierung: {
     de: { title: 'Prozessautomatisierung', label: 'Prozessautomatisierung', summary: 'Kurz Automatisierung', intro: 'Einführung Prozessautomatisierung' },
     en: { title: 'Process Automation', label: 'Process Automation', summary: 'Short automation', intro: 'Intro process automation' },
+  },
+  'ki-tipps-und-tricks': {
+    de: { title: 'KI-Tipps und Tricks', label: 'KI-Tipps und Tricks', summary: 'Welche Skills KI-Agenten wirklich helfen und wie belastbar der Nutzen ist.', intro: 'Skills halten wiederkehrende Arbeitsabläufe für KI-Agenten fest, etwa für Excel-Auswertungen oder die systematische Fehlersuche. Wir ordnen ein, was Studien zeigen, welche Skills sich für einen Test lohnen und wie Sie den Nutzen in Ihrem eigenen Arbeitsablauf prüfen.' },
+    en: { title: 'AI Tips and Tricks', label: 'AI Tips and Tricks', summary: 'Which skills actually help AI agents and how strong the evidence is.', intro: 'Skills capture recurring workflows for AI agents, such as analysing Excel files or investigating bugs systematically. We explain what studies show, which skills are worth testing and how to assess their value in your own workflow.' },
+  },
+  'modelle-und-kosten': {
+    de: { title: 'Modelle und Kosten: Wie finde ich das beste Preis-/Leistungsverhältnis?', label: 'Modelle und Kosten', summary: 'Warum das günstigste Modell nicht automatisch die beste Wahl ist und wie Sie Preis und Leistung selbst vergleichen.', intro: 'Ein niedriger Preis je Token sagt wenig darüber aus, was ein brauchbares Ergebnis kostet. Diese Seite zeigt, welche Kosten in die Rechnung gehören, was öffentliche Vergleiche leisten und wie Sie mit eigenen Testaufgaben das passende Modell finden.' },
+    en: { title: 'Models and Costs: How do I find the best price-performance ratio?', label: 'Models and Costs', summary: 'Why the cheapest model is not automatically the best choice and how to compare price and performance yourself.', intro: 'A low price per token says little about what a usable result costs. This page shows which costs belong in the calculation, what public comparisons can and cannot do, and how to find the right model with your own test tasks.' },
   },
 };
 

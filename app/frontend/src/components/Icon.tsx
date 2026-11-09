@@ -1,4 +1,5 @@
 const PATHS = {
+  bulb: <><path d="M9 18h6M10 21h4M8 14a6 6 0 1 1 8 0c-1 .8-1 1.5-1 2H9c0-.5 0-1.2-1-2Z" /><path d="M10 8h4M12 8v8" /></>,
   chevDown: <path d="M6 9l6 6 6-6" />,
   chevLeft: <path d="M15 6l-6 6 6 6" />,
   chevRight: <path d="M9 6l6 6-6 6" />,
@@ -56,6 +57,13 @@ const PATHS = {
       <rect x="3" y="4" width="6" height="6" rx="1.5" />
       <rect x="15" y="14" width="6" height="6" rx="1.5" />
       <path d="M9 7h3a2 2 0 0 1 2 2v6a2 2 0 0 0 2 2" />
+    </>
+  ),
+  coins: (
+    <>
+      <ellipse cx="9" cy="6.5" rx="6" ry="2.5" />
+      <path d="M3 6.5v5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-5" />
+      <path d="M9 14v3.5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-5c0-1.4-2.7-2.5-6-2.5" />
     </>
   ),
   plug: <path d="M9 3v5M15 3v5M6 8h12v3a6 6 0 0 1-12 0zM12 17v4" />,

@@ -4,6 +4,7 @@ import { ApiError } from './api/client';
 import { LangLayout, Shell } from './components/Layout';
 import { AUDIT_TOPIC } from './lib/audit';
 import { DEFAULT_LANG, preferredLang } from './lib/lang';
+import { AiUses } from './pages/AiUses';
 import { AuditDimensionPage } from './pages/AuditDimension';
 import { Blog } from './pages/Blog';
 import { Home } from './pages/Home';
@@ -26,6 +27,7 @@ export const routes: RouteObject[] = [
       { path: 'blog', element: <Blog /> },
       { path: 'blog/:slug', element: <PostPage /> },
       { path: 'profil', element: <Profile /> },
+      { path: 'ki-einsatzfelder', element: <AiUses /> },
       { path: 'impressum', element: <Legal page="imprint" /> },
       { path: 'datenschutz', element: <Legal page="privacy" /> },
       { path: '*', element: <NotFound /> },

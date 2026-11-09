@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router';
 import { isNotFound, useTopic } from '../api/client';
 import { Art } from '../components/Art';
 import { AuditOverview } from '../components/AuditOverview';
+import { TopicContent } from '../components/TopicContent';
 import { AutomationBenefits } from '../components/AutomationBenefits';
 import { AUTOMATION_TOPIC } from '../i18n/automation';
 import { AUDIT_TOPIC } from '../lib/audit';
@@ -9,7 +10,12 @@ import { PostList } from '../components/PostRow';
 import { EmptyPosts, LoadError, Loading, TranslationNotice } from '../components/Status';
 import { href, useLang } from '../lib/lang';
 import { useHead, usePageFocus } from '../lib/page';
+import { getTopicContent } from '../lib/topicContent';
 import { NotFound } from './NotFound';
+
+/** Erlaubt nach „/“ einen Zeilenumbruch, etwa in „Preis-/Leistungsverhältnis“, ohne den Text zu verändern. */
+const breakAfterSlash = (text: string) =>
+  text.split(/(?<=\/)/).flatMap((part, i) => (i ? [<wbr key={i} />, part] : [part]));
 
 /**
  * Themenseite mit Titel, Einführung und zugeordneten veröffentlichten Beiträgen (Anforderung 3).
@@ -30,6 +36,7 @@ export function TopicPage() {
   const tp = topic.data;
   const fallback = tp.lang !== lang;
   const contentLang = fallback ? tp.lang : undefined;
+  const content = getTopicContent(tp.slug, lang);
 
   return (
     <div className="container">
@@ -44,14 +51,16 @@ export function TopicPage() {
         <div lang={contentLang}>
           <p className="eyebrow">{t('topic.eyebrow')}</p>
           <h1 className="page-title" tabIndex={-1} ref={h1}>
-            {tp.title}
+            {breakAfterSlash(tp.title)}
           </h1>
+          {content?.subtitle && <p className="topic-subtitle">{breakAfterSlash(content.subtitle)}</p>}
           <p className="lead">{tp.intro}</p>
           {fallback && <TranslationNotice text={t('fallbackTopic', { language: t(`langName.${tp.lang}`) })} />}
         </div>
         <Art topic={tp.slug} seed={1} />
       </section>
       {tp.slug === AUDIT_TOPIC && <AuditOverview />}
+      {content && <TopicContent content={content} />}
       {tp.slug === AUTOMATION_TOPIC && <AutomationBenefits />}
       <section className="section" aria-labelledby="topicPosts">
         <div className="section-head">
