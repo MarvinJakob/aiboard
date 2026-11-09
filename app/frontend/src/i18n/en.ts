@@ -27,7 +27,7 @@ export const en: Messages = {
   toTopic: 'View topic',
   count_one: '{{count}} article',
   count_other: '{{count}} articles',
-  topic: { eyebrow: 'Topic', posts: 'Articles on this topic' },
+  topic: { eyebrow: 'Topic', posts: 'Articles on this topic', table: 'Topic content table, scroll horizontally' },
   empty: {
     title: 'No articles yet',
     topicText: 'Nothing has been published on this topic yet. The introduction above gives a first overview – you will find more articles in the blog.',

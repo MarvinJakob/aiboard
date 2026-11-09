@@ -16,8 +16,8 @@ export default defineConfig({
       '/api': 'http://localhost:8080',
       '/media': 'http://localhost:8080',
     },
-    // Tests prüfen die dokumentierten Antwortsätze gegen die Audit-Inhalte des Backends.
-    fs: { allow: ['.', '../backend/internal/audit'] },
+    // Tests vergleichen Audit-Inhalte und die verbindlichen Themenseiten-Vorlagen.
+    fs: { allow: ['.', '../backend/internal/audit', '../../content'] },
   },
   test: {
     environment: 'jsdom',

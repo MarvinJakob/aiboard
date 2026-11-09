@@ -16,12 +16,14 @@ const PALETTES: Record<string, Palette> = {
   software: { c1: 'rgba(129,140,248,.95)', c2: 'rgba(192,132,252,.9)', c3: 'rgba(34,211,238,.75)', b1: '#1e1b4b', b2: '#3730a3', dot: '#6366f1' },
   audit: { c1: 'rgba(45,212,191,.9)', c2: 'rgba(74,222,128,.75)', c3: 'rgba(56,189,248,.8)', b1: '#042f2e', b2: '#0f5e6e', dot: '#0d9488' },
   data: { c1: 'rgba(251,146,60,.95)', c2: 'rgba(244,63,94,.85)', c3: 'rgba(250,204,21,.8)', b1: '#431407', b2: '#9a3412', dot: '#ea580c' },
+  skills: { c1: 'rgba(244,114,182,.95)', c2: 'rgba(192,132,252,.9)', c3: 'rgba(251,191,36,.8)', b1: '#500724', b2: '#86198f', dot: '#db2777' },
 };
 
 const TOPICS: Record<string, { palette: keyof typeof PALETTES; icon: IconName }> = {
   softwareentwicklung: { palette: 'software', icon: 'code' },
   'ai-audit': { palette: 'audit', icon: 'shield' },
   'data-analytics': { palette: 'data', icon: 'chart' },
+  'ki-tipps-und-tricks': { palette: 'skills', icon: 'bulb' },
 };
 
 const FALLBACK = { palette: 'software' as const, icon: 'spark' as IconName };
