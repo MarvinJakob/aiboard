@@ -439,11 +439,11 @@ describe('Ticket #20: Helle und dunkle Darstellung', () => {
     expect(theme()).toBe('light');
   });
 
-  it('folgt ohne gespeicherte Wahl der Systemeinstellung', async () => {
+  it('startet ohne gespeicherte Wahl auch bei dunkler Systemeinstellung hell', async () => {
     systemDark(true);
     renderApp('/de');
-    expect(await screen.findByRole('button', { name: 'Dunkle Darstellung' })).toHaveAttribute('aria-pressed', 'true');
-    expect(theme()).toBe('dark');
+    expect(await screen.findByRole('button', { name: 'Dunkle Darstellung' })).toHaveAttribute('aria-pressed', 'false');
+    expect(theme()).toBe('light');
   });
 
   it('ist per Tastatur bedienbar', async () => {
@@ -467,10 +467,10 @@ describe('Ticket #20: Helle und dunkle Darstellung', () => {
       expect(theme()).toBe('light');
     });
 
-    it('übernimmt ohne gespeicherte Wahl die Systemeinstellung', () => {
+    it('startet ohne gespeicherte Wahl auch bei dunkler Systemeinstellung hell', () => {
       systemDark(true);
       run();
-      expect(theme()).toBe('dark');
+      expect(theme()).toBe('light');
     });
 
     it('verwendet hell, wenn die Systemeinstellung nicht ermittelbar ist', () => {
