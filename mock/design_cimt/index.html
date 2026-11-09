@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="KI Perspektiven: ein Designentwurf zwischen cimt und Apple Human Interface Guidelines. Klare Inhalte, opake Inhaltsflächen und Liquid-Glass-Navigation.">
+  <title>KI Perspektiven · design_cimt</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M6 18 18 6M6 6h12v12"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 6-6 6 6 6m8-12 6 6-6 6m-3-15-2 18"/></symbol>
+    <symbol id="i-data" viewBox="0 0 24 24"><path d="M4 3v17h17M8 15v-4m5 4V7m5 8v-6"/></symbol>
+    <symbol id="i-flow" viewBox="0 0 24 24"><rect x="2" y="9" width="6" height="6" rx="1"/><rect x="16" y="2" width="6" height="6" rx="1"/><rect x="16" y="16" width="6" height="6" rx="1"/><path d="M8 12h4m4-7h-4v14h4"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 2.7 6.3L21 12l-6.3 2.7L12 21l-2.7-6.3L3 12l6.3-2.7L12 3Z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 15.5A9 9 0 0 1 8.5 4 9 9 0 1 0 20 15.5Z"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+  </svg>
+
+  <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#start" aria-label="KI Perspektiven – Startseite">
+        <span class="brand-mark" aria-hidden="true">ki<span>.</span></span>
+        <span class="brand-name">KI Perspektiven<span>Wissen trifft Umsetzung.</span></span>
+      </a>
+      <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="navigation">
+        <span class="menu-lines" aria-hidden="true"></span><span id="menu-label">Menü</span>
+      </button>
+      <nav class="navigation" id="navigation" aria-label="Hauptnavigation">
+        <a href="#themen">Themen</a>
+        <a href="#audit">KI-Audit</a>
+        <a href="#wissen">Wissen &amp; Praxis</a>
+        <a href="../profil/index.html">Profil <svg class="icon small" aria-hidden="true"><use href="#i-up"/></svg></a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-button" id="theme-toggle" type="button" aria-label="Dunkle Darstellung" aria-pressed="false">
+          <svg class="icon" aria-hidden="true"><use href="#i-moon"/></svg>
+        </button>
+        <a class="button button-small header-cta" href="#audit">Potenziale entdecken <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </div>
+    </div>
+  </header>
+
+  <main id="inhalt" tabindex="-1">
+    <section class="hero" id="start" aria-labelledby="hero-title">
+      <div class="container appearance-bar">
+        <p class="design-caption"><span class="design-dot" aria-hidden="true"></span> cimt-Farben. Apple-inspirierte Klarheit.</p>
+      </div>
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="line" aria-hidden="true"></span> KI. MIT PERSPEKTIVE.</p>
+          <h1 id="hero-title">KI verstehen.<br>Potenziale<br><span>entfalten.</span></h1>
+          <p class="hero-description">Nicht jeder Hype bringt Sie weiter. Gute Fragen schon. Entdecken Sie, wo künstliche Intelligenz in Ihrem Unternehmen sinnvoll wird – verständlich, praxisnah und mit klarem Blick auf die Umsetzung.</p>
+          <div class="hero-actions">
+            <a class="button" href="#themen">Themen entdecken <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+            <a class="quiet-link" href="#audit">Wo stehen Sie heute? <span aria-hidden="true">↗</span></a>
+          </div>
+          <div class="hero-footnote"><span class="tiny-cross" aria-hidden="true">+</span> Technologieoffen denken. Verantwortungsbewusst handeln.</div>
+        </div>
+        <div class="hero-visual">
+          <div class="visual-top"><span><span class="status-dot" aria-hidden="true"></span> VON DER IDEE ZUR WIRKUNG</span><span>01 — 04</span></div>
+          <svg class="orbit-art" viewBox="0 0 560 480" role="img" aria-labelledby="orbit-title orbit-description">
+            <title id="orbit-title">KI verbindet Daten, Menschen und Prozesse</title>
+            <desc id="orbit-description">Eine orangefarbene Mitte verbindet die vier Bereiche Strategie, Daten, Entwicklung und Prozesse. Der Mensch und die Verantwortung stehen im Mittelpunkt der Umsetzung.</desc>
+            <defs>
+              <pattern id="dot-grid" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#ffffff" opacity=".14"/></pattern>
+              <radialGradient id="orange-glow"><stop stop-color="#dc6e14" stop-opacity=".18"/><stop offset="1" stop-color="#dc6e14" stop-opacity="0"/></radialGradient>
+              <linearGradient id="core-fill" x2="1" y2="1"><stop stop-color="#ef8e3f"/><stop offset="1" stop-color="#dc6e14"/></linearGradient>
+            </defs>
+            <rect width="560" height="480" fill="url(#dot-grid)"/>
+            <circle cx="280" cy="240" r="224" fill="url(#orange-glow)"/>
+            <g fill="none" stroke="#90a5b8">
+              <circle cx="280" cy="240" r="171" opacity=".22"/>
+              <circle cx="280" cy="240" r="123" opacity=".3" stroke-dasharray="3 8"/>
+              <path d="M280 69v342M109 240h342" opacity=".15"/>
+              <path d="M280 69a171 171 0 0 1 171 171" stroke="#dc6e14" stroke-width="2"/>
+              <path d="M109 240a171 171 0 0 0 171 171" stroke="#dc6e14" stroke-width="2"/>
+              <path d="m172 146 65 60m86 68 65 60m-216 0 65-60m86-68 65-60" stroke="#dc6e14" opacity=".7"/>
+            </g>
+            <g fill="#dc6e14"><circle cx="280" cy="69" r="4"/><circle cx="451" cy="240" r="4"/><circle cx="280" cy="411" r="4"/><circle cx="109" cy="240" r="4"/></g>
+            <g fill="#172f44" stroke="#3b5062">
+              <rect x="71" y="106" width="150" height="76" rx="8"/>
+              <rect x="339" y="106" width="150" height="76" rx="8"/>
+              <rect x="71" y="298" width="150" height="76" rx="8"/>
+              <rect x="339" y="298" width="150" height="76" rx="8"/>
+            </g>
+            <g font-family="Helvetica, Arial, sans-serif">
+              <g fill="#dc6e14" font-size="10" letter-spacing="2"><text x="89" y="131">01 / ORIENTIEREN</text><text x="357" y="131">02 / VERSTEHEN</text><text x="89" y="323">03 / GESTALTEN</text><text x="357" y="323">04 / VERBINDEN</text></g>
+              <g fill="#fff" font-size="18"><text x="89" y="158">Strategie</text><text x="357" y="158">Daten</text><text x="89" y="350">Entwicklung</text><text x="357" y="350">Prozesse</text></g>
+            </g>
+            <circle cx="280" cy="240" r="72" fill="#dc6e14" opacity=".09"/>
+            <circle cx="280" cy="240" r="59" fill="url(#core-fill)"/>
+            <circle cx="280" cy="240" r="49" fill="none" stroke="#ffb57b" opacity=".65"/>
+            <text x="280" y="251" text-anchor="middle" fill="#12263a" font-family="Helvetica, Arial, sans-serif" font-size="36" font-weight="700">KI</text>
+            <g fill="#b9c9d6" font-family="Helvetica, Arial, sans-serif" font-size="10" letter-spacing="2"><text x="280" y="25" text-anchor="middle">MENSCHEN IM MITTELPUNKT</text><text x="280" y="462" text-anchor="middle">KLARE LEITPLANKEN. ECHTER MEHRWERT.</text></g>
+          </svg>
+          <div class="visual-bottom"><span class="visual-plus" aria-hidden="true">+</span><p>Technologie ist der Anfang.<br><strong>Der Unterschied liegt in der Umsetzung.</strong></p><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg></div>
+        </div>
+      </div>
+      <div class="container principles" aria-label="Unser Blick auf KI">
+        <div><span class="principle-number">01</span><p><strong>Verstehen statt vermuten.</strong><span>Chancen und Grenzen einordnen.</span></p></div>
+        <div><span class="principle-number">02</span><p><strong>Aus der Praxis denken.</strong><span>Mit einem konkreten Problem starten.</span></p></div>
+        <div><span class="principle-number">03</span><p><strong>Verantwortung mitnehmen.</strong><span>Menschen, Daten und Qualität im Blick.</span></p></div>
+      </div>
+    </section>
+
+    <section class="section container" id="themen" aria-labelledby="topics-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">THEMEN &amp; PERSPEKTIVEN</p><h2 id="topics-title">Vier Einstiege.<br>Ihr nächster Schritt.</h2></div>
+        <p>Von der ersten Frage bis zum vernetzten Prozess: Finden Sie die Perspektive, die zu Ihrer Herausforderung passt.</p>
+      </div>
+      <div class="topic-grid" aria-label="Themen auswählen">
+        <button class="topic-card" type="button" data-topic="software" aria-pressed="true" aria-controls="topic-detail">
+          <span class="card-top"><span>01</span><svg class="icon" aria-hidden="true"><use href="#i-code"/></svg></span>
+          <span class="card-title">Software-<br>entwicklung</span>
+          <span class="card-description">Bessere Werkzeuge.<br>Bewusste Entscheidungen.</span>
+          <span class="card-bottom"><span>Perspektive entdecken</span><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+        </button>
+        <button class="topic-card" type="button" data-topic="data" aria-pressed="false" aria-controls="topic-detail">
+          <span class="card-top"><span>02</span><svg class="icon" aria-hidden="true"><use href="#i-data"/></svg></span>
+          <span class="card-title">Data &amp;<br>Analytics</span>
+          <span class="card-description">Daten verstehen.<br>Erkenntnisse nutzbar machen.</span>
+          <span class="card-bottom"><span>Perspektive entdecken</span><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+        </button>
+        <button class="topic-card" type="button" data-topic="automation" aria-pressed="false" aria-controls="topic-detail">
+          <span class="card-top"><span>03</span><svg class="icon" aria-hidden="true"><use href="#i-flow"/></svg></span>
+          <span class="card-title">Prozess-<br>automatisierung</span>
+          <span class="card-description">Systeme verbinden.<br>Freiraum schaffen.</span>
+          <span class="card-bottom"><span>Perspektive entdecken</span><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+        </button>
+        <button class="topic-card" type="button" data-topic="adoption" aria-pressed="false" aria-controls="topic-detail">
+          <span class="card-top"><span>04</span><svg class="icon" aria-hidden="true"><use href="#i-spark"/></svg></span>
+          <span class="card-title">KI im<br>Arbeitsalltag</span>
+          <span class="card-description">Menschen befähigen.<br>KI sinnvoll integrieren.</span>
+          <span class="card-bottom"><span>Perspektive entdecken</span><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+        </button>
+      </div>
+      <div class="topic-detail" id="topic-detail" role="region" aria-label="Ausgewählte Perspektive" aria-live="polite">
+        <span class="detail-label" id="topic-label">IM FOKUS / SOFTWAREENTWICKLUNG</span>
+        <div><h3 id="topic-title">KI schreibt mit. Ihr Team entscheidet.</h3><p id="topic-description">Code-Assistenten können Entwürfe, Tests und Dokumentation unterstützen. Entscheidend bleiben klare Anforderungen, nachvollziehbare Änderungen und ein sorgfältiges Review durch das Team.</p></div>
+        <a class="quiet-link" id="topic-link" href="#wissen">Passende Beiträge <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </div>
+    </section>
+
+    <section class="audit-section section" id="audit" aria-labelledby="audit-title">
+      <div class="container audit-grid">
+        <div class="audit-copy">
+          <p class="eyebrow">VOM WISSEN INS HANDELN</p>
+          <h2 id="audit-title">Die beste KI-Strategie<br>beginnt mit einer<br><span>ehrlichen Frage.</span></h2>
+          <p>Wie gut sind Sie auf den Einsatz von KI vorbereitet? Ein KI-Audit hilft, den eigenen Stand zu verstehen, Lücken sichtbar zu machen und nächste Schritte zu priorisieren.</p>
+          <button class="button" id="start-check" type="button" aria-haspopup="dialog">KI-Check ausprobieren <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <p class="demo-note">Interaktive Demo mit drei Beispielfragen. Kein vollständiges Audit.<br>Antworten bleiben nur für die Dauer des Checks im Arbeitsspeicher.</p>
+        </div>
+        <div class="maturity">
+          <div class="maturity-heading"><span>ENTWICKLUNG STATT SCHUBLADEN</span><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg></div>
+          <div class="maturity-step"><span class="step-index">01</span><div><h3>Einfach</h3><p>Erste Erfahrungen sammeln.<br>Potenziale sichtbar machen.</p></div><span class="step-bars" aria-hidden="true"><i></i><i></i><i></i></span></div>
+          <div class="maturity-step"><span class="step-index">02</span><div><h3>Strukturiert</h3><p>Klare Regeln vereinbaren.<br>Ein gemeinsames Vorgehen leben.</p></div><span class="step-bars" aria-hidden="true"><i></i><i></i><i></i></span></div>
+          <div class="maturity-step"><span class="step-index">03</span><div><h3>Intelligent</h3><p>Wirkung regelmäßig prüfen.<br>Aus Erfahrungen besser werden.</p></div><span class="step-bars" aria-hidden="true"><i></i><i></i><i></i></span></div>
+          <div class="maturity-footer"><span class="status-dot" aria-hidden="true"></span> Nicht möglichst viel KI. Sondern die richtige.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section container knowledge-section" id="wissen" aria-labelledby="knowledge-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">WISSEN &amp; PRAXIS</p><h2 id="knowledge-title">Weniger Buzzwords.<br>Mehr Aha-Momente.</h2></div>
+        <p>Impulse zum Weiterdenken. Die folgenden Beispielbeiträge machen die Themen im Entwurf erlebbar.</p>
+      </div>
+      <div class="filters" role="group" aria-label="Beiträge nach Thema filtern">
+        <button type="button" data-filter="all" aria-pressed="true">Alle Perspektiven <span>4</span></button>
+        <button type="button" data-filter="software" aria-pressed="false">Entwicklung</button>
+        <button type="button" data-filter="data" aria-pressed="false">Data &amp; Analytics</button>
+        <button type="button" data-filter="automation" aria-pressed="false">Automatisierung</button>
+        <button type="button" data-filter="adoption" aria-pressed="false">Arbeitsalltag</button>
+      </div>
+      <p class="sr-only" id="filter-status" role="status">4 Beispielbeiträge</p>
+      <div class="post-grid">
+        <article class="post-card" data-category="software">
+          <div class="post-art art-code" aria-hidden="true"><span class="art-caption">HUMAN × AI</span><div class="code-window"><span class="window-dots">● ● ●</span><code><span>function</span> betterTogether() {<br>&nbsp; const idea = <b>human</b>;<br>&nbsp; const draft = <b>ai</b>.assist(idea);<br>&nbsp; return <b>team</b>.review(draft);<br>}</code></div><span class="art-index">01 / ENTWICKLUNG</span></div>
+          <div class="post-body"><p class="post-meta">SOFTWAREENTWICKLUNG <span>4 MIN. LESEZEIT · BEISPIEL</span></p><h3><button class="article-trigger" type="button" data-article="software" aria-haspopup="dialog">KI im Team: Unterstützung ist noch keine Verantwortung.</button></h3><p>Warum gute Anforderungen und ein menschliches Review auch mit KI den Unterschied machen.</p><span class="post-bottom">Perspektive lesen <svg class="icon" aria-hidden="true"><use href="#i-up"/></svg></span></div>
+        </article>
+        <article class="post-card" data-category="automation">
+          <div class="post-art art-flow" aria-hidden="true"><span class="art-caption">WENIGER ROUTINE. MEHR FREIRAUM.</span><div class="flow-diagram"><span><svg class="icon"><use href="#i-data"/></svg></span><i></i><span class="flow-core">KI</span><i></i><span><svg class="icon"><use href="#i-check"/></svg></span></div><span class="flow-human">+ Freigabe durch den Menschen</span><span class="art-index">02 / AUTOMATISIERUNG</span></div>
+          <div class="post-body"><p class="post-meta">PROZESSAUTOMATISIERUNG <span>3 MIN. LESEZEIT · BEISPIEL</span></p><h3><button class="article-trigger" type="button" data-article="automation" aria-haspopup="dialog">Vom einzelnen Prompt zum verlässlichen Workflow.</button></h3><p>Wie Regeln, KI und bewusste Freigaben zusammen einen nachvollziehbaren Prozess ergeben.</p><span class="post-bottom">Perspektive lesen <svg class="icon" aria-hidden="true"><use href="#i-up"/></svg></span></div>
+        </article>
+        <article class="post-card" data-category="data">
+          <div class="post-art art-data" aria-hidden="true"><span class="art-caption">DATEN → KONTEXT → ERKENNTNIS</span><div class="chart-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span class="chart-label">Die richtige Frage verändert den Blick.</span><span class="art-index">03 / DATA &amp; ANALYTICS</span></div>
+          <div class="post-body"><p class="post-meta">DATA &amp; ANALYTICS <span>3 MIN. LESEZEIT · BEISPIEL</span></p><h3><button class="article-trigger" type="button" data-article="data" aria-haspopup="dialog">Gute Antworten beginnen mit guten Daten.</button></h3><p>Warum Datenqualität, Kontext und fachliche Prüfung vor dem nächsten KI-Werkzeug kommen.</p><span class="post-bottom">Perspektive lesen <svg class="icon" aria-hidden="true"><use href="#i-up"/></svg></span></div>
+        </article>
+        <article class="post-card" data-category="adoption">
+          <div class="post-art art-adoption" aria-hidden="true"><span class="art-caption">BEFÄHIGEN STATT NUR BEREITSTELLEN</span><div class="adoption-type">Mensch<span>+</span>KI<span class="adoption-dot">.</span></div><span class="art-index">04 / ARBEITSALLTAG</span></div>
+          <div class="post-body"><p class="post-meta">KI IM ARBEITSALLTAG <span>3 MIN. LESEZEIT · BEISPIEL</span></p><h3><button class="article-trigger" type="button" data-article="adoption" aria-haspopup="dialog">Ein KI-Zugang allein verändert noch keinen Arbeitsalltag.</button></h3><p>Gemeinsame Regeln und alltagstaugliche Anwendungsfälle machen aus Zugang echte Nutzung.</p><span class="post-bottom">Perspektive lesen <svg class="icon" aria-hidden="true"><use href="#i-up"/></svg></span></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section container approach-section" aria-labelledby="approach-title">
+      <div><p class="eyebrow">DIE HALTUNG DAHINTER</p><h2 id="approach-title">Technologie verstehen.<br><span>Menschen mitnehmen.</span></h2></div>
+      <div class="approach-copy"><p>KI wird dann wertvoll, wenn sie zu den Menschen, Daten und Prozessen eines Unternehmens passt. Dieser Entwurf verbindet Wissen und Orientierung mit dem nächsten machbaren Schritt.</p><a class="quiet-link" href="../profil/index.html">Die Perspektive dahinter kennenlernen <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+    </section>
+
+    <section class="contact-section" aria-labelledby="contact-title">
+      <div class="container contact-inner"><div><p class="eyebrow">UND JETZT?</p><h2 id="contact-title">Aus einer guten Frage<br>kann etwas Großes werden.</h2></div><a class="button button-dark" href="https://www.cimt-ag.de/kontakt/" target="_blank" rel="noopener noreferrer">Mit cimt ins Gespräch kommen <svg class="icon" aria-hidden="true"><use href="#i-up"/></svg><span class="sr-only"> (externe Website, neuer Tab)</span></a></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top"><a class="brand footer-brand" href="#start"><span class="brand-mark" aria-hidden="true">ki<span>.</span></span><span class="brand-name">KI Perspektiven<span>Wissen trifft Umsetzung.</span></span></a><p>Die Farben von cimt.<br>Die Ruhe und Klarheit von Apple, neu interpretiert.</p><a class="quiet-link" href="#start">Nach oben <span aria-hidden="true">↑</span></a></div>
+      <details class="sources" id="quellen">
+        <summary>Gestaltungsgrundlage &amp; Quellen <span>Stand: 9. November 2026</span></summary>
+        <div class="source-grid">
+          <p><strong>cimt als Markenreferenz.</strong> Die <a href="https://www.cimt-ag.de/" target="_blank" rel="noopener noreferrer">cimt-Startseite (externe Website, neuer Tab)</a> liefert die Referenz für dunkle Blautöne, helle Flächen, orange Akzente und die Verbindung von Strategie und Umsetzung. Die Unternehmensfarbe <code>#dc6e14</code> ist eine Vorgabe für diesen Entwurf. Dunkleres Orange wird für gut lesbaren Text auf hellen Flächen verwendet.</p>
+          <p><strong>Apple: Typografie &amp; Bedienung.</strong> Aus den <a href="https://developer.apple.com/design/human-interface-guidelines/typography" target="_blank" rel="noopener noreferrer">HIG zur Typografie (neuer Tab)</a> werden Systemschriften, klare Gewichtung und lesbare Textgrößen auf das Web übertragen. Weiche Radien und zurückhaltende Schatten ergänzen diese eigenständige Interpretation; Apple-Schriften oder -Symbole werden nicht eingebettet.</p>
+          <p><strong>Apple: Materialien &amp; Barrierefreiheit.</strong> Nach den <a href="https://developer.apple.com/design/human-interface-guidelines/materials" target="_blank" rel="noopener noreferrer">HIG zu Materialien (neuer Tab)</a> bleibt Liquid Glass dauerhaft auf der Navigation aktiv; Inhalte und Dialoge sind immer opak. Die <a href="https://developer.apple.com/design/human-interface-guidelines/accessibility" target="_blank" rel="noopener noreferrer">HIG zur Barrierefreiheit (neuer Tab)</a> liefern die Grundlage für Tastaturbedienung, große Bedienflächen und den Vorrang für reduzierte Transparenz, erhöhten Kontrast und reduzierte Bewegung. Ohne Blur-Unterstützung und beim Drucken bleibt die Navigation opak. Der Glaseffekt funktioniert ohne JavaScript.</p>
+          <p><strong>Fachliche Anknüpfung.</strong> <a href="https://www.cimt-ag.de/n8n-beratung/" target="_blank" rel="noopener noreferrer">cimt über n8n und Agentic AI (neuer Tab)</a> belegt die Einordnung von Workflows, menschlichen Freigaben und Governance. <a href="https://www.cimt-ag.de/langdock-beratung/" target="_blank" rel="noopener noreferrer">cimt über Langdock (neuer Tab)</a> dient als Anknüpfung für KI-Adoption und den Arbeitsalltag. Texte, Grafiken und Beispielbeiträge dieses Mocks sind eigenständig formuliert; sie sind keine Projektberichte oder übernommenen Website-Inhalte.</p>
+        </div>
+      </details>
+      <div class="footer-bottom"><span>design_cimt · Lokaler Designentwurf, kein offizielles Angebot der cimt ag.</span><span>Keine Cookies. Kein Tracking. Keine externen Schrift- oder Bildabrufe.</span><a href="#quellen">Quellen</a></div>
+    </div>
+  </footer>
+
+  <dialog class="content-dialog" id="article-dialog" aria-labelledby="article-title">
+    <div class="dialog-top"><span class="eyebrow">PERSPEKTIVE / BEISPIELBEITRAG</span><button class="icon-button close-dialog" type="button" aria-label="Beitrag schließen"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+    <article><p class="dialog-category" id="article-category"></p><h2 id="article-title"></h2><div class="article-content" id="article-content"></div></article>
+    <div class="dialog-bottom"><span>Eigenständiger Beispieltext für diesen Designentwurf.</span><button class="quiet-link close-dialog" type="button">Schließen <svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+  </dialog>
+
+  <dialog class="content-dialog check-dialog" id="check-dialog" aria-labelledby="check-title">
+    <div class="dialog-top"><span class="eyebrow">KI-CHECK / INTERAKTIVE DEMO</span><button class="icon-button close-dialog" type="button" aria-label="KI-Check schließen"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+    <h2 id="check-title">Ein erster Blick auf Ihren KI-Einsatz.</h2>
+    <p class="check-intro">Drei unabhängige Beispielfragen zu Zielen, Daten und Verantwortung. Das Ergebnis ist ein Denkanstoß, kein Reifegrad und keine fachliche oder rechtliche Bewertung.</p>
+    <form id="check-form">
+      <fieldset><legend><span>01 / ZIELE</span>Gibt es einen konkreten Anwendungsfall mit einem messbaren Ziel?</legend><label><input type="radio" name="goals" value="yes" required> Ja</label><label><input type="radio" name="goals" value="no" required> Noch nicht</label></fieldset>
+      <fieldset><legend><span>02 / DATEN</span>Ist geklärt, welche Daten Sie mit dem gewählten KI-System verarbeiten dürfen?</legend><label><input type="radio" name="data" value="yes" required> Ja</label><label><input type="radio" name="data" value="no" required> Noch nicht</label></fieldset>
+      <fieldset><legend><span>03 / VERANTWORTUNG</span>Ist festgelegt, wer die KI-Ergebnisse prüft und freigibt?</legend><label><input type="radio" name="ownership" value="yes" required> Ja</label><label><input type="radio" name="ownership" value="no" required> Noch nicht</label></fieldset>
+      <button class="button" type="submit">Impulse anzeigen <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+    </form>
+    <div class="check-result" id="check-result" tabindex="-1" hidden></div>
+    <p class="demo-note">Keine Übertragung und keine Speicherung. Beim Schließen werden die Antworten gelöscht.</p>
+  </dialog>
+  <noscript><p class="noscript-note">Der Entwurf ist auch ohne JavaScript lesbar. Themenwechsel, Filter, Beispielbeiträge und KI-Check benötigen JavaScript.</p></noscript>
+</body>
+</html>
