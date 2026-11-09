@@ -23,6 +23,8 @@ Der Entwicklungsagent setzt Tickets um. Ein separater Review-Agent prüft die Um
 
 `Todo` → `In Progress` → `Review` → `Done`. Bei Mängeln geht das Ticket von `Review` zurück nach `In Progress` und nach der Korrektur erneut nach `Review`.
 
+**Branches nach dem Merge löschen.** Lösche jeden Arbeitsbranch nach dem bestätigten Merge in `main` auf dem Remote und lokal. Behalte `main`. Prüfe vorher, dass alle Änderungen übernommen wurden. Lösche lokale Branches erst, wenn sie in keinem Worktree mehr ausgecheckt sind, und bewahre ungesicherte Änderungen.
+
 ## Mit dem AI Board verbinden
 
 Verwende die GitHub CLI (`gh`) und lade den GitHub-Token aus `.token/github`. Die Datei enthält nur den Token und bleibt lokal. Gib den Token nicht aus und nimm ihn nicht in Commits auf. `GH_TOKEN` authentifiziert `gh`, ohne den Token über `gh auth login` zu speichern.
