@@ -58,8 +58,10 @@ switch() {
   docker image inspect "$(image "$version")" > /dev/null
   current=$(envget VERSION)
   previous=$(envget PREVIOUS_VERSION)
+  # Vor dem Start setzen, damit der Status im Protokoll die neue vorherige Version zeigt.
+  # Schlägt der Start fehl, wird der alte Wert unten wiederhergestellt.
+  if [[ -n "$current" && "$current" != "$version" ]]; then envset PREVIOUS_VERSION "$current"; fi
   if activate "$version"; then
-    if [[ -n "$current" && "$current" != "$version" ]]; then envset PREVIOUS_VERSION "$current"; fi
     return 0
   fi
   echo "FEHLER: Version $version ist nicht gesund." >&2
