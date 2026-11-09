@@ -25,7 +25,7 @@ export const de = {
   toTopic: 'Zum Thema',
   count_one: '{{count}} Beitrag',
   count_other: '{{count}} Beiträge',
-  topic: { eyebrow: 'Thema', posts: 'Beiträge zu diesem Thema' },
+  topic: { eyebrow: 'Thema', posts: 'Beiträge zu diesem Thema', table: 'Tabelle im Themeninhalt, horizontal scrollbar' },
   empty: {
     title: 'Noch keine Beiträge',
     topicText: 'Zu diesem Thema ist noch nichts erschienen. Die Einführung oben gibt einen ersten Überblick – weitere Beiträge finden Sie im Blog.',

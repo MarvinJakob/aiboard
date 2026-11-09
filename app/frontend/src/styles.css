@@ -509,6 +509,19 @@ svg { display: block; }
 .crumbs a:hover { color: var(--text); text-decoration: underline; }
 .topic-hero { display: grid; grid-template-columns: 1.1fr .9fr; align-items: center; gap: clamp(28px, 4vw, 56px); padding-top: 24px; }
 .topic-hero > .art { aspect-ratio: 4 / 3; border-radius: var(--radius-xl); box-shadow: var(--shadow-card-hover); }
+.topic-hero > div { min-width: 0; overflow-wrap: anywhere; }
+.topic-subtitle { margin-top: 16px; font-size: clamp(1.25rem, 2.5vw, 1.65rem); font-weight: 600; line-height: 1.35; }
+.topic-content { max-width: 760px; margin: clamp(40px, 6vw, 72px) auto 0; overflow-wrap: anywhere; }
+.prose--topic > p:first-child { padding: 20px 24px; border-left: 4px solid var(--accent); border-radius: var(--radius-s); background: var(--surface); }
+.prose--topic code { font-size: .9em; overflow-wrap: anywhere; }
+.topic-table { max-width: 100%; margin: 1.4em 0; overflow-x: auto; border: 1px solid var(--border-strong); border-radius: var(--radius-s); background: var(--surface); }
+.topic-table table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 1rem; line-height: 1.55; }
+.topic-table th, .topic-table td { padding: 12px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border-strong); }
+.topic-table th { background: var(--fill); }
+.prose--topic [id^="topic-source-"] { scroll-margin-top: 110px; }
+.prose--topic [id^="topic-source-"]:focus { outline: 3px solid var(--accent); outline-offset: 3px; }
+.prose--topic .task-list-item { list-style: none; }
+.prose--topic .contains-task-list { padding-left: 0; }
 .count { color: var(--text-3); font-size: .9375rem; white-space: nowrap; }
 
 .empty {
@@ -869,6 +882,9 @@ svg { display: block; }
   .glass--clear { background-color: rgba(10, 12, 18, .82); }
   .scroll-edge { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--bg); -webkit-mask-image: none; mask-image: none; height: calc(var(--header-h) + 24px); }
 }
+
+/* Tabellen im Themeninhalt scrollen horizontal; Wörter in Zellen nicht mitten im Wort trennen (Ticket #81). */
+.topic-table th, .topic-table td { overflow-wrap: normal; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
