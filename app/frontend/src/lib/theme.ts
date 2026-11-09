@@ -9,12 +9,8 @@ import { canPersistPreferences } from './consent';
 export type Theme = 'light' | 'dark';
 
 export const THEME_KEY = 'ki-perspektiven.theme';
-const DARK_QUERY = '(prefers-color-scheme: dark)';
 
 const isTheme = (v: unknown): v is Theme => v === 'light' || v === 'dark';
-
-/** Wahl dieser Sitzung; gilt auch dann, wenn sie wegen „Keine Cookies“ nicht gespeichert wird. */
-let chosenInSession = false;
 
 export function storedTheme(): Theme | null {
   try {
@@ -25,18 +21,9 @@ export function storedTheme(): Theme | null {
   }
 }
 
-/** Systemeinstellung; ist sie nicht ermittelbar, gilt hell. */
-export function systemTheme(): Theme {
-  try {
-    return window.matchMedia?.(DARK_QUERY).matches ? 'dark' : 'light';
-  } catch {
-    return 'light';
-  }
-}
-
 export function currentTheme(): Theme {
   const attr = document.documentElement.getAttribute('data-theme');
-  return isTheme(attr) ? attr : storedTheme() ?? systemTheme();
+  return isTheme(attr) ? attr : storedTheme() ?? 'light';
 }
 
 export function applyTheme(theme: Theme) {
@@ -52,10 +39,7 @@ function storeTheme(theme: Theme) {
   }
 }
 
-/**
- * Aktuelle Darstellung und Umschalter. Ohne gespeicherte Wahl folgt die Seite Änderungen
- * der Systemeinstellung, sobald eine Wahl gespeichert ist, nicht mehr.
- */
+/** Aktuelle Darstellung und Umschalter. Ohne gespeicherte Wahl gilt hell (Ticket #53). */
 export function useTheme(): [Theme, (theme: Theme) => void] {
   const [theme, setTheme] = useState<Theme>(currentTheme);
 
@@ -63,18 +47,7 @@ export function useTheme(): [Theme, (theme: Theme) => void] {
     applyTheme(theme);
   }, [theme]);
 
-  useEffect(() => {
-    const mq = typeof window.matchMedia === 'function' ? window.matchMedia(DARK_QUERY) : null;
-    if (!mq) return;
-    const onChange = () => {
-      if (!storedTheme() && !chosenInSession) setTheme(mq.matches ? 'dark' : 'light');
-    };
-    mq.addEventListener?.('change', onChange);
-    return () => mq.removeEventListener?.('change', onChange);
-  }, []);
-
   const choose = (next: Theme) => {
-    chosenInSession = true;
     storeTheme(next);
     setTheme(next);
   };

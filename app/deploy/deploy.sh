@@ -6,6 +6,7 @@
 #   deploy/deploy.sh switch VERSION              eine bereits gebaute Version starten
 #   deploy/deploy.sh rollback                    zur vorherigen Version zurückkehren
 #   deploy/deploy.sh status                      Versionen, Container und Healthcheck anzeigen
+#   deploy/deploy.sh current                     nur den Commit der laufenden Version ausgeben (leer, wenn keine läuft)
 #
 # Umgebung: DEPLOY_HOST (z. B. root@78.47.14.178), optional DEPLOY_SSH_KEY und DEPLOY_DIR (Standard /opt/ki-web).
 # Läuft unter Linux, macOS und Git Bash. Gebaut wird der eingecheckte Stand des Commits, nicht die Arbeitskopie.
@@ -93,11 +94,19 @@ prune() {
   docker image prune -f > /dev/null
 }
 
+# Commit der laufenden Version aus dem Image-Label, leer, wenn keine Version läuft oder das Image fehlt
+current() {
+  local version
+  version=$(envget VERSION)
+  [[ -n "$version" ]] || return 0
+  docker image inspect -f '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$(image "$version")" 2>/dev/null || true
+}
+
 status() {
   local version
   version=$(envget VERSION)
   echo "VERSION=$version PREVIOUS_VERSION=$(envget PREVIOUS_VERSION)"
-  echo "Commit: $(docker image inspect -f '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$(image "$version")" 2>/dev/null)"
+  echo "Commit: $(current)"
   docker compose ps --format 'table {{.Service}}\t{{.Image}}\t{{.Status}}'
   echo -n "Healthcheck https://$(envget DOMAIN)/api/health: "
   # Bis zu 60 s warten, etwa bis Caddy beim ersten Start das Zertifikat hat
@@ -134,8 +143,9 @@ case "${1:-}" in
     ;;
   rollback) remote rollback ;;
   status) remote status ;;
+  current) remote current ;;
   *)
-    sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
     exit 1
     ;;
 esac

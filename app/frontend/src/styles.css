@@ -45,7 +45,7 @@
   --glass-hl-color: rgba(255, 255, 255, .6);
 }
 
-/* Dunkel: Das Startskript theme.js setzt data-theme aus der gespeicherten Wahl oder der Systemeinstellung. */
+/* Dunkel: Das Startskript theme.js setzt data-theme aus der gespeicherten Wahl; ohne Wahl gilt hell. */
 :root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #0a0c11; --surface: #151922; --text: #f1f3f7; --text-2: #aab2c0; --text-3: #949cab;

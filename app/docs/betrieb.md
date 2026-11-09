@@ -28,8 +28,25 @@ Die Datei `/opt/ki-web/.env` (Rechte `600`) enthält die Werte für den Betrieb.
 | `REGISTRY` | `ghcr.io/marvinjakob` | Präfix des Image-Namens |
 | `VERSION` | z. B. `a1b2c3d` | Laufende Version, setzt `deploy.sh` |
 | `PREVIOUS_VERSION` | z. B. `9d034c1` | Vorherige Version für den Rollback, setzt `deploy.sh` |
+| `REQUIRE_LOGIN` | `true` | Zugangsschutz der Entwicklungswebseite; bleibt bis zur ausdrücklich beschlossenen öffentlichen Freigabe aktiv |
 
 `DEV_SEED` wird im Betrieb nie gesetzt. `compose.yaml` setzt die Variable nicht, deshalb landen keine Testbeiträge und keine Testkonten in der Produktivdatenbank.
+
+## Zugangsschutz bis zur öffentlichen Freigabe
+
+In `/opt/ki-web/.env` bleibt ausdrücklich `REQUIRE_LOGIN=true` gesetzt. Compose verwendet auch ohne Eintrag den Wert `true`. Die Datei liegt außerhalb der versionierten Builds und wird beim Deployment nicht ersetzt; `deploy.sh` ändert nur die Versionsfelder. Ein Containerneustart übernimmt die bestehende Containerkonfiguration. Nach einer Änderung an `.env` ist dagegen `docker compose up -d --wait` nötig; `docker compose restart` liest die Umgebungsvariablen nicht neu ein.
+
+Nach jedem Deployment und Neustart ohne Sitzung prüfen:
+
+```bash
+curl -sS -D - -o /dev/null https://78-47-14-178.sslip.io/en/profil
+curl -sS -D - https://78-47-14-178.sslip.io/api/posts?lang=de
+curl -fsS https://78-47-14-178.sslip.io/robots.txt
+```
+
+Erwartet werden `303` zur Anmeldung mit internem Rücksprungziel, `401` ohne Inhaltsdaten und `Disallow: /`. Die Antworten des Backends tragen `X-Robots-Tag: noindex, nofollow`. Anmeldung samt Ressourcen und `/api/health` bleiben erreichbar. Mit einem gültigen Konto muss nach dem Login das ursprüngliche interne Ziel erscheinen; nach Abmeldung oder Sitzungsablauf ist es wieder gesperrt. Die Prüfung umfasst Startseite, Themen, Blog, Profil und AI Audit in beiden Sprachen. Medien liefert Caddy wie bisher direkt aus (siehe [README](../README.md#zugangsschutz-vor-dem-livegang)).
+
+Erst nach ausdrücklich beschlossener öffentlicher Freigabe und Fertigstellung der Rechtstexte darf der Betreiber `REQUIRE_LOGIN=false` setzen und die Container mit `docker compose up -d --wait` aktualisieren. Vor einem Rollback muss auch die Zielversion den Zugangsschutz aus #49 enthalten. Der Betriebsnachweis für #54 steht in [zugangsschutz-abnahme.md](zugangsschutz-abnahme.md).
 
 Aufbau des Projektverzeichnisses:
 
@@ -58,14 +75,16 @@ cd /opt/ki-web && docker compose exec -it backend /server user create --email AD
 
 ## Automatisches Deployment
 
-Jeder in `main` gemergte Pull Request wird automatisch bereitgestellt. Das übernimmt der Workflow [.github/workflows/deploy.yml](../../.github/workflows/deploy.yml):
+Nach jedem Merge in `main` wird der aktuelle Stand von `main` automatisch bereitgestellt. Das übernimmt der Workflow [.github/workflows/deploy.yml](../../.github/workflows/deploy.yml):
 
-1. **Prüfungen:** Bei jedem Pull Request in `main` (Öffnen, neue Commits) und noch einmal nach dem Merge laufen `go vet`, `go test` sowie Typprüfung und Tests beider Frontends wie in [README.md](../README.md#code-erzeugen-und-testen). Schlägt eine Prüfung fehl, wird nicht deployed.
-2. **Deployment:** Nur nach einem Merge ruft der Job `deploy/deploy.sh release <Merge-Commit>` auf, wie unter [Neue Version bereitstellen](#neue-version-bereitstellen) beschrieben. Geschlossene, nicht gemergte Pull Requests lösen nichts aus.
-3. **Healthcheck:** Ist die neue Version nicht gesund, startet `deploy.sh` wieder die bisherige Version und der Lauf schlägt fehl. Anschließend prüft der Workflow `DEPLOY_URL/api/health` von außen.
-4. **Protokoll:** Pull Request, Commit und Image-Version stehen im Protokoll und in der Zusammenfassung des Laufs unter *Actions*.
+1. **Prüfungen im Pull Request:** Bei jedem Pull Request in `main` (Öffnen, neue Commits) laufen `go vet`, `go test` sowie Typprüfung und Tests beider Frontends wie in [README.md](../README.md#code-erzeugen-und-testen). Die Schritte stehen in [.github/actions/pruefungen](../../.github/actions/pruefungen/action.yml).
+2. **Stand bestimmen:** Nach einem Merge checkt der Deploy-Job den aktuellen Stand von `main` aus, nicht den Merge-Commit des Pull Requests. Läuft genau dieser Commit schon auf dem Server (`deploy/deploy.sh current`), endet der Lauf ohne Build und Neustart erfolgreich. Geschlossene, nicht gemergte Pull Requests lösen nichts aus.
+3. **Prüfungen vor dem Deployment:** Der Deploy-Job führt dieselben Prüfungen für den auszuliefernden Stand aus. Schlägt eine Prüfung fehl, wird nicht deployed.
+4. **Deployment:** Der Job ruft `deploy/deploy.sh release <Commit>` auf, wie unter [Neue Version bereitstellen](#neue-version-bereitstellen) beschrieben.
+5. **Healthcheck:** Ist die neue Version nicht gesund, startet `deploy.sh` wieder die bisherige Version und der Lauf schlägt fehl. Anschließend prüft der Workflow `DEPLOY_URL/api/health` von außen.
+6. **Protokoll:** Pull Request, sein Merge-Commit, der bereitgestellte Stand von `main`, die Image-Version und ob das Deployment übersprungen wurde, stehen im Protokoll und in der Zusammenfassung des Laufs unter *Actions*.
 
-Läufe für die Umgebung `production` laufen nacheinander (`concurrency`). Ein laufendes Deployment wird nicht abgebrochen.
+**Mehrere Merges kurz nacheinander:** Läufe für die Umgebung `production` laufen nacheinander (`concurrency`). Ein laufendes Deployment wird nicht abgebrochen. Sie starten aber nicht unbedingt in der Reihenfolge der Merges, und GitHub behält nur den zuletzt wartenden Lauf, ältere wartende Läufe werden abgebrochen („Canceling since a higher priority waiting request for deploy-production exists“). Das ist gewollt: Jeder Lauf liefert den Stand von `main` zu seinem Start aus. Deshalb enthält das letzte Deployment immer alle Merges, und ein später startender Lauf eines früheren Merges kann keine ältere Version ausliefern. Ein abgebrochener Lauf muss nicht wiederholt werden.
 
 Einstellungen unter *Settings → Secrets and variables → Actions* des Repositorys:
 
@@ -125,7 +144,7 @@ app/deploy/deploy.sh switch VERSION
 app/deploy/deploy.sh status
 ```
 
-zeigt laufende und vorherige Version, den Commit des Images, den Zustand der Container und das Ergebnis von `https://DOMAIN/api/health`.
+zeigt laufende und vorherige Version, den Commit des Images, den Zustand der Container und das Ergebnis von `https://DOMAIN/api/health`. `app/deploy/deploy.sh current` gibt nur den Commit der laufenden Version aus.
 
 - Docker prüft das Backend alle 30 Sekunden mit `/server healthcheck`. Nach dem Start prüft es alle 2 Sekunden, bis der erste Check erfolgreich ist.
 - Beide Container haben `restart: unless-stopped`. Nach einem Neustart des Servers starten sie automatisch, Caddy erst, wenn das Backend gesund ist.

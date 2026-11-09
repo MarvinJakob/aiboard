@@ -1,5 +1,5 @@
-// Setzt die Darstellung vor dem ersten Zeichnen, damit die Seite nicht kurz hell aufblitzt (Ticket #20).
-// Gespeicherte Wahl, sonst Systemeinstellung, sonst hell. Als eigene Datei, weil die CSP Inline-Skripte verbietet.
+// Setzt die Darstellung vor dem ersten Zeichnen, damit keine andere Darstellung aufblitzt (Tickets #20, #53).
+// Gespeicherte Wahl, sonst hell. Als eigene Datei, weil die CSP Inline-Skripte verbietet.
 (function () {
   var theme = null;
   try {
@@ -8,7 +8,7 @@
     /* privat oder blockiert */
   }
   if (theme !== 'light' && theme !== 'dark') {
-    theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    theme = 'light';
   }
   document.documentElement.setAttribute('data-theme', theme);
 })();

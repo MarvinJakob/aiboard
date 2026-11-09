@@ -3,6 +3,7 @@ package httpserver_test
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -70,6 +71,41 @@ func TestGateKeepsLoginReachable(t *testing.T) {
 	if status != http.StatusUnauthorized {
 		t.Fatalf("anmeldung mit falschen daten: status %d, erwartet 401", status)
 	}
+}
+
+// Ticket #54: Direkte Links in beiden Sprachen bleiben vor Anmeldung und nach Sitzungsablauf gesperrt.
+func TestGateProtectsDevelopmentPagesAfterSessionExpiry(t *testing.T) {
+	srv, db := newServer(t, true, func(c *httpserver.Config) { c.RequireLogin = true })
+	createUser(t, db, editorEmail, service.RoleEditor)
+	b := newBrowser(t, srv)
+	paths := []string{"/"}
+	for _, lang := range []string{"de", "en"} {
+		for _, page := range []string{"", "/blog", "/blog/beispiel", "/profil", "/themen/ki-datenanalyse", "/themen/ai-audit", "/themen/ai-audit/strategie"} {
+			paths = append(paths, "/"+lang+page)
+		}
+	}
+	checkClosed := func() {
+		t.Helper()
+		for _, path := range paths {
+			resp, body := b.do(http.MethodGet, path, nil)
+			wantRedirect(t, resp, "/redaktion/anmelden?weiter="+url.QueryEscape(path))
+			if strings.Contains(body, `id="root"`) {
+				t.Fatalf("%s: geschütztes Frontend ausgeliefert", path)
+			}
+		}
+		for _, path := range []string{"/api/topics?lang=en", "/api/posts?lang=en", "/api/audit?lang=en"} {
+			resp, body := b.do(http.MethodGet, path, nil)
+			wantStatus(t, resp, body, http.StatusUnauthorized)
+		}
+	}
+	checkClosed()
+	b.mustLogin(editorEmail)
+	resp, body := b.do(http.MethodGet, "/en/profil", nil)
+	wantStatus(t, resp, body, http.StatusOK)
+	if _, err := db.Exec("UPDATE sessions SET expires_at = '2000-01-01T00:00:00Z'"); err != nil {
+		t.Fatal(err)
+	}
+	checkClosed()
 }
 
 // Ticket #49, Kriterien 2 und 3: Nach der Anmeldung ist die Webseite wie bisher erreichbar, und die
