@@ -2,9 +2,9 @@ import { Link, useParams } from 'react-router';
 import { isNotFound, useTopic } from '../api/client';
 import { Art } from '../components/Art';
 import { AuditOverview } from '../components/AuditOverview';
+import { TopicContent } from '../components/TopicContent';
 import { AutomationBenefits } from '../components/AutomationBenefits';
 import { AUTOMATION_TOPIC } from '../i18n/automation';
-import { TopicContent } from '../components/TopicContent';
 import { AUDIT_TOPIC } from '../lib/audit';
 import { PostList } from '../components/PostRow';
 import { EmptyPosts, LoadError, Loading, TranslationNotice } from '../components/Status';
@@ -56,8 +56,8 @@ export function TopicPage() {
         <Art topic={tp.slug} seed={1} />
       </section>
       {tp.slug === AUDIT_TOPIC && <AuditOverview />}
-      {tp.slug === AUTOMATION_TOPIC && <AutomationBenefits />}
       {content && <TopicContent content={content} />}
+      {tp.slug === AUTOMATION_TOPIC && <AutomationBenefits />}
       <section className="section" aria-labelledby="topicPosts">
         <div className="section-head">
           <h2 className="section-title" id="topicPosts">

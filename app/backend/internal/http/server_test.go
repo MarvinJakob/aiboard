@@ -131,7 +131,7 @@ func TestHealth(t *testing.T) {
 func TestTopicsAreSeeded(t *testing.T) {
 	srv, _ := newServer(t, false)
 	list := getJSON[api.TopicList](t, srv, "/api/topics?lang=de", 200)
-	want := []string{"AI in der Softwareentwicklung", "AI Audit für Unternehmen", "AI in Data Analytics", "Prozessautomatisierung", "KI-Tipps und Tricks"}
+	want := []string{"KI in der Softwareentwicklung", "AI Audit für Unternehmen", "KI in Data Analytics", "Prozessautomatisierung", "KI-Tipps und Tricks"}
 	if len(list.Items) != len(want) {
 		t.Fatalf("%d Themen, erwartet %d", len(list.Items), len(want))
 	}
@@ -204,6 +204,34 @@ func TestSkillsTopic(t *testing.T) {
 	d := getJSON[api.TopicDetail](t, srv, "/api/topics/"+slug+"?lang=de", 200)
 	if d.PostCount != 1 || strings.Join(slugs(d.Posts), ",") != "ki-veraendert-softwareteams" {
 		t.Fatalf("Veröffentlichte Beiträge und Entwurfsfilter: %+v", d)
+	}
+}
+
+// Ticket #81: neue Metadaten in beiden Sprachen, Slug und zugeordnete Beiträge bleiben erhalten.
+func TestDataAnalyticsTopicMetadata(t *testing.T) {
+	srv, db := newServer(t, false)
+	_, err := db.Exec(`INSERT INTO posts (id, slug, status, published_at, updated_at) VALUES (100, 'daten-beitrag', 'published', '2026-11-09T10:00:00Z', '2026-11-09T10:00:00Z');
+		INSERT INTO post_translations (post_id, lang, title, summary, body_markdown) VALUES (100, 'de', 'Datenbeitrag', 'Kurz', 'Text');
+		INSERT INTO post_topics (post_id, topic_id) VALUES (100, (SELECT id FROM topics WHERE slug = 'data-analytics'));`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string][4]string{
+		"de": {"KI in Data Analytics", "Data Analytics",
+			"Wie aus einer schnellen KI-Antwort eine belastbare Analyse wird: Kennzahlen klären, Ergebnisse prüfen.",
+			"KI beantwortet Datenfragen in Alltagssprache, schreibt Analysecode und unterstützt Prognosen. Belastbar werden die Ergebnisse erst, wenn Kennzahlen eindeutig definiert sind und Antworten mit den Quelldaten abgeglichen werden. Diese Seite zeigt Einsatzfelder, Grenzen und einen Pilot."},
+		"en": {"AI in Data Analytics", "Data Analytics",
+			"How a quick AI answer becomes a reliable analysis: clarify metrics, check results.",
+			"AI answers data questions in everyday language, writes analysis code and supports forecasts. The results only become reliable once metrics are clearly defined and answers are checked against the source data. This page covers use cases, limits and a pilot."},
+	}
+	for lang, w := range want {
+		d := getJSON[api.TopicDetail](t, srv, "/api/topics/data-analytics?lang="+lang, 200)
+		if got := [4]string{d.Title, d.Label, d.Summary, d.Intro}; got != w || d.Slug != "data-analytics" || string(d.Lang) != lang {
+			t.Errorf("%s: %+v", lang, d)
+		}
+		if len(d.Posts) != 1 || d.Posts[0].Slug != "daten-beitrag" {
+			t.Errorf("%s: Beitrag fehlt: %+v", lang, d.Posts)
+		}
 	}
 }
 
@@ -329,6 +357,44 @@ func TestTopicShowsAssignedPosts(t *testing.T) {
 	getJSON[api.Error](t, srv, "/api/topics/gibt-es-nicht", 404)
 	if resp, _ := get(t, srv, "/de/themen/gibt-es-nicht"); resp.StatusCode != 404 {
 		t.Fatalf("unbekanntes Thema: %d", resp.StatusCode)
+	}
+}
+
+// Ticket #80: Metadaten stimmen mit der verbindlichen deutschen Textvorlage überein.
+func TestSoftwareGuardrailsMetadata(t *testing.T) {
+	srv, _ := newServer(t, true)
+	source, err := os.ReadFile("../../../../content/KI in der Softwareentwicklung.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := getJSON[api.TopicDetail](t, srv, "/api/topics/softwareentwicklung?lang=de", 200)
+	for name, value := range map[string]string{"Titel": d.Title, "Label": d.Label, "Kurzbeschreibung": d.Summary, "Einführung": d.Intro} {
+		prefix := "- **" + name + ":** "
+		found := false
+		for _, line := range strings.Split(string(source), "\n") {
+			if !strings.HasPrefix(line, prefix) {
+				continue
+			}
+			expected := strings.TrimSpace(strings.TrimPrefix(line, prefix))
+			if name == "Titel" {
+				expected = strings.Split(expected, " (bisher:")[0]
+			}
+			if value != expected {
+				t.Errorf("%s: %q, erwartet %q", name, value, expected)
+			}
+			found = true
+		}
+		if !found {
+			t.Fatalf("%s fehlt in der Vorlage", name)
+		}
+	}
+	en := getJSON[api.TopicDetail](t, srv, "/api/topics/softwareentwicklung?lang=en", 200)
+	if en.Lang != "en" || en.Summary != "How to guide AI assistants with Markdown rules, access permissions, tests and reviews." || !strings.Contains(en.Intro, "verifiable rules") {
+		t.Fatalf("Englische Metadaten: %+v", en)
+	}
+	resp, html := get(t, srv, "/de/themen/softwareentwicklung")
+	if resp.StatusCode != 200 || !strings.Contains(html, "<title>KI in der Softwareentwicklung · KI Perspektiven</title>") {
+		t.Fatalf("Metadaten bei Direktaufruf: %d, %s", resp.StatusCode, html)
 	}
 }
 

@@ -9,16 +9,16 @@ type L = 'de' | 'en';
 
 const topicData: Record<string, Record<L, Omit<Topic, 'lang' | 'postCount' | 'slug'>>> = {
   softwareentwicklung: {
-    de: { title: 'AI in der Softwareentwicklung', label: 'Softwareentwicklung', summary: 'Kurz SE', intro: 'Einführung Softwareentwicklung' },
-    en: { title: 'AI in Software Development', label: 'Software Development', summary: 'Short SE', intro: 'Intro software development' },
+    de: { title: 'KI in der Softwareentwicklung', label: 'Softwareentwicklung', summary: 'Wie Sie KI-Assistenten mit Markdown-Regeln, Zugriffsrechten, Tests und Reviews anleiten.', intro: 'Dateien wie `AGENTS.md` geben KI-Assistenten Ziele, Arbeitsabläufe und Grenzen mit. Das Modell kann solche Regeln aber missverstehen oder übergehen. Hier sehen Sie, wie Sie prüfbare Regeln schreiben, Freigaben an Aktionen binden und Grenzen technisch absichern.' },
+    en: { title: 'AI in Software Development', label: 'Software Development', summary: 'How to guide AI assistants with Markdown rules, access permissions, tests and reviews.', intro: 'Files such as `AGENTS.md` give AI assistants goals, workflows and boundaries. However, the model can misunderstand or disregard these rules. Here you can learn how to write verifiable rules, tie approvals to actions and enforce boundaries through technical controls.' },
   },
   'ai-audit': {
     de: { title: 'AI Audit für Unternehmen', label: 'AI Audit', summary: 'Kurz Audit', intro: 'Einführung Audit' },
     en: { title: 'AI Audit for Companies', label: 'AI Audit', summary: 'Short audit', intro: 'Intro audit' },
   },
   'data-analytics': {
-    de: { title: 'AI in Data Analytics', label: 'Data Analytics', summary: 'Kurz Data', intro: 'Einführung Data Analytics' },
-    en: { title: 'AI in Data Analytics', label: 'Data Analytics', summary: 'Short data', intro: 'Intro data analytics' },
+    de: { title: 'KI in Data Analytics', label: 'Data Analytics', summary: 'Wie aus einer schnellen KI-Antwort eine belastbare Analyse wird: Kennzahlen klären, Ergebnisse prüfen.', intro: 'KI beantwortet Datenfragen in Alltagssprache, schreibt Analysecode und unterstützt Prognosen. Belastbar werden die Ergebnisse erst, wenn Kennzahlen eindeutig definiert sind und Antworten mit den Quelldaten abgeglichen werden. Diese Seite zeigt Einsatzfelder, Grenzen und einen Pilot.' },
+    en: { title: 'AI in Data Analytics', label: 'Data Analytics', summary: 'How a quick AI answer becomes a reliable analysis: clarify metrics, check results.', intro: 'AI answers data questions in everyday language, writes analysis code and supports forecasts. The results only become reliable once metrics are clearly defined and answers are checked against the source data. This page covers use cases, limits and a pilot.' },
   },
   prozessautomatisierung: {
     de: { title: 'Prozessautomatisierung', label: 'Prozessautomatisierung', summary: 'Kurz Automatisierung', intro: 'Einführung Prozessautomatisierung' },

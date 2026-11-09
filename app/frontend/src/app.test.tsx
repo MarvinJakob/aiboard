@@ -88,9 +88,9 @@ describe('Ticket #73: Startseite nach mock/landing', () => {
     const { router } = renderApp('/de');
     const card = await screen.findByRole('link', { name: /AI Audit für Unternehmen.*Zum Thema/s });
     expect(card).toHaveAttribute('href', '/de/themen/ai-audit');
-    await user.click(screen.getByRole('link', { name: 'Thema: AI in Data Analytics' }));
+    await user.click(screen.getByRole('link', { name: 'Thema: KI in Data Analytics' }));
     expect(router.state.location.pathname).toBe('/de/themen/data-analytics');
-    expect(await screen.findByRole('heading', { level: 1, name: 'AI in Data Analytics' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'KI in Data Analytics' })).toBeInTheDocument();
   });
 
   it('zeigt die drei neuesten Beiträge und verlinkt Blog und Profil', async () => {
@@ -120,7 +120,7 @@ describe('Ticket #73: Startseite nach mock/landing', () => {
   it('zeigt ohne veröffentlichte Beiträge weiterhin die Themenkarten und keinen Blogabschnitt', async () => {
     installFakeApi([]);
     renderApp('/de');
-    expect(await screen.findByRole('link', { name: /AI in der Softwareentwicklung.*Zum Thema/s })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: /KI in der Softwareentwicklung.*Zum Thema/s })).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByText('Wird geladen …')).not.toBeInTheDocument());
     expect(screen.queryByRole('region', { name: 'Neu im Blog.' })).not.toBeInTheDocument();
   });
@@ -176,7 +176,7 @@ describe('Anforderung 2: Navigation', () => {
     const { router } = renderApp('/de/blog/neu');
     await user.click(await screen.findByRole('button', { name: 'Themen' }));
     const menu = document.querySelector('.popover') as HTMLElement;
-    await user.click(await within(menu).findByRole('link', { name: /AI in Data Analytics/ }));
+    await user.click(await within(menu).findByRole('link', { name: /KI in Data Analytics/ }));
     expect(router.state.location.pathname).toBe('/de/themen/data-analytics');
     expect(screen.getByRole('button', { name: 'Themen' })).toHaveAttribute('aria-expanded', 'false');
 
@@ -200,8 +200,8 @@ describe('Anforderung 3: Themenseiten', () => {
 
   it('bleibt ohne veröffentlichte Beiträge mit Einführung aufrufbar', async () => {
     renderApp('/de/themen/data-analytics');
-    expect(await screen.findByRole('heading', { level: 1, name: 'AI in Data Analytics' })).toBeInTheDocument();
-    expect(screen.getByText('Einführung Data Analytics')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'KI in Data Analytics' })).toBeInTheDocument();
+    expect(screen.getByText(/^KI beantwortet Datenfragen in Alltagssprache/)).toBeInTheDocument();
     expect(screen.getByText('Noch keine Beiträge')).toBeInTheDocument();
   });
 
@@ -305,7 +305,7 @@ describe('Anforderung 8: KI-Audit-Übersicht', () => {
 
   it('erscheint nur beim Thema AI Audit', async () => {
     renderApp('/de/themen/softwareentwicklung');
-    await screen.findByRole('heading', { level: 1, name: 'AI in der Softwareentwicklung' });
+    await screen.findByRole('heading', { level: 1, name: 'KI in der Softwareentwicklung' });
     expect(screen.queryByRole('heading', { name: 'Die Dimensionen des KI-Audits' })).not.toBeInTheDocument();
   });
 });
@@ -436,7 +436,7 @@ describe('Ticket #21: AI Audit als eigener Navigationseintrag', () => {
       '/de/themen/softwareentwicklung', '/de/themen/data-analytics', '/de/themen/prozessautomatisierung', '/de/themen/ki-tipps-und-tricks',
     ]);
     expect(within(menu).queryByRole('link', { name: /AI Audit/ })).not.toBeInTheDocument();
-    await user.click(within(menu).getByRole('link', { name: /AI in Data Analytics/ }));
+    await user.click(within(menu).getByRole('link', { name: /KI in Data Analytics/ }));
     expect(router.state.location.pathname).toBe('/de/themen/data-analytics');
   });
 
