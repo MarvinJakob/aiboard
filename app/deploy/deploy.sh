@@ -36,22 +36,40 @@ build() {
     -t "$(image "$version")" "build/$version"
 }
 
-switch() {
-  local version=$1 current
-  [[ -d "build/$version" ]] || { echo "Version $version ist nicht vorhanden (build/$version fehlt)" >&2; exit 1; }
-  docker image inspect "$(image "$version")" > /dev/null
-  current=$(envget VERSION)
-  # compose.yaml und Caddyfile gehören zur Version. Caddyfile per cat überschreiben,
-  # damit der Bind-Mount im laufenden Caddy-Container dieselbe Datei behält.
+# Startet VERSION mit der zugehörigen compose.yaml und Caddyfile. Gibt 1 zurück, wenn
+# der Docker-Healthcheck oder /api/health über HTTPS nicht erfolgreich ist.
+activate() {
+  local version=$1
+  # Caddyfile per cat überschreiben, damit der Bind-Mount im laufenden Caddy-Container dieselbe Datei behält
   cp "build/$version/compose.yaml" compose.yaml
   mkdir -p deploy
   cat "build/$version/deploy/Caddyfile" > deploy/Caddyfile
-  if [[ -n "$current" && "$current" != "$version" ]]; then envset PREVIOUS_VERSION "$current"; fi
   envset VERSION "$version"
   echo "Starte $(image "$version") ..."
-  docker compose up -d --remove-orphans --wait --wait-timeout 180
-  docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile > /dev/null 2>&1
-  status
+  docker compose up -d --remove-orphans --wait --wait-timeout 180 || return 1
+  docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile > /dev/null 2>&1 || true
+  status || return 1
+}
+
+# Wechselt auf VERSION. Schlägt der Start fehl, läuft wieder die bisherige Version und der Aufruf endet mit Fehler.
+switch() {
+  local version=$1 current previous
+  [[ -d "build/$version" ]] || { echo "Version $version ist nicht vorhanden (build/$version fehlt)" >&2; exit 1; }
+  docker image inspect "$(image "$version")" > /dev/null
+  current=$(envget VERSION)
+  previous=$(envget PREVIOUS_VERSION)
+  if activate "$version"; then
+    if [[ -n "$current" && "$current" != "$version" ]]; then envset PREVIOUS_VERSION "$current"; fi
+    return 0
+  fi
+  echo "FEHLER: Version $version ist nicht gesund." >&2
+  docker compose logs --tail 30 backend >&2 || true
+  if [[ -n "$current" && "$current" != "$version" ]]; then
+    echo "Stelle die bisherige Version $current wieder her ..." >&2
+    activate "$current" || echo "FEHLER: Auch $current startet nicht." >&2
+    envset PREVIOUS_VERSION "$previous"
+  fi
+  exit 1
 }
 
 rollback() {
@@ -86,8 +104,8 @@ status() {
     curl -fsS -m 10 "https://$(envget DOMAIN)/api/health" 2> /dev/null && { echo; return 0; }
     sleep 2
   done
-  curl -fsS -m 10 "https://$(envget DOMAIN)/api/health"
-  echo
+  # Ausdrücklich zurückgeben: Innerhalb von "activate || ..." greift set -e nicht
+  if curl -fsS -m 10 "https://$(envget DOMAIN)/api/health"; then echo; else echo; return 1; fi
 }
 
 "$@"
