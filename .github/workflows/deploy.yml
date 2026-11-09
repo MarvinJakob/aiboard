@@ -1,0 +1,102 @@
+# Prüft jeden Pull Request in main und stellt gemergte Pull Requests auf dem Hetzner-Server bereit.
+# Ablauf und Secrets: app/docs/betrieb.md, Abschnitt „Automatisches Deployment“.
+name: Prüfen und deployen
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Prüfungen (app/README.md)
+    # Geschlossene, nicht gemergte Pull Requests lösen nichts aus
+    if: github.event.action != 'closed' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      # Bei einem Merge ist github.sha der Merge-Commit in main
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: app/backend/go.mod
+          cache-dependency-path: app/backend/go.sum
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            app/frontend/package-lock.json
+            app/frontend-redaktion/package-lock.json
+
+      - name: Backend
+        working-directory: app/backend
+        run: go vet ./... && go test ./...
+
+      - name: Öffentliches Frontend
+        working-directory: app/frontend
+        run: npm ci && npm run typecheck && npm test
+
+      - name: Redaktionsfrontend
+        working-directory: app/frontend-redaktion
+        run: npm ci && npm run typecheck && npm test
+
+  deploy:
+    name: Deployment auf Hetzner
+    needs: test
+    if: github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.DEPLOY_URL }}
+    # Deployments nacheinander ausführen, laufende nicht abbrechen
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: SSH-Zugang einrichten
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Version bauen und starten
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          export DEPLOY_SSH_KEY=$HOME/.ssh/deploy
+          version=$(git rev-parse --short=7 "$GITHUB_SHA")
+          echo "Pull Request #$PR, Commit $GITHUB_SHA, Image-Version $version"
+          app/deploy/deploy.sh release "$GITHUB_SHA" "$version"
+          {
+            echo "### Deployment"
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Pull Request | #$PR |"
+            echo "| Commit | \`$GITHUB_SHA\` |"
+            echo "| Image | \`ki-web:$version\` |"
+            echo "| Adresse | ${{ vars.DEPLOY_URL }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Healthcheck von außen
+        if: vars.DEPLOY_URL != ''
+        run: curl -fsS --retry 5 --retry-delay 5 --retry-all-errors "${{ vars.DEPLOY_URL }}/api/health"
+
+      - name: SSH-Schlüssel entfernen
+        if: always()
+        run: rm -f ~/.ssh/deploy

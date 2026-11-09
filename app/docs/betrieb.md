@@ -56,9 +56,31 @@ Danach die erste Version wie unter [Neue Version bereitstellen](#neue-version-be
 cd /opt/ki-web && docker compose exec -it backend /server user create --email ADRESSE --role admin
 ```
 
+## Automatisches Deployment
+
+Jeder in `main` gemergte Pull Request wird automatisch bereitgestellt. Das übernimmt der Workflow [.github/workflows/deploy.yml](../../.github/workflows/deploy.yml):
+
+1. **Prüfungen:** Bei jedem Pull Request in `main` (Öffnen, neue Commits) und noch einmal nach dem Merge laufen `go vet`, `go test` sowie Typprüfung und Tests beider Frontends wie in [README.md](../README.md#code-erzeugen-und-testen). Schlägt eine Prüfung fehl, wird nicht deployed.
+2. **Deployment:** Nur nach einem Merge ruft der Job `deploy/deploy.sh release <Merge-Commit>` auf, wie unter [Neue Version bereitstellen](#neue-version-bereitstellen) beschrieben. Geschlossene, nicht gemergte Pull Requests lösen nichts aus.
+3. **Healthcheck:** Ist die neue Version nicht gesund, startet `deploy.sh` wieder die bisherige Version und der Lauf schlägt fehl. Anschließend prüft der Workflow `DEPLOY_URL/api/health` von außen.
+4. **Protokoll:** Pull Request, Commit und Image-Version stehen im Protokoll und in der Zusammenfassung des Laufs unter *Actions*.
+
+Läufe für die Umgebung `production` laufen nacheinander (`concurrency`). Ein laufendes Deployment wird nicht abgebrochen.
+
+Einstellungen unter *Settings → Secrets and variables → Actions* des Repositorys:
+
+| Name | Art | Inhalt |
+|---|---|---|
+| `DEPLOY_HOST` | Secret | `root@78.47.14.178` |
+| `DEPLOY_SSH_KEY` | Secret | Privater Schlüssel nur für dieses Deployment (ed25519). Der öffentliche Teil steht auf dem Server in `/root/.ssh/authorized_keys`. |
+| `DEPLOY_KNOWN_HOSTS` | Secret | Host-Schlüssel des Servers, z. B. aus `ssh-keyscan -t ed25519 78.47.14.178` nach Abgleich des Fingerprints |
+| `DEPLOY_URL` | Variable | `https://78-47-14-178.sslip.io` |
+
+Eine Registry ist nicht nötig, weil das Image auf dem Server gebaut wird. Den Schlüssel bei Verdacht auf Missbrauch auf dem Server aus `authorized_keys` löschen und neu erzeugen.
+
 ## Neue Version bereitstellen
 
-Lokal im Repository, mit dem eingecheckten Stand des gewünschten Commits:
+Ohne Pull Request, etwa für einen erneuten Versuch, lokal im Repository mit dem eingecheckten Stand des gewünschten Commits:
 
 ```bash
 export DEPLOY_HOST=root@78.47.14.178 DEPLOY_SSH_KEY=.ssh/hetzner
@@ -69,9 +91,10 @@ Das Skript [deploy/deploy.sh](../deploy/deploy.sh)
 
 1. überträgt `app/` des Commits per `git archive` nach `/opt/ki-web/build/<VERSION>`. `VERSION` ist der kurze Commit-Hash, ein drittes Argument legt einen anderen Namen fest.
 2. baut darauf das Image `ghcr.io/marvinjakob/ki-web:<VERSION>` mit den Labels `org.opencontainers.image.revision` (Commit) und `org.opencontainers.image.version`.
-3. kopiert `compose.yaml` und `deploy/Caddyfile` der Version nach `/opt/ki-web`, merkt sich die bisherige Version als `PREVIOUS_VERSION` und setzt `VERSION`.
-4. startet die Container mit `docker compose up -d --wait`. Das Kommando endet erst, wenn der Healthcheck des Backends erfolgreich ist, sonst mit Fehler.
-5. lädt die Caddy-Konfiguration neu, zeigt den Status und räumt Builds älter als die fünf jüngsten auf.
+3. kopiert `compose.yaml` und `deploy/Caddyfile` der Version nach `/opt/ki-web` und setzt `VERSION`.
+4. startet die Container mit `docker compose up -d --wait` und prüft danach `https://DOMAIN/api/health`. Erst wenn beides erfolgreich ist, wird die bisherige Version zu `PREVIOUS_VERSION`.
+5. startet bei einem Fehler wieder die bisherige Version und endet mit Fehler. Schlägt schon der Build fehl, läuft die bisherige Version ohne Unterbrechung weiter.
+6. lädt die Caddy-Konfiguration neu, zeigt den Status und räumt Builds älter als die fünf jüngsten auf.
 
 Ein Build dauert auf dem Server einige Minuten. Beim Austausch des Backend-Containers ist die Seite wenige Sekunden nicht erreichbar. Datenbank und Medien liegen in Volumes und bleiben erhalten.
 
