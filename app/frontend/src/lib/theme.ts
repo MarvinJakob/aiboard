@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { canPersistPreferences } from './consent';
 
 /**
  * Helle und dunkle Darstellung (Ticket #20). Die Wahl bleibt nur im Browser gespeichert und gilt
@@ -30,6 +31,7 @@ export function applyTheme(theme: Theme) {
 }
 
 function storeTheme(theme: Theme) {
+  if (!canPersistPreferences()) return;
   try {
     localStorage.setItem(THEME_KEY, theme);
   } catch {

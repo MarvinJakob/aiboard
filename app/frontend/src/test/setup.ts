@@ -1,10 +1,13 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
+import { resetConsentMemory } from '../lib/consent';
 
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  sessionStorage.clear();
+  resetConsentMemory();
 });
 
 // jsdom kennt scrollTo, scrollIntoView und matchMedia nicht vollständig
