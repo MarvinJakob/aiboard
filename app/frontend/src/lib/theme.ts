@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { canPersistPreferences } from './consent';
 
 /**
  * Helle und dunkle Darstellung (Ticket #20). Die Wahl bleibt nur im Browser gespeichert und gilt
@@ -11,6 +12,9 @@ export const THEME_KEY = 'ki-perspektiven.theme';
 const DARK_QUERY = '(prefers-color-scheme: dark)';
 
 const isTheme = (v: unknown): v is Theme => v === 'light' || v === 'dark';
+
+/** Wahl dieser Sitzung; gilt auch dann, wenn sie wegen „Keine Cookies“ nicht gespeichert wird. */
+let chosenInSession = false;
 
 export function storedTheme(): Theme | null {
   try {
@@ -40,6 +44,7 @@ export function applyTheme(theme: Theme) {
 }
 
 function storeTheme(theme: Theme) {
+  if (!canPersistPreferences()) return;
   try {
     localStorage.setItem(THEME_KEY, theme);
   } catch {
@@ -62,13 +67,14 @@ export function useTheme(): [Theme, (theme: Theme) => void] {
     const mq = typeof window.matchMedia === 'function' ? window.matchMedia(DARK_QUERY) : null;
     if (!mq) return;
     const onChange = () => {
-      if (!storedTheme()) setTheme(mq.matches ? 'dark' : 'light');
+      if (!storedTheme() && !chosenInSession) setTheme(mq.matches ? 'dark' : 'light');
     };
     mq.addEventListener?.('change', onChange);
     return () => mq.removeEventListener?.('change', onChange);
   }, []);
 
   const choose = (next: Theme) => {
+    chosenInSession = true;
     storeTheme(next);
     setTheme(next);
   };

@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { TFunction } from 'i18next';
+import { canPersistPreferences } from './consent';
 
 export const LANGS = ['de', 'en'] as const;
 export type Lang = (typeof LANGS)[number];
@@ -20,6 +21,7 @@ export function storedLang(): Lang | null {
 }
 
 export function storeLang(lang: Lang) {
+  if (!canPersistPreferences()) return;
   try {
     localStorage.setItem(STORAGE_KEY, lang);
   } catch {
