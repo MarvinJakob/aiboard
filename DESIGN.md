@@ -215,19 +215,17 @@ Gedrückte Bedienelemente skalieren kurz auf 95 %. Bei `prefers-reduced-motion: 
 - **Klarheit:** Der Text sagt klar, dass der Zugang nur für die Redaktion gilt (Responsibility).
 - **Fehlermeldungen** sind konkret und bieten einen nächsten Schritt.
 
-### Startseite (Anf. 1)
+### Startseite (Anf. 1, Ticket #73)
 
-1. **Intro:** eine Zeile Überschrift und ein Satz Nutzenversprechen.
-2. **Beitrags-Karussell:**
-   - zeigt bis zu drei der neuesten Beiträge als großflächige Bildkarte.
-   - Steuerung als Clear-Glas-Kapsel mit Pfeilen und Positionspunkten. Der aktive Punkt wird zur Kapsel.
-   - lässt sich wischen, kein Autoplay.
-   - Nicht sichtbare Folien sind `inert`.
-3. **Themenkarten:**
-   - horizontale Leiste mit Scroll-Snap.
-   - Runde Glas-Pfeile erscheinen nur, wenn Karten außerhalb des sichtbaren Bereichs liegen, und sind am Anfang bzw. Ende deaktiviert.
-4. **Mehr aus dem Blog:** weitere Beiträge als Liste und ein Link „Alle Beiträge“.
-5. **Ohne veröffentlichte Beiträge** entfällt das Karussell. Die Themenkarten bleiben.
+Vorlage ist der Landing-Page-Entwurf [mock/landing/index.html](mock/landing/index.html). Er ersetzt das frühere Karussell und die Themenleiste.
+
+1. **Hero:** Überschrift mit Verlauf in der zweiten Zeile, ein Satz Nutzenversprechen, Primärbutton zum KI-Audit, Textlink zu „Was ist KI?“ und eine Grafik aus drei Kreisen, je einer pro Thema. Die Kreise führen zur Themenseite und heben die passende Themenkarte hervor.
+2. **Kennzahlen:** drei Werte zur KI-Nutzung in Deutschland mit Quellenverweis.
+3. **Was ist KI?:** Definition, die sieben typischen Aufgaben als Tabs (Pfeiltasten, Pos1, Ende) mit Beispiel und drei Grenzen von KI.
+4. **Themen:** drei opake Karten im Raster.
+5. **KI-Audit:** dunkle Fläche in beiden Darstellungen. Dimension wählen, die drei Reifegrade zeigen ihre Bedeutung für diese Dimension, der Button führt zur Selbsteinschätzung.
+6. **Neu im Blog:** die drei neuesten Beiträge als Karten und ein Link „Alle Beiträge“. Ohne veröffentlichte Beiträge entfällt der Abschnitt.
+7. **Profil-Teaser** und **Quellen** mit nummerierten Verweisen aus dem Text.
 
 ### Themenseite (Anf. 3)
 
@@ -264,7 +262,7 @@ Gedrückte Bedienelemente skalieren kurz auf 95 %. Bei `prefers-reduced-motion: 
 - [ ] Systemeinstellungen werden berücksichtigt: `prefers-reduced-transparency`, `prefers-contrast`, `prefers-reduced-motion`, `prefers-color-scheme` und `forced-colors`. [Q4] [Q5] [Q6]
 - [ ] Ein Skip-Link „Zum Inhalt springen“ ist vorhanden. Der Fokus ist sichtbar (3 px, Akzentfarbe).
 - [ ] Nach jedem Seitenwechsel springt der Fokus auf die H1 und der Seitentitel wird aktualisiert.
-- [ ] Das Karussell hat `aria-roledescription="carousel"` und Punkte mit Beschriftung („Beitrag 2 von 3“). Es gibt kein Autoplay.
+- [ ] Tabs und Auswahlschalter der Startseite sind per Tastatur bedienbar und melden ihren Zustand (`aria-selected`, `aria-pressed`). Zahlen, die hochzählen, lesen Screenreader nur als Endwert.
 - [ ] `lang` ist für die Seite und für nicht übersetzte Abschnitte gesetzt.
 - [ ] Touch-Ziele sind mindestens 44 px groß.
 - [ ] Informationen hängen nie nur an Farbe: Themen-Chips haben immer einen Text.

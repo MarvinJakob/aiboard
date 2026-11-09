@@ -92,7 +92,7 @@ var texts = map[service.Lang]map[string]string{
 	service.DE: {
 		"profile.title":  "Marvin Jakob – Profil",
 		"profile.desc":   "Marvin Jakob: IT-Berater und Full-Stack-Entwickler. Mein Hintergrund und meine Fragen zu KI in Softwareentwicklung, Data Analytics und AI Audit.",
-		"home.desc":      "Einordnungen, Erfahrungen und Leitfäden für Teams, die künstliche Intelligenz verantwortungsvoll nutzen wollen.",
+		"home.desc":      "KI Perspektiven ordnet künstliche Intelligenz verständlich ein: was sie kann, wo ihre Grenzen liegen und wie Unternehmen ihren KI-Reifegrad einschätzen.",
 		"blog.title":     "Blog",
 		"blog.desc":      "Alle veröffentlichten Beiträge rund um KI – die neuesten zuerst.",
 		"imprint.title":  "Impressum",
@@ -105,7 +105,7 @@ var texts = map[service.Lang]map[string]string{
 	service.EN: {
 		"profile.title":  "Marvin Jakob – Profile",
 		"profile.desc":   "Marvin Jakob: IT consultant and full-stack developer. My background and questions about AI in software development, data analytics and AI audit.",
-		"home.desc":      "Perspectives, experiences and guides for teams who want to use artificial intelligence responsibly.",
+		"home.desc":      "KI Perspektiven explains artificial intelligence in plain terms: what it can do, where its limits are and how companies assess their AI maturity.",
 		"blog.title":     "Blog",
 		"blog.desc":      "All published articles about AI – newest first.",
 		"imprint.title":  "Legal notice",

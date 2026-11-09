@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="KI Perspektiven ordnet künstliche Intelligenz verständlich ein: was sie kann, wo ihre Grenzen liegen und wie Unternehmen ihren KI-Reifegrad einschätzen.">
+  <title>KI Perspektiven</title>
+  <style>
+    /* ===== Design-Tokens (DESIGN.md, Abschnitt 4) ===== */
+    :root {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Inter, Roboto, sans-serif;
+      color-scheme: light;
+      --bg: #eef1f6; --surface: #fff; --surface-2: #f6f8fb; --text: #0d1320; --text-2: #4a5466;
+      --accent: #0a5fd6; --accent-ink: #fff;
+      --border: rgba(13,19,32,.08); --line: #d8dee8; --fill: rgba(13,19,32,.06);
+      --indigo: #6366f1; --teal: #0d9488; --orange: #ea580c;
+      --indigo-soft: #eeedff; --teal-soft: #e3f4f1; --orange-soft: #fff0e3;
+      --glass-tint: rgba(255,255,255,.52); --glass-tint-strong: rgba(255,255,255,.72);
+      --glass-filter: blur(22px) saturate(180%); --glass-edge: rgba(255,255,255,.65);
+      --glass-rim: rgba(255,255,255,.9); --glass-hl-color: rgba(255,255,255,.75);
+      --glass-shadow: 0 12px 40px -20px rgba(23,40,76,.35);
+      --shadow-soft: 0 20px 60px -36px rgba(23,40,76,.45);
+      --blend: multiply; --lens-sub: #4a5466;
+      --dur-fast: 160ms; --dur-base: 300ms; --dur-slow: 500ms;
+      --ease-out: cubic-bezier(.22,1,.36,1); --ease-spring: cubic-bezier(.34,1.36,.64,1);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #0a0c11; --surface: #151922; --surface-2: #1b202b; --text: #f1f3f7; --text-2: #aab2c0;
+        --accent: #5ea3ff; --accent-ink: #0a172a;
+        --border: rgba(255,255,255,.08); --line: #2c3444; --fill: rgba(255,255,255,.07);
+        --indigo-soft: #26244a; --teal-soft: #14332f; --orange-soft: #3a2619;
+        --glass-tint: rgba(28,32,42,.48); --glass-tint-strong: rgba(28,32,42,.72);
+        --glass-edge: rgba(255,255,255,.14); --glass-rim: rgba(255,255,255,.18); --glass-hl-color: rgba(255,255,255,.12);
+        --glass-shadow: 0 12px 40px -16px rgba(0,0,0,.7); --shadow-soft: 0 20px 60px -30px rgba(0,0,0,.8);
+        --blend: screen; --lens-sub: rgba(255,255,255,.9);
+      }
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0a0c11; --surface: #151922; --surface-2: #1b202b; --text: #f1f3f7; --text-2: #aab2c0;
+      --accent: #5ea3ff; --accent-ink: #0a172a;
+      --border: rgba(255,255,255,.08); --line: #2c3444; --fill: rgba(255,255,255,.07);
+      --indigo-soft: #26244a; --teal-soft: #14332f; --orange-soft: #3a2619;
+      --glass-tint: rgba(28,32,42,.48); --glass-tint-strong: rgba(28,32,42,.72);
+      --glass-edge: rgba(255,255,255,.14); --glass-rim: rgba(255,255,255,.18); --glass-hl-color: rgba(255,255,255,.12);
+      --glass-shadow: 0 12px 40px -16px rgba(0,0,0,.7); --shadow-soft: 0 20px 60px -30px rgba(0,0,0,.8);
+      --blend: screen; --lens-sub: rgba(255,255,255,.9);
+    }
+
+    /* ===== Grundlagen ===== */
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 104px; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-size: 17px; line-height: 1.55; overflow-x: hidden; }
+    /* Ebene 0: ruhiger Hintergrund aus reinen Verläufen, ohne filter: blur() */
+    .backdrop { position: absolute; inset: 0 0 auto; height: 1100px; z-index: -1; pointer-events: none; overflow: hidden; }
+    .backdrop::before, .backdrop::after { content: ""; position: absolute; inset: -20%; background:
+        radial-gradient(40% 35% at 18% 22%, color-mix(in srgb, var(--indigo) 22%, transparent), transparent 70%),
+        radial-gradient(35% 30% at 85% 18%, color-mix(in srgb, var(--teal) 18%, transparent), transparent 70%),
+        radial-gradient(30% 28% at 70% 62%, color-mix(in srgb, var(--orange) 14%, transparent), transparent 70%);
+      animation: drift 28s var(--ease-out) infinite alternate; }
+    .backdrop::after { background: linear-gradient(to bottom, transparent 55%, var(--bg)); animation: none; inset: 0; }
+    @keyframes drift { to { transform: translate3d(3%, 2%, 0) rotate(4deg); } }
+    a { color: inherit; text-underline-offset: 4px; }
+    button, input, select { font: inherit; color: inherit; }
+    a, button, select { -webkit-tap-highlight-color: transparent; }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2, h3 { text-wrap: balance; }
+    .container { width: min(1120px, calc(100% - 32px)); margin-inline: auto; }
+    .skip { position: fixed; left: 16px; top: -100px; z-index: 50; background: var(--surface); padding: 12px 20px; border-radius: 12px; }
+    .skip:focus { top: 12px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+    /* ===== Liquid Glass (DESIGN.md, Abschnitt 5) ===== */
+    .glass {
+      background-color: var(--glass-tint);
+      background-image:
+        radial-gradient(160px circle at var(--mx, 50%) var(--my, -120px), var(--glass-hl-color), transparent 70%),
+        linear-gradient(135deg, rgba(255,255,255,.18), transparent 45%);
+      -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter);
+      border: 1px solid var(--glass-edge);
+      box-shadow: inset 0 1px 0 var(--glass-rim), var(--glass-shadow);
+    }
+    .glass--strong { background-color: var(--glass-tint-strong); }
+
+    /* ===== Kopfzeile ===== */
+    .header { position: fixed; top: 12px; left: 0; right: 0; z-index: 20; pointer-events: none; }
+    .bar { position: relative; pointer-events: auto; width: min(1120px, calc(100% - 24px)); margin-inline: auto; height: 60px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 14px; transition: width var(--dur-slow) var(--ease-out); }
+    .bar-glass { position: absolute; inset: 0; border-radius: 999px; z-index: -1; }
+    .scrolled .bar { width: min(920px, calc(100% - 24px)); }
+    .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 750; letter-spacing: -.03em; white-space: nowrap; min-height: 44px; margin-right: auto; }
+    .brand-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; color: #fff; font-size: 14px; letter-spacing: -.05em; background: conic-gradient(from 210deg, var(--indigo), var(--teal), var(--orange), var(--indigo)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.3); }
+    .nav { display: flex; gap: 2px; }
+    .nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px; text-decoration: none; font-size: 15px; font-weight: 600; transition: background var(--dur-fast); }
+    .nav a:hover { background: var(--fill); }
+    .nav a[aria-current="true"] { background: var(--fill); color: var(--accent); }
+    .tools { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+    .seg { position: relative; display: flex; padding: 3px; border-radius: 999px; background: var(--fill); }
+    .seg button { position: relative; z-index: 1; width: 44px; min-height: 38px; border: 0; background: none; border-radius: 999px; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--text-2); }
+    .seg button[aria-pressed="true"] { color: var(--text); }
+    .seg-thumb { position: absolute; top: 3px; left: 3px; width: 44px; height: calc(100% - 6px); border-radius: 999px; background: var(--surface); box-shadow: 0 2px 8px -2px rgba(0,0,0,.2); transition: transform var(--dur-base) var(--ease-spring); }
+    .seg[data-lang="en"] .seg-thumb { transform: translateX(44px); }
+    .icon-btn { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: none; cursor: pointer; transition: background var(--dur-fast), transform var(--dur-fast); }
+    .icon-btn:hover { background: var(--fill); }
+    .icon-btn:active, .btn:active, .chip:active { transform: scale(.95); }
+    svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ===== Buttons und Links ===== */
+    .btn { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 22px; border-radius: 999px; font-size: 15px; font-weight: 650; text-decoration: none; border: 0; cursor: pointer; transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast); }
+    .btn--primary { background: var(--accent); color: var(--accent-ink); box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--accent) 80%, transparent); }
+    .btn--primary:hover { transform: translateY(-2px); }
+    .btn--secondary { background: var(--surface); color: var(--text); border: 1px solid var(--line); }
+    .btn--secondary:hover { background: var(--surface-2); }
+    .text-link { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--accent); font-weight: 650; font-size: 15px; text-decoration: none; }
+    .text-link:hover { text-decoration: underline; }
+    .text-link svg.i { width: 16px; height: 16px; transition: transform var(--dur-fast) var(--ease-out); }
+    .text-link:hover svg.i { transform: translateX(3px); }
+
+    /* ===== Typografie ===== */
+    .eyebrow { display: inline-flex; align-items: center; gap: 10px; color: var(--accent); font-size: 12px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 16px; }
+    .eyebrow::before { content: ""; width: 24px; height: 2px; background: currentColor; }
+    .display { font-size: clamp(40px, 6.4vw, 76px); line-height: 1.02; font-weight: 750; letter-spacing: -.045em; margin-bottom: 24px; }
+    .display span { background: linear-gradient(100deg, var(--indigo), var(--teal) 55%, var(--orange)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .lead { font-size: clamp(18px, 1.6vw, 20px); color: var(--text-2); max-width: 560px; margin-bottom: 32px; }
+    h2 { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.1; font-weight: 720; letter-spacing: -.035em; margin-bottom: 12px; }
+    h3 { font-size: 20px; line-height: 1.25; font-weight: 700; letter-spacing: -.02em; margin-bottom: 8px; }
+    .muted { color: var(--text-2); }
+    .section { padding-block: 96px 0; }
+    .section-head { display: flex; justify-content: space-between; align-items: end; gap: 32px; margin-bottom: 32px; }
+    .section-head p { max-width: 520px; margin-bottom: 0; }
+    sup a { color: var(--text-2); text-decoration: none; font-size: 11px; font-weight: 650; padding: 0 2px; }
+    sup a:hover { color: var(--accent); }
+
+    /* ===== Hero ===== */
+    .hero { padding-top: 156px; display: grid; grid-template-columns: 1.15fr 1fr; gap: 48px; align-items: center; }
+    .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+    .lens { position: relative; aspect-ratio: 1; width: 100%; max-width: 480px; justify-self: end; }
+    .lens svg { width: 100%; height: 100%; overflow: visible; }
+    .lens .orb { mix-blend-mode: var(--blend); transform-box: fill-box; transform-origin: center; transition: transform var(--dur-base) var(--ease-spring), opacity var(--dur-base); }
+    .lens a:hover .orb, .lens a:focus-visible .orb, .lens a.is-hot .orb { transform: scale(1.06); }
+    .lens.has-hot a:not(.is-hot):not(:hover) .orb { opacity: .55; }
+    .lens a { outline: none; cursor: pointer; }
+    .lens a:focus-visible .ring { stroke: var(--accent); stroke-width: 3; }
+    .lens .lbl { font-size: 15px; font-weight: 700; fill: var(--text); letter-spacing: -.01em; }
+    .lens .lbl-sub { font-size: 12px; font-weight: 600; fill: var(--lens-sub); }
+    .lens .core-bg { fill: var(--surface); stroke: var(--glass-edge); stroke-width: 1; filter: drop-shadow(0 6px 14px rgba(0,0,0,.18)); }
+    .lens .core { font-size: 30px; font-weight: 800; letter-spacing: -.04em; fill: var(--text); }
+    .lens-note { position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); font-size: 12px; color: var(--text-2); white-space: nowrap; }
+
+    /* ===== Kennzahlen ===== */
+    .facts { margin-top: 72px; display: grid; grid-template-columns: repeat(3, 1fr); background: var(--surface); border: 1px solid var(--border); border-radius: 28px; box-shadow: var(--shadow-soft); }
+    .fact { padding: 28px 32px; }
+    .fact + .fact { border-left: 1px solid var(--border); }
+    .fact strong { display: block; font-size: clamp(36px, 4vw, 48px); line-height: 1; font-weight: 750; letter-spacing: -.04em; margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+    .fact p { margin: 0; font-size: 15px; color: var(--text-2); }
+    .facts-caption { grid-column: 1 / -1; padding: 14px 32px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-2); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+    /* ===== Was ist KI ===== */
+    .what { display: grid; grid-template-columns: 1fr 1.25fr; gap: 48px; align-items: start; }
+    .definition { position: sticky; top: 104px; }
+    .definition blockquote { margin: 24px 0; padding: 20px 24px; border-left: 3px solid var(--accent); background: var(--surface); border-radius: 0 20px 20px 0; font-size: 17px; }
+    .definition blockquote footer { margin-top: 10px; font-size: 13px; color: var(--text-2); }
+    .tasks { background: var(--surface); border: 1px solid var(--border); border-radius: 28px; padding: 8px; box-shadow: var(--shadow-soft); }
+    .tasklist { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px; }
+    .chip { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: none; cursor: pointer; font-size: 14px; font-weight: 650; transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), transform var(--dur-fast); }
+    .chip:hover { background: var(--fill); }
+    .chip[aria-selected="true"], .chip[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .chip .n { font-variant-numeric: tabular-nums; opacity: .6; font-size: 12px; }
+    .taskpanel { margin: 4px; padding: 28px; border-radius: 20px; background: var(--surface-2); min-height: 236px; }
+    .taskpanel .kicker { font-size: 12px; font-weight: 700; color: var(--text-2); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
+    .taskpanel h3 { font-size: 26px; letter-spacing: -.03em; }
+    .taskpanel .example { margin: 20px 0 0; padding-top: 20px; border-top: 1px solid var(--line); }
+    .taskpanel .example strong { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-2); margin-bottom: 6px; }
+    .taskpanel.swap { animation: swap var(--dur-base) var(--ease-out); }
+    @keyframes swap { from { opacity: 0; transform: translateY(6px); } }
+    .limits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 48px; }
+    .limit { padding: 24px; border-radius: 20px; border: 1px dashed var(--line); }
+    .limit h3 { font-size: 17px; display: flex; gap: 10px; align-items: center; }
+    .limit h3 svg { color: var(--orange); flex: none; }
+    .limit p { font-size: 15px; color: var(--text-2); margin: 0; }
+
+    /* ===== Themen ===== */
+    .topics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .topic { position: relative; display: flex; flex-direction: column; padding: 8px; border-radius: 28px; background: var(--surface); border: 1px solid var(--border); text-decoration: none; transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base); }
+    .topic:hover, .topic.is-hot { transform: translateY(-4px); box-shadow: var(--shadow-soft); }
+    .topic-art { position: relative; height: 180px; border-radius: 20px; overflow: hidden; }
+    .topic-art svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .topic--software .topic-art { background: linear-gradient(135deg, #6366f1, #8b5cf6 50%, #22d3ee); }
+    .topic--audit .topic-art { background: linear-gradient(135deg, #0d9488, #22c55e 55%, #38bdf8); }
+    .topic--data .topic-art { background: linear-gradient(135deg, #ea580c, #ec4899 55%, #facc15); }
+    .topic-body { padding: 20px 16px 16px; display: flex; flex-direction: column; flex: 1; }
+    .topic-body .label { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--text-2); margin-bottom: 8px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .topic-body p { font-size: 15px; color: var(--text-2); flex: 1; }
+    .topic-body .text-link { align-self: start; }
+
+    /* ===== KI-Audit ===== */
+    .audit { position: relative; overflow: hidden; border-radius: 36px; background: #0b1220; color: #f1f3f7; padding: 56px; }
+    .audit::before { content: ""; position: absolute; inset: 0; background: radial-gradient(50% 60% at 100% 0%, rgba(13,148,136,.45), transparent 70%), radial-gradient(40% 50% at 0% 100%, rgba(99,102,241,.35), transparent 70%); pointer-events: none; }
+    .audit > * { position: relative; }
+    .audit .eyebrow { color: #5eead4; }
+    .audit .muted { color: #b7c0cf; }
+    .audit-top { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; margin-bottom: 40px; }
+    .audit-top h2 { font-size: clamp(30px, 3.8vw, 46px); }
+    .dimpicker { display: grid; gap: 14px; }
+    .dimgroup { display: grid; grid-template-columns: 112px 1fr; align-items: start; gap: 8px; }
+    .dimgroup > span { font-size: 12px; font-weight: 700; color: #8f9bb0; text-transform: uppercase; letter-spacing: .06em; padding-top: 14px; }
+    .dimchips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .audit .chip { border-color: rgba(255,255,255,.18); color: #e6e9ef; }
+    .audit .chip:hover { background: rgba(255,255,255,.08); }
+    .audit .chip[aria-pressed="true"] { background: #f1f3f7; color: #0b1220; border-color: #f1f3f7; }
+    .levels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; counter-reset: lvl; }
+    .level { padding: 24px; border-radius: 24px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); }
+    .level-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .meter { display: flex; gap: 4px; }
+    .meter i { width: 18px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.18); }
+    .level:nth-child(1) .meter i:nth-child(-n+1), .level:nth-child(2) .meter i:nth-child(-n+2), .level:nth-child(3) .meter i { background: #5eead4; }
+    .level h3 { margin: 0; font-size: 18px; }
+    .level .motto { font-size: 14px; color: #8f9bb0; margin-bottom: 12px; }
+    .level .desc { font-size: 15px; margin: 0; }
+    .level .desc.swap { animation: swap var(--dur-base) var(--ease-out); }
+    .audit-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px; margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,.12); }
+    .audit-foot p { margin: 0; font-size: 14px; }
+    .audit .btn--secondary { background: #f1f3f7; color: #0b1220; border: 0; }
+    .audit .btn--secondary:hover { background: #fff; }
+
+    /* ===== Blog ===== */
+    .posts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .post { display: flex; flex-direction: column; text-decoration: none; padding: 8px; border-radius: 28px; background: var(--surface); border: 1px solid var(--border); transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base); }
+    .post:hover { transform: translateY(-4px); box-shadow: var(--shadow-soft); }
+    .post-art { height: 150px; border-radius: 20px; }
+    .post-body { padding: 18px 14px 14px; }
+    .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); margin-bottom: 10px; }
+    .tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: var(--fill); font-size: 12px; font-weight: 650; color: var(--text); }
+    .post h3 { font-size: 19px; }
+    .post p { margin: 0; font-size: 15px; color: var(--text-2); }
+
+    /* ===== Profil ===== */
+    .person { display: grid; grid-template-columns: 220px 1fr; gap: 40px; align-items: center; padding: 32px; border-radius: 32px; background: var(--surface); border: 1px solid var(--border); }
+    .person img { width: 220px; height: 220px; object-fit: cover; border-radius: 80px 24px 24px 24px; display: block; background: var(--fill); }
+    .person blockquote { margin: 0 0 16px; font-size: clamp(20px, 2.2vw, 26px); line-height: 1.35; font-weight: 650; letter-spacing: -.02em; }
+    .person p { color: var(--text-2); margin-bottom: 8px; }
+
+    /* ===== Quellen und Footer ===== */
+    .sources { margin-top: 96px; padding-top: 32px; border-top: 1px solid var(--line); }
+    .sources h2 { font-size: 20px; letter-spacing: -.02em; }
+    .sources ol { margin: 0; padding-left: 22px; columns: 2; column-gap: 48px; font-size: 13px; color: var(--text-2); }
+    .sources li { break-inside: avoid; margin-bottom: 8px; padding-left: 4px; }
+    .sources li:target { color: var(--text); background: var(--fill); border-radius: 6px; }
+    footer.site { margin-top: 64px; background: var(--surface); border-top: 1px solid var(--border); padding: 48px 0 32px; }
+    .foot-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 32px; }
+    .foot-grid h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-2); margin-bottom: 12px; }
+    .foot-grid ul { list-style: none; margin: 0; padding: 0; }
+    .foot-grid li a { display: inline-flex; min-height: 36px; align-items: center; text-decoration: none; font-size: 15px; }
+    .foot-grid li a:hover { color: var(--accent); }
+    .foot-grid .brand { margin-bottom: 12px; }
+    .foot-grid p { font-size: 14px; color: var(--text-2); max-width: 340px; }
+    .proto { margin-top: 32px; padding: 16px 20px; border-radius: 20px; border: 1px dashed var(--line); display: flex; flex-wrap: wrap; align-items: center; gap: 12px 28px; font-size: 13px; color: var(--text-2); }
+    .proto strong { color: var(--text); }
+    .proto label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+    .proto select { min-height: 36px; padding: 4px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); }
+    .proto input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+    /* ===== Overlays ===== */
+    dialog { border: 0; padding: 0; background: none; color: var(--text); max-width: calc(100% - 32px); }
+    dialog::backdrop { background: rgba(5,8,14,.35); }
+    .dlg { width: 400px; max-width: 100%; padding: 28px; border-radius: 28px; }
+    .dlg[open], dialog[open] .dlg { animation: pop var(--dur-slow) var(--ease-spring); }
+    @keyframes pop { from { opacity: 0; transform: scale(.94) translateY(8px); } }
+    .dlg h2 { font-size: 24px; }
+    .dlg p { font-size: 15px; color: var(--text-2); }
+    .field { display: grid; gap: 6px; margin-bottom: 14px; font-size: 14px; font-weight: 600; }
+    .field input { min-height: 46px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-weight: 400; }
+    .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+    .toast { position: fixed; left: 50%; bottom: 24px; z-index: 30; padding: 12px 20px; border-radius: 999px; font-size: 14px; font-weight: 600; transform: translate(-50%, 140%); opacity: 0; transition: transform var(--dur-slow) var(--ease-spring), opacity var(--dur-base); max-width: calc(100% - 32px); text-align: center; }
+    .toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+    /* ===== Responsiv ===== */
+    @media (max-width: 960px) {
+      .hero { grid-template-columns: 1fr; padding-top: 128px; }
+      .lens { justify-self: center; max-width: 400px; }
+      .what { grid-template-columns: 1fr; }
+      .definition { position: static; }
+      .audit-top { grid-template-columns: 1fr; gap: 28px; }
+      .topics, .posts { grid-template-columns: 1fr 1fr; }
+      .topics > :last-child, .posts > :last-child { grid-column: 1 / -1; }
+    }
+    @media (max-width: 760px) {
+      .brand-name { display: none; }
+      .nav a { padding: 0 12px; }
+      .facts { grid-template-columns: 1fr; }
+      .fact + .fact { border-left: 0; border-top: 1px solid var(--border); }
+      .limits, .levels { grid-template-columns: 1fr; }
+      .topics, .posts { grid-template-columns: 1fr; }
+      .section-head { flex-direction: column; align-items: start; gap: 8px; }
+      .audit { padding: 32px 20px; border-radius: 28px; }
+      .dimgroup { grid-template-columns: 1fr; gap: 4px; }
+      .dimgroup > span { padding-top: 0; }
+      .person { grid-template-columns: 1fr; padding: 24px; gap: 24px; }
+      .person img { width: 160px; height: 160px; border-radius: 60px 20px 20px 20px; }
+      .sources ol { columns: 1; }
+      .foot-grid { grid-template-columns: 1fr 1fr; }
+      .foot-grid > :first-child { grid-column: 1 / -1; }
+      .section { padding-top: 72px; }
+    }
+    @media (max-width: 600px) {
+      .bar { padding: 0 6px 0 8px; gap: 2px; }
+      .nav a { padding: 0 10px; font-size: 14px; }
+      .nav a.opt { display: none; }
+      .seg button, .seg-thumb { width: 38px; }
+      .seg[data-lang="en"] .seg-thumb { transform: translateX(38px); }
+      .icon-btn { width: 40px; }
+      .taskpanel { padding: 20px; }
+      .fact, .facts-caption { padding-inline: 20px; }
+    }
+
+    /* ===== Systemeinstellungen ===== */
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .glass { background-color: var(--glass-tint-strong); } }
+    @media (prefers-reduced-transparency: reduce) { .glass { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; } }
+    :root[data-transparency="reduce"] .glass { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+    @media (prefers-contrast: more) {
+      :root { --text-2: var(--text); --line: var(--text); --border: var(--text); }
+      .glass { background: var(--surface); border-color: var(--text); }
+    }
+    @media (forced-colors: active) {
+      .glass { background: Canvas; color: CanvasText; border-color: CanvasText; }
+      .chip[aria-selected="true"], .chip[aria-pressed="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; }
+      .display span { color: CanvasText; background: none; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#inhalt">Zum Inhalt springen</a>
+  <div class="backdrop" aria-hidden="true"></div>
+
+  <!-- Ebene 2: Funktion (Glas) -->
+  <header class="header" id="header">
+    <div class="bar">
+      <div class="bar-glass glass" aria-hidden="true"></div>
+      <a class="brand" href="#start" aria-label="KI Perspektiven – Startseite"><span class="brand-icon" aria-hidden="true">ki.</span><span class="brand-name">KI Perspektiven</span></a>
+      <nav class="nav" aria-label="Hauptnavigation">
+        <a href="#themen" data-spy="themen">Themen</a>
+        <a href="#audit" data-spy="audit" class="opt">KI-Audit</a>
+        <a href="#blog" data-spy="blog">Blog</a>
+      </nav>
+      <div class="tools">
+        <div class="seg" id="langSeg" data-lang="de" role="group" aria-label="Sprache">
+          <span class="seg-thumb" aria-hidden="true"></span>
+          <button type="button" aria-pressed="true" lang="de" data-lang="de">DE</button>
+          <button type="button" aria-pressed="false" lang="en" data-lang="en">EN</button>
+        </div>
+        <button class="icon-btn" type="button" id="accountBtn" aria-label="Anmeldung für die Redaktion" aria-haspopup="dialog">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="inhalt" tabindex="-1">
+    <!-- Hero -->
+    <section class="container hero" id="start" aria-labelledby="hero-title">
+      <div>
+        <p class="eyebrow">Wissen und Praxis rund um KI</p>
+        <h1 class="display" id="hero-title">KI verstehen.<br><span>Sinnvoll einsetzen.</span></h1>
+        <p class="lead">Einordnungen, Erfahrungen und ein KI-Audit für Teams, die künstliche Intelligenz verantwortungsvoll nutzen wollen – ohne Hype, mit Quellen.</p>
+        <div class="hero-actions">
+          <a class="btn btn--primary" href="#audit">KI-Reifegrad einschätzen
+            <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="text-link" href="#ki">Was ist KI eigentlich?
+            <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg></a>
+        </div>
+      </div>
+
+      <div class="lens" id="lens">
+        <svg viewBox="0 0 400 400" role="group" aria-label="Drei Perspektiven auf KI">
+          <defs>
+            <radialGradient id="gIndigo" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#a5b4fc"/><stop offset=".6" stop-color="#6366f1"/><stop offset="1" stop-color="#7c3aed"/></radialGradient>
+            <radialGradient id="gTeal" cx="65%" cy="30%" r="75%"><stop offset="0" stop-color="#99f6e4"/><stop offset=".6" stop-color="#14b8a6"/><stop offset="1" stop-color="#0d9488"/></radialGradient>
+            <radialGradient id="gOrange" cx="50%" cy="70%" r="75%"><stop offset="0" stop-color="#fed7aa"/><stop offset=".6" stop-color="#fb923c"/><stop offset="1" stop-color="#ea580c"/></radialGradient>
+          </defs>
+          <a href="#thema-software" data-topic="software" aria-label="Thema: AI in der Softwareentwicklung">
+            <circle class="orb" cx="145" cy="150" r="112" fill="url(#gIndigo)" opacity=".85"/>
+            <circle class="ring" cx="145" cy="150" r="112" fill="none" stroke="none"/>
+            <text class="lbl" x="92" y="112" text-anchor="middle">Software-</text>
+            <text class="lbl-sub" x="92" y="130" text-anchor="middle">entwicklung</text>
+          </a>
+          <a href="#thema-audit" data-topic="audit" aria-label="Thema: AI Audit für Unternehmen">
+            <circle class="orb" cx="255" cy="150" r="112" fill="url(#gTeal)" opacity=".85"/>
+            <circle class="ring" cx="255" cy="150" r="112" fill="none" stroke="none"/>
+            <text class="lbl" x="310" y="112" text-anchor="middle">AI Audit</text>
+            <text class="lbl-sub" x="310" y="130" text-anchor="middle">für Unternehmen</text>
+          </a>
+          <a href="#thema-data" data-topic="data" aria-label="Thema: AI in Data Analytics">
+            <circle class="orb" cx="200" cy="245" r="112" fill="url(#gOrange)" opacity=".85"/>
+            <circle class="ring" cx="200" cy="245" r="112" fill="none" stroke="none"/>
+            <text class="lbl" x="200" y="318" text-anchor="middle">Data</text>
+            <text class="lbl-sub" x="200" y="336" text-anchor="middle">Analytics</text>
+          </a>
+          <g aria-hidden="true" pointer-events="none">
+            <circle class="core-bg" cx="200" cy="182" r="34"/>
+            <text class="core" x="200" y="193" text-anchor="middle">KI</text>
+          </g>
+        </svg>
+        <span class="lens-note" aria-hidden="true">Drei Perspektiven – ein Thema antippen</span>
+      </div>
+    </section>
+
+    <!-- Kennzahlen -->
+    <section class="container" aria-labelledby="facts-title">
+      <h2 class="sr-only" id="facts-title">KI in Deutschland in Zahlen</h2>
+      <div class="facts">
+        <div class="fact"><strong data-count="26">26 %</strong><p>der Unternehmen in Deutschland nutzten 2025 KI.<sup><a href="#q3" aria-label="Quelle 3">3</a></sup></p></div>
+        <div class="fact"><strong data-count="57">57 %</strong><p>sind es bei Unternehmen mit mehr als 250 Beschäftigten.<sup><a href="#q3" aria-label="Quelle 3">3</a></sup></p></div>
+        <div class="fact"><strong data-count="32,3">32,3 %</strong><p>der 16- bis 74-Jährigen nutzten generative KI.<sup><a href="#q4" aria-label="Quelle 4">4</a></sup></p></div>
+        <p class="facts-caption"><span>KI in Deutschland, Berichtsjahr 2025</span><span>Quellen: Destatis, Eurostat</span></p>
+      </div>
+    </section>
+
+    <!-- Was ist KI -->
+    <section class="container section" id="ki" aria-labelledby="ki-title">
+      <div class="what">
+        <div class="definition">
+          <p class="eyebrow">Grundlagen</p>
+          <h2 id="ki-title">Was ist KI – und was kann man damit machen?</h2>
+          <p class="muted">KI-Systeme leiten aus ihren Eingaben selbst ab, wie sie ein Ergebnis erzeugen. Das unterscheidet sie von Software, die nur von Menschen vorgegebene Regeln abarbeitet.<sup><a href="#q2" aria-label="Quelle 2">2</a></sup></p>
+          <blockquote>
+            Ein KI-System erzeugt aus Eingaben Vorhersagen, Inhalte, Empfehlungen oder Entscheidungen, die physische oder virtuelle Umgebungen beeinflussen können.
+            <footer>Sinngemäß nach der OECD-Definition von 2023<sup><a href="#q1" aria-label="Quelle 1">1</a></sup></footer>
+          </blockquote>
+          <a class="text-link" href="../../research/2026-11-09%20Was%20ist%20KI%20und%20was%20man%20damit%20machen%20kann.md">Ganze Einordnung lesen
+            <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
+
+        <div class="tasks">
+          <div class="tasklist" role="tablist" aria-label="Sieben typische Aufgaben von KI" id="tasklist"></div>
+          <div class="taskpanel" role="tabpanel" id="taskpanel" tabindex="0" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="limits" aria-label="Was KI nicht garantiert">
+        <div class="limit">
+          <h3><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>Keine richtigen Ergebnisse garantiert</h3>
+          <p>Sprachmodelle können Inhalte erfinden, die glaubwürdig wirken – auch Literaturangaben.<sup><a href="#q9" aria-label="Quelle 9">9</a></sup></p>
+        </div>
+        <div class="limit">
+          <h3><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Kein aktuelles Wissen</h3>
+          <p>Ohne Anbindung an aktuelle Daten kennt ein Modell nur den Stand seiner Trainingsdaten.<sup><a href="#q9" aria-label="Quelle 9">9</a></sup></p>
+        </div>
+        <div class="limit">
+          <h3><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>Kein gewünschtes Verhalten</h3>
+          <p>Ziele lassen sich schwer vollständig festlegen. Der Nutzen hängt von der Gestaltung des Einsatzes ab.<sup><a href="#q1" aria-label="Quelle 1">1</a></sup><sup><a href="#q10" aria-label="Quelle 10">10</a></sup></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Themen -->
+    <section class="container section" id="themen" aria-labelledby="themen-title">
+      <div class="section-head">
+        <div><p class="eyebrow">Themen</p><h2 id="themen-title">Drei Schwerpunkte als Einstieg.</h2></div>
+        <p class="muted">Jedes Thema hat eine Einführung und passende Beiträge.</p>
+      </div>
+      <div class="topics">
+        <a class="topic topic--software" id="thema-software" data-topic="software" href="../design/index.html#/thema/software">
+          <div class="topic-art" aria-hidden="true"><svg viewBox="0 0 300 180" preserveAspectRatio="xMidYMid slice"><g fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2"><path d="M110 70 80 90l30 20M190 70l30 20-30 20M165 60l-30 60"/></g><circle cx="250" cy="30" r="60" fill="rgba(255,255,255,.12)"/></svg></div>
+          <div class="topic-body">
+            <span class="label"><span class="dot" style="background:var(--indigo)"></span>Softwareentwicklung</span>
+            <h3>AI in der Softwareentwicklung</h3>
+            <p>Wie KI-Assistenten Planung, Code und Tests verändern.</p>
+            <span class="text-link">Zum Thema <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+        <a class="topic topic--audit" id="thema-audit" data-topic="audit" href="../design/index.html#/thema/audit">
+          <div class="topic-art" aria-hidden="true"><svg viewBox="0 0 300 180" preserveAspectRatio="xMidYMid slice"><g fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2"><rect x="105" y="45" width="90" height="100" rx="12"/><path d="M125 80h50M125 100h50M125 120h30"/><path d="m170 120 8 8 16-18"/></g><circle cx="40" cy="160" r="70" fill="rgba(255,255,255,.12)"/></svg></div>
+          <div class="topic-body">
+            <span class="label"><span class="dot" style="background:var(--teal)"></span>AI Audit</span>
+            <h3>AI Audit für Unternehmen</h3>
+            <p>KI-Einsatz prüfen, Risiken bewerten, Regeln einhalten.</p>
+            <span class="text-link">Zum Thema <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+        <a class="topic topic--data" id="thema-data" data-topic="data" href="../design/index.html#/thema/data">
+          <div class="topic-art" aria-hidden="true"><svg viewBox="0 0 300 180" preserveAspectRatio="xMidYMid slice"><g fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2"><path d="M90 130V95M125 130V70M160 130V85M195 130V55"/><path d="M85 135h120"/><path d="m90 80 35-25 35 15 35-30" stroke-dasharray="4 6"/></g><circle cx="260" cy="150" r="60" fill="rgba(255,255,255,.12)"/></svg></div>
+          <div class="topic-body">
+            <span class="label"><span class="dot" style="background:var(--orange)"></span>Data Analytics</span>
+            <h3>AI in Data Analytics</h3>
+            <p>Mit KI schneller von Daten zu belastbaren Erkenntnissen.</p>
+            <span class="text-link">Zum Thema <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- KI-Audit -->
+    <section class="container section" id="audit" aria-labelledby="audit-title">
+      <div class="audit">
+        <div class="audit-top">
+          <div>
+            <p class="eyebrow">KI-Audit</p>
+            <h2 id="audit-title">Wie bereit ist Ihr Unternehmen für KI?</h2>
+            <p class="muted">Acht Dimensionen, drei Reifegrade. Ein Reifegrad gilt nur, wenn alle darunterliegenden erfüllt sind. Die Fragen der nächsten Stufe werden zu Ihrer To-do-Liste.</p>
+          </div>
+          <div class="dimpicker" id="dimpicker" aria-label="Dimension auswählen"></div>
+        </div>
+        <div class="levels" id="levels" aria-live="polite">
+          <article class="level"><div class="level-head"><span class="meter" aria-hidden="true"><i></i><i></i><i></i></span><h3>Einfach</h3></div><p class="motto">Es passiert etwas, aber jeder macht es anders.</p><p class="desc"></p></article>
+          <article class="level"><div class="level-head"><span class="meter" aria-hidden="true"><i></i><i></i><i></i></span><h3>Strukturiert</h3></div><p class="motto">Es gibt ein definiertes Vorgehen, das gelebt wird.</p><p class="desc"></p></article>
+          <article class="level"><div class="level-head"><span class="meter" aria-hidden="true"><i></i><i></i><i></i></span><h3>Intelligent</h3></div><p class="motto">Wir lernen aus Fehlern und verbessern das Vorgehen.</p><p class="desc"></p></article>
+        </div>
+        <div class="audit-foot">
+          <p class="muted">Ja/Nein-Fragen je Dimension · Ihre Antworten bleiben im Browser und werden nicht übertragen.</p>
+          <a class="btn btn--secondary" id="auditCta" href="../design/index.html#/thema/audit">Selbsteinschätzung starten
+            <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Blog -->
+    <section class="container section" id="blog" aria-labelledby="blog-title">
+      <div class="section-head">
+        <div><p class="eyebrow">Blog</p><h2 id="blog-title">Neu im Blog.</h2></div>
+        <a class="text-link" href="../design/index.html#/blog">Alle Beiträge <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="posts">
+        <a class="post" href="../design/index.html#/blog">
+          <div class="post-art" aria-hidden="true" style="background: radial-gradient(60% 80% at 20% 20%, #a5b4fc, transparent), linear-gradient(135deg, #6366f1, #22d3ee)"></div>
+          <div class="post-body">
+            <div class="meta"><time datetime="2026-11-03">3. November 2026</time><span class="tag"><span class="dot" style="background:var(--indigo)"></span>Softwareentwicklung</span></div>
+            <h3>Wie KI die Arbeit in Softwareteams verändert</h3>
+            <p>Weniger Routine, mehr Review: Was sich für Entwicklerinnen und Entwickler im Alltag tatsächlich verschiebt.</p>
+          </div>
+        </a>
+        <a class="post" href="../design/index.html#/blog">
+          <div class="post-art" aria-hidden="true" style="background: radial-gradient(60% 80% at 80% 20%, #99f6e4, transparent), linear-gradient(135deg, #0d9488, #38bdf8)"></div>
+          <div class="post-body">
+            <div class="meta"><time datetime="2026-10-28">28. Oktober 2026</time><span class="tag"><span class="dot" style="background:var(--teal)"></span>AI Audit</span></div>
+            <h3>AI Audit: Fünf Fragen, die Unternehmen jetzt klären sollten</h3>
+            <p>Von der Bestandsaufnahme bis zur Verantwortung – ein kompakter Leitfaden für den Einstieg.</p>
+          </div>
+        </a>
+        <a class="post" href="../design/index.html#/blog">
+          <div class="post-art" aria-hidden="true" style="background: radial-gradient(60% 80% at 30% 80%, #c4b5fd, transparent), linear-gradient(135deg, #14b8a6, #6366f1)"></div>
+          <div class="post-body">
+            <div class="meta"><time datetime="2026-10-21">21. Oktober 2026</time><span class="tag"><span class="dot" style="background:var(--teal)"></span>AI Audit</span><span class="tag"><span class="dot" style="background:var(--indigo)"></span>Softwareentwicklung</span></div>
+            <h3>Was KI wirklich kostet – aus Sicht der Nutzer</h3>
+            <p>Lizenzen sind nur der Anfang. Ein Blick auf Zeit, Daten und Lernkurve.</p>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Profil -->
+    <section class="container section" aria-labelledby="person-title">
+      <div class="person">
+        <img src="../../ressources/profil/MarvinJakob.jpg" alt="Illustratives Porträt von Marvin Jakob" width="220" height="220" loading="lazy">
+        <div>
+          <p class="eyebrow" id="person-title">Hinter KI Perspektiven</p>
+          <blockquote>„Der Maßstab für sinnvolle KI: ein klares Problem, geeignete Daten und eine Lösung, die im Arbeitsalltag funktioniert.“</blockquote>
+          <p>Marvin Jakob verbindet Softwareentwicklung, Cloud-Architektur und Business Analyse – seit 2011 in Software-Projekten.</p>
+          <a class="text-link" href="../profil/index.html">Zum Profil <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quellen -->
+    <section class="container sources" aria-labelledby="quellen-title">
+      <h2 id="quellen-title">Quellen</h2>
+      <ol>
+        <li id="q1">OECD (2024): <a href="https://www.oecd.org/en/publications/explanatory-memorandum-on-the-updated-oecd-definition-of-an-ai-system_623da898-en.html">Explanatory memorandum on the updated OECD definition of an AI system</a> – Definition, sieben Aufgaben, Personalisieren, Zielfestlegung.</li>
+        <li id="q2">Europäische Kommission (2025): <a href="https://ai-act-service-desk.ec.europa.eu/sites/default/files/2025-08/commission_guidelines_on_the_definition_of_an_artificial_intelligence_system_established_by_regulation_eu_20241689_ai_actenglish_nf2skcqfrtjdfggjavcodopcwz4_112455.PDF">Leitlinien zur Definition eines KI-Systems (AI Act)</a> – Abgrenzung zu regelbasierter Software, Betrugserkennung, Expertensysteme.</li>
+        <li id="q3">Statistisches Bundesamt (2025): <a href="https://www.destatis.de/DE/Themen/Branchen-Unternehmen/Unternehmen/IKT-in-Unternehmen-IKT-Branche/Tabellen/ikti-unternehmen-kuenstliche-intelligenz.html">Unternehmen mit Nutzung von KI nach Beschäftigtengrößenklassen</a> – 26 % und 57 %.</li>
+        <li id="q4">Eurostat (2026): <a href="https://ec.europa.eu/eurostat/documents/7870049/23260410/KS-01-26-009-EN-N.pdf/37d063cb-28cf-3b4e-91f3-c3784c970842">The use of AI technologies in the European Union</a> – 32,3 % nutzen generative KI.</li>
+        <li id="q5">MASAI-Studie (2025), The Lancet Digital Health: <a href="https://doi.org/10.1016/S2589-7500%2824%2900267-X">KI-unterstützte Mammografie</a>.</li>
+        <li id="q6">ECMWF (2025): <a href="https://www.ecmwf.int/en/about/media-centre/news/2025/ecmwfs-ensemble-ai-forecasts-become-operational">ECMWF’s ensemble AI forecasts become operational</a>.</li>
+        <li id="q7">Brynjolfsson, Li, Raymond (2025), QJE: <a href="https://doi.org/10.1093/qje/qjae044">Generative AI at Work</a>.</li>
+        <li id="q8">Degrave et al. (2022), Nature: <a href="https://www.nature.com/articles/s41586-021-04301-9">Magnetic control of tokamak plasmas through deep reinforcement learning</a>.</li>
+        <li id="q9">BSI (2025): <a href="https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/KI/Generative_KI-Modelle.pdf?__blob=publicationFile&amp;v=5">Generative KI-Modelle – Chancen und Risiken</a> – Halluzinieren, Wissensstand.</li>
+        <li id="q10">Bastani et al. (2025), PNAS: <a href="https://doi.org/10.1073/pnas.2422633122">Generative AI without guardrails can harm learning</a>.</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="site">
+    <div class="container">
+      <div class="foot-grid">
+        <div>
+          <a class="brand" href="#start"><span class="brand-icon" aria-hidden="true">ki.</span><span>KI Perspektiven</span></a>
+          <p>Einordnungen und Leitfäden zu künstlicher Intelligenz. Keine Tracking-Cookies, kein Newsletter-Popup – Ihre Audit-Antworten bleiben in Ihrem Browser.</p>
+        </div>
+        <div>
+          <h2>Themen</h2>
+          <ul>
+            <li><a href="../design/index.html#/thema/software">Softwareentwicklung</a></li>
+            <li><a href="../design/index.html#/thema/audit">AI Audit</a></li>
+            <li><a href="../design/index.html#/thema/data">Data Analytics</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Rechtliches</h2>
+          <ul>
+            <li><a href="#">Impressum</a></li>
+            <li><a href="#">Datenschutz</a></li>
+            <li><a href="#">Barrierefreiheit</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="proto" aria-label="Prototyp-Einstellungen">
+        <strong>Prototyp</strong>
+        <label>Darstellung
+          <select id="themeSel"><option value="system">System</option><option value="light">Hell</option><option value="dark">Dunkel</option></select></label>
+        <label><input type="checkbox" id="transpChk"> Reduzierte Transparenz</label>
+        <span>Landing-Page-Entwurf · Stand 9. November 2026 · Texte teils Platzhalter</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Ebene 3: Overlays -->
+  <dialog id="loginDlg" aria-labelledby="login-title">
+    <form class="dlg glass glass--strong" method="dialog" id="loginForm">
+      <h2 id="login-title">Anmeldung für die Redaktion</h2>
+      <p>Dieser Zugang ist nur für Redakteurinnen und Redakteure. Zum Lesen brauchen Sie kein Konto.</p>
+      <label class="field">E-Mail<input type="email" autocomplete="username" required></label>
+      <label class="field">Passwort<input type="password" autocomplete="current-password" required></label>
+      <div class="dlg-actions">
+        <button class="btn btn--secondary" type="button" value="cancel" id="loginCancel">Abbrechen</button>
+        <button class="btn btn--primary" type="submit">Anmelden</button>
+      </div>
+    </form>
+  </dialog>
+  <div class="toast glass glass--strong" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    // ----- Inhalte -----
+    const TASKS = [
+      { name: 'Erkennen', what: 'Bilder, Videos, Ton oder Texte einordnen und Objekte darin finden.', example: 'In der schwedischen MASAI-Studie wurden bei KI-unterstützter Mammografie 6,4 statt 5,0 Krebsfälle je 1.000 Untersuchungen entdeckt.', src: 5 },
+      { name: 'Auffälligkeiten entdecken', what: 'Muster und Ausreißer in großen Datenmengen finden.', example: 'Betrugserkennung in Transaktionsdaten.', src: 2 },
+      { name: 'Vorhersagen', what: 'Aus bisherigem Verhalten künftige Entwicklungen ableiten.', example: 'Das Europäische Zentrum für mittelfristige Wettervorhersage betreibt seit 2025 Ensemble-Vorhersagen mit einem KI-Modell.', src: 6 },
+      { name: 'Personalisieren', what: 'Ein Profil einer Person erstellen und Ausgaben daran anpassen.', example: 'Empfehlungssysteme, die die Vorlieben einzelner Nutzerinnen und Nutzer nach und nach eingrenzen.', src: 1 },
+      { name: 'Interaktion unterstützen', what: 'Sprache und andere Inhalte verstehen und erzeugen, etwa im Gespräch zwischen Mensch und Maschine.', example: 'Mit einem KI-Assistenten lösten Supportbeschäftigte im Durchschnitt 15 Prozent mehr Anliegen pro Stunde.', src: 7 },
+      { name: 'Zielgerichtet optimieren', what: 'Die beste Lösung für ein vorgegebenes Ziel suchen.', example: 'Ein mit Reinforcement Learning trainiertes System regelte das Plasma im Fusionsreaktor TCV.', src: 8 },
+      { name: 'Mit Wissen schlussfolgern', what: 'Neue Ergebnisse ableiten, die so nicht in den Daten stehen – etwa durch Modellierung und Simulation.', example: 'Expertensysteme, die aus Symptomen auf eine Diagnose schließen.', src: 2 },
+    ];
+    // Erste Sätze der Reifegrade aus app/backend/internal/audit/content.json
+    const DIMS = [
+      { cat: 'Organisatorisch', title: 'Strategie und Wirtschaftlichkeit', slug: 'strategie-und-wirtschaftlichkeit', levels: ['Erste Ziele, eine verantwortliche Person und praktische Anwendungen bestehen.', 'KI-Vorhaben werden nach festgelegten Kriterien ausgewählt und gesteuert.', 'Der tatsächliche Nutzen wird nachgewiesen.'] },
+      { cat: 'Organisatorisch', title: 'Ressourcen und Kompetenzen', slug: 'ressourcenplanung-und-kompetenzen', levels: ['Einzelne Mitarbeitende lernen den Umgang mit KI oder planen die dafür benötigte Arbeitszeit.', 'Personalbedarf und Qualifizierung werden nach einem dokumentierten Vorgehen geplant.', 'Das Unternehmen überprüft regelmäßig, ob seine Personalplanung und Lernangebote die benötigten Fähigkeiten tatsächlich hervorbringen.'] },
+      { cat: 'Organisatorisch', title: 'Betrieb', slug: 'betrieb', levels: ['Mindestens eine KI-Anwendung, integrierte KI-Funktion oder automatisierte Aufgabe wird tatsächlich betreut.', 'Alle KI-Anwendungen, integrierten KI-Funktionen und automatisierten Aufgaben werden nach dokumentierten Verfahren betreut.', 'Betriebserfahrungen verändern die Betreuung und Steuerung der Automatisierungen.'] },
+      { cat: 'Organisatorisch', title: 'Governance und Compliance', slug: 'governance-und-compliance', levels: ['Für mindestens eine KI-Anwendung wurde eine konkrete Rechts- oder Vertragsfrage bearbeitet.', 'Für alle betrachteten KI-Anwendungen werden die einschlägigen Anforderungen nach einem dokumentierten Verfahren geprüft.', 'Das Unternehmen beobachtet relevante Rechts- und Vertragsänderungen und verbessert sein Prüfverfahren anhand der bisherigen Fälle.'] },
+      { cat: 'Fachlich', title: 'Agenten und Prozesse', slug: 'agenten-und-prozesse', levels: ['Mindestens eine Person verwendet KI in einem tatsächlichen Arbeitsvorgang.', 'Die KI ist in einen dokumentierten und tatsächlich genutzten Arbeitsablauf eingebunden.', 'Erfahrungen aus bearbeiteten Vorgängen verändern den fachlichen Arbeitsablauf.'] },
+      { cat: 'Technisch', title: 'Technologie und Infrastruktur', slug: 'technologie-und-infrastruktur', levels: ['Mindestens ein KI-Werkzeug oder Modell ist nutzbar eingerichtet, etwa ein Cloudzugang oder eine lokal installierte Lösung.', 'Technische Auswahl und Bereitstellung folgen dokumentierten Kriterien.', 'Das Unternehmen überprüft seine Architektur und Bereitstellungsverfahren regelmäßig anhand der tatsächlichen technischen Anforderungen.'] },
+      { cat: 'Technisch', title: 'Daten und Wissen', slug: 'daten-und-wissen', levels: ['Für mindestens eine KI-Aufgabe wurden Daten oder Wissensquellen erschlossen, etwa Dokumente hochgeladen oder Daten exportiert.', 'Die verwendeten Bestände sind erfasst, fachlich bewertet und nach einem dokumentierten Verfahren gepflegt.', 'Erfahrungen mit Daten- und Wissenslücken verändern die Verfahren zur Bereitstellung und Pflege.'] },
+      { cat: 'Technisch', title: 'Sicherheit und Zuverlässigkeit', slug: 'sicherheit-und-zuverlaessigkeit', levels: ['Für mindestens eine Anwendung wurden Ergebnisse getestet oder technische Schutzmaßnahmen überprüft.', 'Sicherheit und Ergebnisqualität werden nach einem dokumentierten Verfahren geprüft.', 'Neue Fehler und Angriffsmuster verändern die Tests und Schutzmaßnahmen der Anwendung.'] },
+    ];
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const arrow = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+
+    // ----- Aufgaben von KI (Tabs) -----
+    const tasklist = document.getElementById('tasklist');
+    const taskpanel = document.getElementById('taskpanel');
+    TASKS.forEach((t, i) => {
+      const b = document.createElement('button');
+      b.className = 'chip'; b.type = 'button'; b.id = 'task-' + i;
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-controls', 'taskpanel');
+      b.innerHTML = `<span class="n">${String(i + 1).padStart(2, '0')}</span>${t.name}`;
+      b.addEventListener('click', () => selectTask(i, false));
+      tasklist.append(b);
+    });
+    function selectTask(i, focus) {
+      const t = TASKS[i];
+      tasklist.querySelectorAll('[role=tab]').forEach((b, j) => {
+        b.setAttribute('aria-selected', String(i === j)); b.tabIndex = i === j ? 0 : -1;
+      });
+      taskpanel.setAttribute('aria-labelledby', 'task-' + i);
+      taskpanel.innerHTML = `<p class="kicker">Aufgabe ${i + 1} von ${TASKS.length}</p><h3>${t.name}</h3><p class="muted">${t.what}</p>
+        <p class="example"><strong>Beispiel</strong>${t.example}<sup><a href="#q${t.src}" aria-label="Quelle ${t.src}">${t.src}</a></sup></p>`;
+      taskpanel.classList.remove('swap'); void taskpanel.offsetWidth; taskpanel.classList.add('swap');
+      if (focus) document.getElementById('task-' + i).focus();
+    }
+    tasklist.addEventListener('keydown', e => {
+      const tabs = [...tasklist.querySelectorAll('[role=tab]')];
+      const cur = tabs.indexOf(document.activeElement);
+      if (cur < 0) return;
+      const map = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+      if (e.key in map) { e.preventDefault(); selectTask((cur + map[e.key] + tabs.length) % tabs.length, true); }
+      if (e.key === 'Home') { e.preventDefault(); selectTask(0, true); }
+      if (e.key === 'End') { e.preventDefault(); selectTask(tabs.length - 1, true); }
+    });
+    selectTask(0, false);
+
+    // ----- KI-Audit: Dimension wählen -----
+    const picker = document.getElementById('dimpicker');
+    const descs = document.querySelectorAll('#levels .desc');
+    const auditCta = document.getElementById('auditCta');
+    [...new Set(DIMS.map(d => d.cat))].forEach(cat => {
+      const g = document.createElement('div'); g.className = 'dimgroup'; g.setAttribute('role', 'group'); g.setAttribute('aria-label', cat);
+      g.innerHTML = `<span aria-hidden="true">${cat}</span><div class="dimchips"></div>`;
+      DIMS.forEach((d, i) => {
+        if (d.cat !== cat) return;
+        const b = document.createElement('button');
+        b.className = 'chip'; b.type = 'button'; b.textContent = d.title; b.dataset.i = i;
+        b.addEventListener('click', () => selectDim(i));
+        g.lastElementChild.append(b);
+      });
+      picker.append(g);
+    });
+    function selectDim(i) {
+      picker.querySelectorAll('.chip').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.i === i)));
+      descs.forEach((p, l) => { p.textContent = DIMS[i].levels[l]; p.classList.remove('swap'); void p.offsetWidth; p.classList.add('swap'); });
+      auditCta.firstChild.textContent = `Selbsteinschätzung: ${DIMS[i].title} `;
+    }
+    selectDim(0);
+
+    // ----- Hero-Linse ↔ Themenkarten -----
+    const lens = document.getElementById('lens');
+    function hot(topic) {
+      document.querySelectorAll('[data-topic]').forEach(el => el.classList.toggle('is-hot', el.dataset.topic === topic));
+      lens.classList.toggle('has-hot', !!topic);
+    }
+    document.querySelectorAll('[data-topic]').forEach(el => {
+      el.addEventListener('pointerenter', () => hot(el.dataset.topic));
+      el.addEventListener('pointerleave', () => hot(null));
+      el.addEventListener('focus', () => hot(el.dataset.topic));
+      el.addEventListener('blur', () => hot(null));
+    });
+
+    // ----- Kopfzeile: schrumpfen, Scroll-Spy, Lichtreflex -----
+    const header = document.getElementById('header');
+    const glass = header.querySelector('.bar-glass');
+    const onScroll = () => header.classList.toggle('scrolled', scrollY > 24);
+    addEventListener('scroll', onScroll, { passive: true }); onScroll();
+    header.addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse') return;
+      const r = glass.getBoundingClientRect();
+      glass.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      glass.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    });
+    header.addEventListener('pointerleave', () => { glass.style.removeProperty('--mx'); glass.style.removeProperty('--my'); });
+    const navLinks = document.querySelectorAll('.nav a');
+    const spy = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        if (!en.isIntersecting) return;
+        navLinks.forEach(a => a.dataset.spy === en.target.id ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'));
+      });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    ['start', 'ki', 'themen', 'audit', 'blog'].forEach(id => spy.observe(document.getElementById(id)));
+
+    // ----- Kennzahlen hochzählen -----
+    const counters = document.querySelectorAll('[data-count]');
+    if (!reduceMotion) {
+      const io = new IntersectionObserver(entries => entries.forEach(en => {
+        if (!en.isIntersecting) return; io.unobserve(en.target);
+        const el = en.target, target = parseFloat(el.dataset.count.replace(',', '.')), dec = el.dataset.count.includes(',') ? 1 : 0;
+        const t0 = performance.now();
+        const step = now => {
+          const p = Math.min(1, (now - t0) / 900), v = target * (1 - Math.pow(1 - p, 3));
+          el.textContent = v.toFixed(dec).replace('.', ',') + ' %';
+          if (p < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      }), { threshold: .6 });
+      counters.forEach(c => io.observe(c));
+    }
+
+    // ----- Sprache (im Mock nur Deutsch) -----
+    const toast = document.getElementById('toast');
+    let toastTimer;
+    function showToast(msg) { toast.textContent = msg; toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 3200); }
+    const seg = document.getElementById('langSeg');
+    seg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      if (b.dataset.lang === 'en') {
+        seg.dataset.lang = 'en';
+        setTimeout(() => { seg.dataset.lang = 'de'; }, 600);
+        showToast('Die englische Fassung ist in diesem Entwurf noch nicht enthalten.');
+      }
+    }));
+
+    // ----- Anmeldedialog -----
+    const dlg = document.getElementById('loginDlg');
+    const accountBtn = document.getElementById('accountBtn');
+    accountBtn.addEventListener('click', () => dlg.showModal());
+    document.getElementById('loginCancel').addEventListener('click', () => dlg.close());
+    dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+    dlg.addEventListener('close', () => accountBtn.focus());
+    document.getElementById('loginForm').addEventListener('submit', () => showToast('Im Entwurf gibt es keine echte Anmeldung.'));
+
+    // ----- Prototyp-Einstellungen -----
+    document.getElementById('themeSel').addEventListener('change', e => {
+      if (e.target.value === 'system') delete document.documentElement.dataset.theme;
+      else document.documentElement.dataset.theme = e.target.value;
+    });
+    document.getElementById('transpChk').addEventListener('change', e => {
+      if (e.target.checked) document.documentElement.dataset.transparency = 'reduce';
+      else delete document.documentElement.dataset.transparency;
+    });
+  </script>
+</body>
+</html>
