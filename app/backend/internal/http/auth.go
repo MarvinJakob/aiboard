@@ -28,11 +28,13 @@ const (
 	clientIPKey
 )
 
+// identityFrom liefert die vom guard geprüfte Identität der Sitzung.
 func identityFrom(ctx context.Context) (service.Identity, bool) {
 	id, ok := ctx.Value(identityKey).(service.Identity)
 	return id, ok
 }
 
+// clientIPFrom liefert die vom guard ermittelte IP-Adresse der Anfrage.
 func clientIPFrom(ctx context.Context) string {
 	ip, _ := ctx.Value(clientIPKey).(string)
 	return ip
@@ -50,14 +52,17 @@ type guard struct {
 	log        *slog.Logger
 }
 
+// unsafeMethod meldet, ob die Methode Daten verändern darf (und deshalb CSRF-Schutz braucht).
 func unsafeMethod(m string) bool {
 	return m != http.MethodGet && m != http.MethodHead && m != http.MethodOptions
 }
 
+// needsSession meldet, ob der API-Pfad eine gültige Sitzung verlangt.
 func needsSession(p string) bool {
 	return p == "/api/admin" || strings.HasPrefix(p, "/api/admin/") || p == "/api/auth/me" || p == "/api/auth/logout"
 }
 
+// wrap prüft Herkunft, Sitzung, CSRF-Token und Rolle vor dem eigentlichen Handler.
 func (g *guard) wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		p := r.URL.Path
@@ -110,6 +115,7 @@ func allowed(p string, role service.Role) bool {
 	return true // /api/auth/me und /api/auth/logout: jede gültige Sitzung
 }
 
+// sessionToken liest das Sitzungs-Token aus dem Cookie, leer wenn es fehlt.
 func sessionToken(r *http.Request) string {
 	c, err := r.Cookie(auth.CookieName)
 	if err != nil {
@@ -148,6 +154,7 @@ func (g *guard) clientIP(r *http.Request) string {
 // Handler für /api/auth
 // ---------------------------------------------------------------------------
 
+// sessionCookie baut den Set-Cookie-Header: HttpOnly, SameSite=Lax und bei HTTPS Secure.
 func (s *apiServer) sessionCookie(value string, maxAge int, expires time.Time) string {
 	c := &http.Cookie{
 		Name:     auth.CookieName,
@@ -162,10 +169,12 @@ func (s *apiServer) sessionCookie(value string, maxAge int, expires time.Time) s
 	return c.String()
 }
 
+// toMe wandelt die Identität in die API-Antwort um.
 func toMe(id service.Identity) api.Me {
 	return api.Me{Id: id.UserID, Email: id.Email, Role: api.Role(id.Role), CsrfToken: id.CSRFToken}
 }
 
+// Login meldet an, begrenzt Fehlversuche je IP-Adresse und ersetzt eine bestehende Sitzung des Browsers.
 func (s *apiServer) Login(ctx context.Context, req api.LoginRequestObject) (api.LoginResponseObject, error) {
 	ip := clientIPFrom(ctx)
 	if !s.limiter.Allowed(ip) {
@@ -198,6 +207,7 @@ func (s *apiServer) Login(ctx context.Context, req api.LoginRequestObject) (api.
 // previousSessionKey trägt das Cookie einer bestehenden Sitzung zum Login-Handler.
 type previousSessionKey struct{}
 
+// Logout löscht die Sitzung serverseitig und das Cookie im Browser.
 func (s *apiServer) Logout(ctx context.Context, _ api.LogoutRequestObject) (api.LogoutResponseObject, error) {
 	id, ok := identityFrom(ctx)
 	if !ok {
@@ -210,6 +220,7 @@ func (s *apiServer) Logout(ctx context.Context, _ api.LogoutRequestObject) (api.
 	return api.Logout204Response{Headers: api.Logout204ResponseHeaders{SetCookie: &cookie}}, nil
 }
 
+// GetMe liefert das angemeldete Konto samt CSRF-Token.
 func (s *apiServer) GetMe(ctx context.Context, _ api.GetMeRequestObject) (api.GetMeResponseObject, error) {
 	id, ok := identityFrom(ctx)
 	if !ok {
