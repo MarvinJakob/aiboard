@@ -25,6 +25,7 @@ import (
 
 	"ki-web/backend/internal/audit"
 	httpserver "ki-web/backend/internal/http"
+	"ki-web/backend/internal/media"
 	"ki-web/backend/internal/service"
 	"ki-web/backend/internal/store"
 	"ki-web/backend/internal/web"
@@ -38,6 +39,7 @@ type config struct {
 	devSeed      bool
 	serveMedia   bool
 	trustProxy   bool
+	requireLogin bool
 }
 
 func env(key, def string) string {
@@ -64,6 +66,7 @@ func loadConfig() config {
 		devSeed:      envBool("DEV_SEED"),
 		serveMedia:   envBool("SERVE_MEDIA"),
 		trustProxy:   envBool("TRUST_PROXY"),
+		requireLogin: envBool("REQUIRE_LOGIN"),
 	}
 }
 
@@ -119,15 +122,19 @@ func runServer(cfg config, log *slog.Logger) error {
 	public := service.NewPublic(store.New(db))
 	accounts := service.NewAccounts(db)
 	go cleanupSessions(ctx, accounts, log)
+	editorial := service.NewEditorial(db)
+	go publishScheduled(ctx, editorial, log)
 	hcfg := httpserver.Config{
 		Public:        public,
 		Audit:         catalog,
 		Accounts:      accounts,
 		Site:          web.New(public, catalog, cfg.baseURL, nil, log),
-		Editorial:     service.NewEditorial(db),
+		Editorial:     editorial,
+		Media:         media.NewStore(cfg.mediaPath),
 		EditorialSite: web.NewEditorial(accounts, nil, log),
 		SecureCookies: strings.HasPrefix(cfg.baseURL, "https://"),
 		TrustProxy:    cfg.trustProxy,
+		RequireLogin:  cfg.requireLogin,
 		Log:           log,
 	}
 	if cfg.serveMedia {
@@ -144,7 +151,8 @@ func runServer(cfg config, log *slog.Logger) error {
 
 	errc := make(chan error, 1)
 	go func() {
-		log.Info("server gestartet", "adresse", cfg.addr, "basis_url", cfg.baseURL, "testinhalte", cfg.devSeed)
+		log.Info("server gestartet", "adresse", cfg.addr, "basis_url", cfg.baseURL, "testinhalte", cfg.devSeed,
+			"zugangsschutz", cfg.requireLogin)
 		errc <- srv.ListenAndServe()
 	}()
 
@@ -160,6 +168,34 @@ func runServer(cfg config, log *slog.Logger) error {
 		return srv.Shutdown(shutdownCtx)
 	}
 	return nil
+}
+
+// publishInterval bestimmt, wie oft fällige Beiträge veröffentlicht werden. Ticket #23 erlaubt
+// höchstens eine Minute Abweichung vom geplanten Zeitpunkt.
+const publishInterval = 15 * time.Second
+
+// publishScheduled veröffentlicht beim Start und danach regelmäßig alle Beiträge, deren geplanter
+// Zeitpunkt erreicht ist (Ticket #23).
+func publishScheduled(ctx context.Context, editorial *service.Editorial, log *slog.Logger) {
+	t := time.NewTicker(publishInterval)
+	defer t.Stop()
+	for {
+		published, skipped, err := editorial.PublishDue(ctx)
+		if err != nil && ctx.Err() == nil {
+			log.Error("geplante beiträge veröffentlichen", "fehler", err)
+		}
+		for _, id := range published {
+			log.Info("geplanten beitrag veröffentlicht", "id", id)
+		}
+		for _, id := range skipped {
+			log.Warn("geplanter beitrag unvollständig, zeitpunkt entfernt", "id", id)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+		}
+	}
 }
 
 // cleanupSessions löscht abgelaufene Sitzungen beim Start und danach täglich (ARCHITECTURE.md, Abschnitt 4).

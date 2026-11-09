@@ -2,9 +2,18 @@
 
 ## In short
 
-- We do not use tracking cookies or analytics.
+- We do not use tracking cookies or analytics. There are no optional cookies or similar technologies.
 - Fonts, scripts and images are served exclusively from our own server. No data is sent to third parties.
-- Your language choice is stored only in your browser (local storage). It never leaves your device.
+- Your language and appearance choice and your cookie choice are stored only in your browser (local storage). They never leave your device. Via "Cookie settings" in the footer you can pick "Store no cookies" (nothing is stored), "Necessary cookies only", or withdraw your choice at any time.
+
+## Cookies and storage access
+
+| Entry | Purpose | Provider | Duration | Classification |
+| --- | --- | --- | --- | --- |
+| `ki-perspektiven.lang` (local storage) | Language choice | this website | until deleted | necessary: a function you explicitly choose (§ 25(2) TDDDG) |
+| `ki-perspektiven.theme` (local storage) | Light or dark appearance | this website | until deleted | necessary: a function you explicitly choose |
+| `ki-perspektiven.consent` (local storage) | Your cookie choice with time and version, no identifier | this website | at most 180 days | necessary to apply your decision |
+| `ki_session` (cookie, HttpOnly) | Editorial sign-in | this website | session | necessary, only after you explicitly sign in under `/redaktion` |
 
 ## Server logs
 

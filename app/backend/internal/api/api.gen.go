@@ -11,10 +11,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"time"
 
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // Defines values for AuditCategory.
@@ -213,16 +215,22 @@ type AuditQuestion struct {
 
 // EditorPost defines model for EditorPost.
 type EditorPost struct {
-	Featured bool  `json:"featured"`
-	Id       int64 `json:"id"`
+	Cover    *Image `json:"cover,omitempty"`
+	Featured bool   `json:"featured"`
+	Id       int64  `json:"id"`
 
 	// PublishedAt Erste Veröffentlichung
 	PublishedAt *time.Time `json:"publishedAt,omitempty"`
+
+	// ScheduledAt Geplante automatische Veröffentlichung in UTC, nur bei Beiträgen „In Arbeit“
+	ScheduledAt *time.Time `json:"scheduledAt,omitempty"`
 	Slug        string     `json:"slug"`
-	Status      PostStatus `json:"status"`
-	Texts       []PostText `json:"texts"`
-	Topics      []string   `json:"topics"`
-	UpdatedAt   time.Time  `json:"updatedAt"`
+
+	// Status `draft` erscheint in der Redaktion als „In Arbeit“, `published` als „Veröffentlicht“
+	Status    PostStatus `json:"status"`
+	Texts     []PostText `json:"texts"`
+	Topics    []string   `json:"topics"`
+	UpdatedAt time.Time  `json:"updatedAt"`
 }
 
 // EditorPostList defines model for EditorPostList.
@@ -235,8 +243,13 @@ type EditorPostSummary struct {
 	Featured    bool       `json:"featured"`
 	Id          int64      `json:"id"`
 	PublishedAt *time.Time `json:"publishedAt,omitempty"`
+
+	// ScheduledAt Geplante automatische Veröffentlichung in UTC
+	ScheduledAt *time.Time `json:"scheduledAt,omitempty"`
 	Slug        string     `json:"slug"`
-	Status      PostStatus `json:"status"`
+
+	// Status `draft` erscheint in der Redaktion als „In Arbeit“, `published` als „Veröffentlicht“
+	Status PostStatus `json:"status"`
 
 	// Title Deutscher Titel, sonst der Titel einer anderen Sprache
 	Title        string    `json:"title"`
@@ -345,7 +358,7 @@ type PostList struct {
 	Items []PostSummary `json:"items"`
 }
 
-// PostStatus defines model for PostStatus.
+// PostStatus `draft` erscheint in der Redaktion als „In Arbeit“, `published` als „Veröffentlicht“
 type PostStatus string
 
 // PostSummary defines model for PostSummary.
@@ -368,7 +381,11 @@ type PostSummary struct {
 // PostText Fassung eines Beitrags in einer Sprache
 type PostText struct {
 	BodyMarkdown string `json:"bodyMarkdown"`
-	Lang         Lang   `json:"lang"`
+
+	// CoverAlt Alternativtext des Titelbilds in dieser Sprache (Ticket #25). Hat der Beitrag ein Titelbild,
+	// ist er zum Veröffentlichen in jeder Fassung nötig.
+	CoverAlt *string `json:"coverAlt,omitempty"`
+	Lang     Lang    `json:"lang"`
 
 	// Summary Kurztext
 	Summary string `json:"summary"`
@@ -377,6 +394,12 @@ type PostText struct {
 
 // Role `editor` verwaltet Beiträge, `admin` zusätzlich die Redaktionskonten
 type Role string
+
+// ScheduleInput defines model for ScheduleInput.
+type ScheduleInput struct {
+	// PublishAt Zeitpunkt der automatischen Veröffentlichung, mit Zeitzone (wird in UTC gespeichert)
+	PublishAt time.Time `json:"publishAt"`
+}
 
 // Topic defines model for Topic.
 type Topic struct {
@@ -474,6 +497,11 @@ type Unauthorized = Error
 // Unprocessable defines model for Unprocessable.
 type Unprocessable = Error
 
+// AdminSetPostCoverMultipartBody defines parameters for AdminSetPostCover.
+type AdminSetPostCoverMultipartBody struct {
+	File openapi_types.File `json:"file"`
+}
+
 // GetAuditParams defines parameters for GetAudit.
 type GetAuditParams struct {
 	// Lang Gewünschte Sprache
@@ -521,6 +549,12 @@ type AdminCreatePostJSONRequestBody = PostInput
 // AdminUpdatePostJSONRequestBody defines body for AdminUpdatePost for application/json ContentType.
 type AdminUpdatePostJSONRequestBody = PostInput
 
+// AdminSetPostCoverMultipartRequestBody defines body for AdminSetPostCover for multipart/form-data ContentType.
+type AdminSetPostCoverMultipartRequestBody AdminSetPostCoverMultipartBody
+
+// AdminSchedulePostJSONRequestBody defines body for AdminSchedulePost for application/json ContentType.
+type AdminSchedulePostJSONRequestBody = ScheduleInput
+
 // AdminCreateUserJSONRequestBody defines body for AdminCreateUser for application/json ContentType.
 type AdminCreateUserJSONRequestBody = NewUser
 
@@ -538,15 +572,30 @@ type ServerInterface interface {
 	// AdminCreatePost Neuen Entwurf anlegen
 	// (POST /api/admin/posts)
 	AdminCreatePost(w http.ResponseWriter, r *http.Request)
+	// AdminDeletePost Beitrag löschen
+	// (DELETE /api/admin/posts/{id})
+	AdminDeletePost(w http.ResponseWriter, r *http.Request, id Id)
 	// AdminGetPost Beitrag mit allen Sprachfassungen zum Bearbeiten laden
 	// (GET /api/admin/posts/{id})
 	AdminGetPost(w http.ResponseWriter, r *http.Request, id Id)
 	// AdminUpdatePost Texte, Themen und Einstellungen speichern
 	// (PUT /api/admin/posts/{id})
 	AdminUpdatePost(w http.ResponseWriter, r *http.Request, id Id)
+	// AdminDeletePostCover Titelbild entfernen
+	// (DELETE /api/admin/posts/{id}/cover)
+	AdminDeletePostCover(w http.ResponseWriter, r *http.Request, id Id)
+	// AdminSetPostCover Titelbild hochladen oder ersetzen
+	// (PUT /api/admin/posts/{id}/cover)
+	AdminSetPostCover(w http.ResponseWriter, r *http.Request, id Id)
 	// AdminPublishPost Veröffentlichen
 	// (POST /api/admin/posts/{id}/publish)
 	AdminPublishPost(w http.ResponseWriter, r *http.Request, id Id)
+	// AdminUnschedulePost Geplanten Zeitpunkt entfernen
+	// (DELETE /api/admin/posts/{id}/schedule)
+	AdminUnschedulePost(w http.ResponseWriter, r *http.Request, id Id)
+	// AdminSchedulePost Automatische Veröffentlichung planen oder ändern
+	// (PUT /api/admin/posts/{id}/schedule)
+	AdminSchedulePost(w http.ResponseWriter, r *http.Request, id Id)
 	// AdminUnpublishPost Veröffentlichung zurücknehmen
 	// (POST /api/admin/posts/{id}/unpublish)
 	AdminUnpublishPost(w http.ResponseWriter, r *http.Request, id Id)
@@ -628,6 +677,32 @@ func (siw *ServerInterfaceWrapper) AdminCreatePost(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// AdminDeletePost operation middleware
+func (siw *ServerInterfaceWrapper) AdminDeletePost(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminDeletePost(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // AdminGetPost operation middleware
 func (siw *ServerInterfaceWrapper) AdminGetPost(w http.ResponseWriter, r *http.Request) {
 
@@ -680,6 +755,58 @@ func (siw *ServerInterfaceWrapper) AdminUpdatePost(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// AdminDeletePostCover operation middleware
+func (siw *ServerInterfaceWrapper) AdminDeletePostCover(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminDeletePostCover(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminSetPostCover operation middleware
+func (siw *ServerInterfaceWrapper) AdminSetPostCover(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminSetPostCover(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // AdminPublishPost operation middleware
 func (siw *ServerInterfaceWrapper) AdminPublishPost(w http.ResponseWriter, r *http.Request) {
 
@@ -697,6 +824,58 @@ func (siw *ServerInterfaceWrapper) AdminPublishPost(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AdminPublishPost(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminUnschedulePost operation middleware
+func (siw *ServerInterfaceWrapper) AdminUnschedulePost(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminUnschedulePost(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminSchedulePost operation middleware
+func (siw *ServerInterfaceWrapper) AdminSchedulePost(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminSchedulePost(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1212,9 +1391,14 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/auth/me", wrapper.GetMe)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/admin/posts", wrapper.AdminListPosts)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/admin/posts", wrapper.AdminCreatePost)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/admin/posts/{id}", wrapper.AdminDeletePost)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/admin/posts/{id}", wrapper.AdminGetPost)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/admin/posts/{id}", wrapper.AdminUpdatePost)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/admin/posts/{id}/cover", wrapper.AdminDeletePostCover)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/admin/posts/{id}/cover", wrapper.AdminSetPostCover)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/admin/posts/{id}/publish", wrapper.AdminPublishPost)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/admin/posts/{id}/schedule", wrapper.AdminUnschedulePost)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/admin/posts/{id}/schedule", wrapper.AdminSchedulePost)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/admin/posts/{id}/unpublish", wrapper.AdminUnpublishPost)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/admin/users", wrapper.AdminListUsers)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/admin/users", wrapper.AdminCreateUser)
@@ -1372,6 +1556,64 @@ func (response AdminCreatePost422JSONResponse) VisitAdminCreatePostResponse(w ht
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminDeletePostRequestObject struct {
+	Id Id `json:"id"`
+}
+
+type AdminDeletePostResponseObject interface {
+	VisitAdminDeletePostResponse(w http.ResponseWriter) error
+}
+
+type AdminDeletePost204Response struct {
+}
+
+func (response AdminDeletePost204Response) VisitAdminDeletePostResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type AdminDeletePost401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AdminDeletePost401JSONResponse) VisitAdminDeletePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminDeletePost403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AdminDeletePost403JSONResponse) VisitAdminDeletePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminDeletePost404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AdminDeletePost404JSONResponse) VisitAdminDeletePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -1547,6 +1789,163 @@ func (response AdminUpdatePost422JSONResponse) VisitAdminUpdatePostResponse(w ht
 	return err
 }
 
+type AdminDeletePostCoverRequestObject struct {
+	Id Id `json:"id"`
+}
+
+type AdminDeletePostCoverResponseObject interface {
+	VisitAdminDeletePostCoverResponse(w http.ResponseWriter) error
+}
+
+type AdminDeletePostCover200JSONResponse EditorPost
+
+func (response AdminDeletePostCover200JSONResponse) VisitAdminDeletePostCoverResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminDeletePostCover401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AdminDeletePostCover401JSONResponse) VisitAdminDeletePostCoverResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminDeletePostCover403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AdminDeletePostCover403JSONResponse) VisitAdminDeletePostCoverResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminDeletePostCover404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AdminDeletePostCover404JSONResponse) VisitAdminDeletePostCoverResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetPostCoverRequestObject struct {
+	Id   Id `json:"id"`
+	Body *multipart.Reader
+}
+
+type AdminSetPostCoverResponseObject interface {
+	VisitAdminSetPostCoverResponse(w http.ResponseWriter) error
+}
+
+type AdminSetPostCover200JSONResponse EditorPost
+
+func (response AdminSetPostCover200JSONResponse) VisitAdminSetPostCoverResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetPostCover400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response AdminSetPostCover400JSONResponse) VisitAdminSetPostCoverResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetPostCover401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AdminSetPostCover401JSONResponse) VisitAdminSetPostCoverResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetPostCover403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AdminSetPostCover403JSONResponse) VisitAdminSetPostCoverResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetPostCover404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AdminSetPostCover404JSONResponse) VisitAdminSetPostCoverResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetPostCover422JSONResponse struct{ UnprocessableJSONResponse }
+
+func (response AdminSetPostCover422JSONResponse) VisitAdminSetPostCoverResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type AdminPublishPostRequestObject struct {
 	Id Id `json:"id"`
 }
@@ -1614,6 +2013,163 @@ func (response AdminPublishPost404JSONResponse) VisitAdminPublishPostResponse(w 
 type AdminPublishPost422JSONResponse struct{ UnprocessableJSONResponse }
 
 func (response AdminPublishPost422JSONResponse) VisitAdminPublishPostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUnschedulePostRequestObject struct {
+	Id Id `json:"id"`
+}
+
+type AdminUnschedulePostResponseObject interface {
+	VisitAdminUnschedulePostResponse(w http.ResponseWriter) error
+}
+
+type AdminUnschedulePost200JSONResponse EditorPost
+
+func (response AdminUnschedulePost200JSONResponse) VisitAdminUnschedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUnschedulePost401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AdminUnschedulePost401JSONResponse) VisitAdminUnschedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUnschedulePost403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AdminUnschedulePost403JSONResponse) VisitAdminUnschedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUnschedulePost404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AdminUnschedulePost404JSONResponse) VisitAdminUnschedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSchedulePostRequestObject struct {
+	Id   Id `json:"id"`
+	Body *AdminSchedulePostJSONRequestBody
+}
+
+type AdminSchedulePostResponseObject interface {
+	VisitAdminSchedulePostResponse(w http.ResponseWriter) error
+}
+
+type AdminSchedulePost200JSONResponse EditorPost
+
+func (response AdminSchedulePost200JSONResponse) VisitAdminSchedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSchedulePost400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response AdminSchedulePost400JSONResponse) VisitAdminSchedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSchedulePost401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AdminSchedulePost401JSONResponse) VisitAdminSchedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSchedulePost403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AdminSchedulePost403JSONResponse) VisitAdminSchedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSchedulePost404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AdminSchedulePost404JSONResponse) VisitAdminSchedulePostResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSchedulePost422JSONResponse struct{ UnprocessableJSONResponse }
+
+func (response AdminSchedulePost422JSONResponse) VisitAdminSchedulePostResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -2387,15 +2943,30 @@ type StrictServerInterface interface {
 	// AdminCreatePost Neuen Entwurf anlegen
 	// (POST /api/admin/posts)
 	AdminCreatePost(ctx context.Context, request AdminCreatePostRequestObject) (AdminCreatePostResponseObject, error)
+	// AdminDeletePost Beitrag löschen
+	// (DELETE /api/admin/posts/{id})
+	AdminDeletePost(ctx context.Context, request AdminDeletePostRequestObject) (AdminDeletePostResponseObject, error)
 	// AdminGetPost Beitrag mit allen Sprachfassungen zum Bearbeiten laden
 	// (GET /api/admin/posts/{id})
 	AdminGetPost(ctx context.Context, request AdminGetPostRequestObject) (AdminGetPostResponseObject, error)
 	// AdminUpdatePost Texte, Themen und Einstellungen speichern
 	// (PUT /api/admin/posts/{id})
 	AdminUpdatePost(ctx context.Context, request AdminUpdatePostRequestObject) (AdminUpdatePostResponseObject, error)
+	// AdminDeletePostCover Titelbild entfernen
+	// (DELETE /api/admin/posts/{id}/cover)
+	AdminDeletePostCover(ctx context.Context, request AdminDeletePostCoverRequestObject) (AdminDeletePostCoverResponseObject, error)
+	// AdminSetPostCover Titelbild hochladen oder ersetzen
+	// (PUT /api/admin/posts/{id}/cover)
+	AdminSetPostCover(ctx context.Context, request AdminSetPostCoverRequestObject) (AdminSetPostCoverResponseObject, error)
 	// AdminPublishPost Veröffentlichen
 	// (POST /api/admin/posts/{id}/publish)
 	AdminPublishPost(ctx context.Context, request AdminPublishPostRequestObject) (AdminPublishPostResponseObject, error)
+	// AdminUnschedulePost Geplanten Zeitpunkt entfernen
+	// (DELETE /api/admin/posts/{id}/schedule)
+	AdminUnschedulePost(ctx context.Context, request AdminUnschedulePostRequestObject) (AdminUnschedulePostResponseObject, error)
+	// AdminSchedulePost Automatische Veröffentlichung planen oder ändern
+	// (PUT /api/admin/posts/{id}/schedule)
+	AdminSchedulePost(ctx context.Context, request AdminSchedulePostRequestObject) (AdminSchedulePostResponseObject, error)
 	// AdminUnpublishPost Veröffentlichung zurücknehmen
 	// (POST /api/admin/posts/{id}/unpublish)
 	AdminUnpublishPost(ctx context.Context, request AdminUnpublishPostRequestObject) (AdminUnpublishPostResponseObject, error)
@@ -2534,6 +3105,32 @@ func (sh *strictHandler) AdminCreatePost(w http.ResponseWriter, r *http.Request)
 	}
 }
 
+// AdminDeletePost operation middleware
+func (sh *strictHandler) AdminDeletePost(w http.ResponseWriter, r *http.Request, id Id) {
+	var request AdminDeletePostRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminDeletePost(ctx, request.(AdminDeletePostRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminDeletePost")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminDeletePostResponseObject); ok {
+		if err := validResponse.VisitAdminDeletePostResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // AdminGetPost operation middleware
 func (sh *strictHandler) AdminGetPost(w http.ResponseWriter, r *http.Request, id Id) {
 	var request AdminGetPostRequestObject
@@ -2593,6 +3190,65 @@ func (sh *strictHandler) AdminUpdatePost(w http.ResponseWriter, r *http.Request,
 	}
 }
 
+// AdminDeletePostCover operation middleware
+func (sh *strictHandler) AdminDeletePostCover(w http.ResponseWriter, r *http.Request, id Id) {
+	var request AdminDeletePostCoverRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminDeletePostCover(ctx, request.(AdminDeletePostCoverRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminDeletePostCover")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminDeletePostCoverResponseObject); ok {
+		if err := validResponse.VisitAdminDeletePostCoverResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminSetPostCover operation middleware
+func (sh *strictHandler) AdminSetPostCover(w http.ResponseWriter, r *http.Request, id Id) {
+	var request AdminSetPostCoverRequestObject
+
+	request.Id = id
+
+	if reader, err := r.MultipartReader(); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode multipart body: %w", err))
+		return
+	} else {
+		request.Body = reader
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminSetPostCover(ctx, request.(AdminSetPostCoverRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminSetPostCover")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminSetPostCoverResponseObject); ok {
+		if err := validResponse.VisitAdminSetPostCoverResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // AdminPublishPost operation middleware
 func (sh *strictHandler) AdminPublishPost(w http.ResponseWriter, r *http.Request, id Id) {
 	var request AdminPublishPostRequestObject
@@ -2612,6 +3268,65 @@ func (sh *strictHandler) AdminPublishPost(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(AdminPublishPostResponseObject); ok {
 		if err := validResponse.VisitAdminPublishPostResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminUnschedulePost operation middleware
+func (sh *strictHandler) AdminUnschedulePost(w http.ResponseWriter, r *http.Request, id Id) {
+	var request AdminUnschedulePostRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminUnschedulePost(ctx, request.(AdminUnschedulePostRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminUnschedulePost")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminUnschedulePostResponseObject); ok {
+		if err := validResponse.VisitAdminUnschedulePostResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminSchedulePost operation middleware
+func (sh *strictHandler) AdminSchedulePost(w http.ResponseWriter, r *http.Request, id Id) {
+	var request AdminSchedulePostRequestObject
+
+	request.Id = id
+
+	var body AdminSchedulePostJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminSchedulePost(ctx, request.(AdminSchedulePostRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminSchedulePost")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminSchedulePostResponseObject); ok {
+		if err := validResponse.VisitAdminSchedulePostResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

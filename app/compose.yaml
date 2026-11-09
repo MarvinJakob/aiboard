@@ -1,5 +1,6 @@
 # Produktion auf dem Hetzner-Cloud-Server (ARCHITECTURE.md, Abschnitt 9).
-# Start: docker compose pull && docker compose up -d
+# Deployment und Rollback mit deploy/deploy.sh, siehe docs/betrieb.md.
+# Entwicklungs-Testdaten (DEV_SEED) sind hier bewusst nicht gesetzt.
 
 x-logging: &logging
   driver: json-file
@@ -11,6 +12,8 @@ services:
     ports: ["80:80", "443:443"]
     environment:
       DOMAIN: ${DOMAIN}
+      # Weitere Adressen, die auf DOMAIN umleiten, z. B. "www.marvinjakob.de 78-47-14-178.sslip.io"
+      REDIRECT_DOMAINS: ${REDIRECT_DOMAINS:-}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -28,6 +31,9 @@ services:
       PUBLIC_BASE_URL: https://${DOMAIN}
       # Caddy setzt X-Forwarded-For; daraus liest das Backend die IP für die Begrenzung der Anmeldeversuche.
       TRUST_PROXY: "true"
+      # Zugangsschutz vor dem Livegang (Ticket #49): Die Webseite sieht nur, wer angemeldet ist.
+      # Zum Livegang REQUIRE_LOGIN=false in die .env schreiben.
+      REQUIRE_LOGIN: ${REQUIRE_LOGIN:-true}
     volumes:
       - app_db:/data/db
       - app_media:/data/media
@@ -36,6 +42,9 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      # Nach dem Start alle 2 s prüfen, damit Deployments nicht 30 s auf den ersten Healthcheck warten
+      start_period: 60s
+      start_interval: 2s
     restart: unless-stopped
     logging: *logging
 

@@ -8,6 +8,7 @@ coverage/
 *.out
 
 # Daten, Medien und Geheimnisse
+.token/
 *.db
 *.db-wal
 *.db-shm

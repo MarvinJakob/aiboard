@@ -1,7 +1,9 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { useTopics } from '../api/client';
+import { AUDIT_TOPIC, auditPath } from '../lib/audit';
 import { LANGS, href, storeLang, switchLangPath, useLang, type Lang } from '../lib/lang';
+import { useTheme } from '../lib/theme';
 import type { NavState } from '../lib/page';
 import { artBackground, topicStyle } from '../lib/topicStyle';
 import { Icon } from './Icon';
@@ -11,7 +13,12 @@ export function Header() {
   const { lang, t } = useLang();
   const { pathname } = useLocation();
   const inBlog = pathname.startsWith(`/${lang}/blog`);
-  const inTopic = pathname.startsWith(`/${lang}/themen/`);
+  const profilePath = href(lang, '/profil');
+  const inProfile = pathname === profilePath || pathname === `${profilePath}/`;
+  // Das AI Audit ist ein eigener Navigationsbereich (Ticket #21), seine Seiten bleiben unter /themen/ai-audit.
+  const auditRoot = auditPath(lang);
+  const inAudit = pathname === auditRoot || pathname.startsWith(`${auditRoot}/`);
+  const inTopic = pathname.startsWith(`/${lang}/themen/`) && !inAudit;
 
   return (
     <header className="site-header">
@@ -27,9 +34,24 @@ export function Header() {
           <Link className="nav-btn press" to={href(lang, '/blog')} aria-current={inBlog ? 'page' : undefined}>
             {t('nav.blog')}
           </Link>
+          <Link
+            className={`nav-btn press${inAudit ? ' is-active' : ''}`}
+            to={auditRoot}
+            aria-current={pathname === auditRoot ? 'page' : inAudit ? 'true' : undefined}
+          >
+            {t('nav.audit')}
+          </Link>
+          <Link
+            className={`nav-btn press${inProfile ? ' is-active' : ''}`}
+            to={profilePath}
+            aria-current={inProfile ? 'page' : undefined}
+          >
+            {t('nav.profile')}
+          </Link>
         </div>
         <div className="nav-actions">
           <LangSwitch />
+          <ThemeToggle />
           {/* Kontoeinstieg (Anforderung 6): führt zur Anmeldung im eigenständigen Redaktionsfrontend,
               daher ein normaler Link statt einer Route dieser App. */}
           <a className="icon-btn press" href="/redaktion/anmelden" aria-label={t('nav.account')} title={t('nav.account')}>
@@ -102,7 +124,7 @@ function TopicsMenu({ active }: { active: boolean }) {
       </button>
       <div className={`popover glass${open ? ' is-open' : ''}`} id={menuId}>
         <ul className="menu-list" ref={listRef}>
-          {topics?.map((tp) => {
+          {topics?.filter((tp) => tp.slug !== AUDIT_TOPIC).map((tp) => {
             const to = href(lang, `/themen/${tp.slug}`);
             return (
               <li key={tp.slug}>
@@ -161,5 +183,27 @@ function LangSwitch() {
         </button>
       ))}
     </div>
+  );
+}
+
+/**
+ * Schalter für die dunkle Darstellung (Ticket #20). Ein Toggle-Button: aria-pressed nennt den Zustand,
+ * das Symbol zeigt die aktive Darstellung (Sonne hell, Mond dunkel).
+ */
+function ThemeToggle() {
+  const { t } = useLang();
+  const [theme, setTheme] = useTheme();
+  const dark = theme === 'dark';
+  return (
+    <button
+      className="icon-btn theme-toggle press"
+      type="button"
+      aria-pressed={dark}
+      aria-label={t('nav.theme')}
+      title={t('nav.theme')}
+      onClick={() => setTheme(dark ? 'light' : 'dark')}
+    >
+      <Icon name={dark ? 'moon' : 'sun'} />
+    </button>
   );
 }

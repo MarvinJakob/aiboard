@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"sync"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -16,6 +17,7 @@ import (
 	"ki-web/backend/internal/api"
 	"ki-web/backend/internal/audit"
 	httpserver "ki-web/backend/internal/http"
+	"ki-web/backend/internal/media"
 	"ki-web/backend/internal/service"
 	"ki-web/backend/internal/store"
 	"ki-web/backend/internal/web"
@@ -26,7 +28,8 @@ const testIndex = `<!doctype html><html lang="de"><head><!--app-head--><title>KI
 const testEditorialIndex = `<!doctype html><html lang="de"><head><title>Redaktion</title></head><body><div id="redaktion"></div></body></html>`
 
 // newServer startet die Anwendung mit einer temporären SQLite-Datenbank je Test.
-func newServer(t *testing.T, devSeed bool) (*httptest.Server, *sql.DB) {
+// opts passen die Konfiguration an, z. B. für den Zugangsschutz (Ticket #49).
+func newServer(t *testing.T, devSeed bool, opts ...func(*httpserver.Config)) (*httptest.Server, *sql.DB) {
 	t.Helper()
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	db, err := store.Open(filepath.Join(t.TempDir(), "test.db"))
@@ -42,6 +45,7 @@ func newServer(t *testing.T, devSeed bool) (*httptest.Server, *sql.DB) {
 		t.Fatal(err)
 	}
 	public := service.NewPublic(store.New(db))
+	mediaDir := t.TempDir()
 	files := fstest.MapFS{
 		"index.html":        {Data: []byte(testIndex)},
 		"favicon.svg":       {Data: []byte("<svg/>")},
@@ -53,18 +57,32 @@ func newServer(t *testing.T, devSeed bool) (*httptest.Server, *sql.DB) {
 		"favicon.svg":           {Data: []byte("<svg/>")},
 		"assets/redaktion-1.js": {Data: []byte("console.log(2)")},
 	}
-	h := httpserver.New(httpserver.Config{
+	cfg := httpserver.Config{
 		Public:        public,
 		Audit:         catalog,
 		Accounts:      accounts,
 		Site:          web.New(public, catalog, "https://example.test", files, log),
 		Editorial:     service.NewEditorial(db),
 		EditorialSite: web.NewEditorial(accounts, editorialFiles, log),
+		Media:         media.NewStore(mediaDir),
+		MediaPath:     mediaDir,
 		Log:           log,
-	})
-	srv := httptest.NewServer(h)
+	}
+	for _, o := range opts {
+		o(&cfg)
+	}
+	srv := httptest.NewServer(httpserver.New(cfg))
 	t.Cleanup(srv.Close)
+	mediaDirs.Store(srv.URL, mediaDir)
 	return srv, db
+}
+
+// mediaDirs merkt sich je Testserver sein Medienverzeichnis (Ticket #25).
+var mediaDirs sync.Map
+
+func mediaDirOf(srv *httptest.Server) string {
+	d, _ := mediaDirs.Load(srv.URL)
+	return d.(string)
 }
 
 func get(t *testing.T, srv *httptest.Server, path string) (*http.Response, string) {

@@ -1,15 +1,22 @@
 import { useEffect, useId, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router';
+import { Navigate, useNavigate, useSearchParams } from 'react-router';
 import { ApiError, homeFor, useLogin, useMe } from '../api/client';
+import { ThemeToggle } from '../components/ThemeToggle';
+import { page, safeTarget } from '../lib/target';
 
 /**
  * Anmeldung der Redaktion (Anforderung 6). Es gibt bewusst keine Selbstregistrierung:
  * Konten richtet ein Admin-Konto in der Benutzerverwaltung ein.
+ *
+ * Bei aktivem Zugangsschutz (Ticket #49) kommen auch Testpersonen hierher. Der Parameter `weiter`
+ * nennt dann die aufgerufene Seite der Webseite, zu der es nach der Anmeldung zurückgeht.
  */
 export function LoginPage() {
   const { data: me } = useMe();
   const login = useLogin();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const target = safeTarget(params.get('weiter'));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [missing, setMissing] = useState(false);
@@ -19,8 +26,13 @@ export function LoginPage() {
     document.title = 'Anmelden – Redaktion – KI Perspektiven';
   }, []);
 
+  // Bereits angemeldet: zum gemerkten Ziel der Webseite.
+  useEffect(() => {
+    if (me && target && !login.isPending) page.open(target);
+  }, [me, target, login.isPending]);
+
   // Bereits angemeldet: direkt zur passenden Startseite.
-  if (me && !login.isPending) return <Navigate to={homeFor(me.role)} replace />;
+  if (me && !login.isPending && !target) return <Navigate to={homeFor(me.role)} replace />;
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +43,9 @@ export function LoginPage() {
     setMissing(false);
     login.mutate(
       { email, password },
-      { onSuccess: (m) => navigate(homeFor(m.role), { replace: true }) },
+      {
+        onSuccess: (m) => (target ? page.open(target) : navigate(homeFor(m.role), { replace: true })),
+      },
     );
   };
 
@@ -39,6 +53,7 @@ export function LoginPage() {
 
   return (
     <main className="login" id="inhalt">
+      <ThemeToggle className="login-theme" />
       <div className="login-card glass glass--strong">
         <a className="brand press" href="/" aria-label="KI Perspektiven – zur öffentlichen Webseite">
           <span className="brand-mark" aria-hidden="true" />
@@ -46,7 +61,10 @@ export function LoginPage() {
         </a>
         <h1>Anmelden</h1>
         <p className="sheet-sub">
-          Der Zugang ist Mitgliedern der Redaktion vorbehalten. Konten richtet die Administration ein.
+          {target
+            ? 'Die Webseite ist noch nicht öffentlich. Bitte mit deinem Testzugang anmelden.'
+            : 'Der Zugang ist Mitgliedern der Redaktion vorbehalten.'}{' '}
+          Konten richtet die Administration ein.
         </p>
         <form onSubmit={submit} noValidate>
           <div className="field">
@@ -78,9 +96,11 @@ export function LoginPage() {
             {error}
           </p>
           <div className="sheet-actions">
-            <a className="btn btn-secondary press" href="/">
-              Zur Webseite
-            </a>
+            {!target && (
+              <a className="btn btn-secondary press" href="/">
+                Zur Webseite
+              </a>
+            )}
             <button className="btn btn-primary press" type="submit" disabled={login.isPending}>
               {login.isPending ? 'Wird angemeldet …' : 'Anmelden'}
             </button>

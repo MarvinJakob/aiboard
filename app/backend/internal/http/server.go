@@ -10,6 +10,7 @@ import (
 
 	"ki-web/backend/internal/audit"
 	"ki-web/backend/internal/auth"
+	"ki-web/backend/internal/media"
 	"ki-web/backend/internal/service"
 	"ki-web/backend/internal/web"
 )
@@ -23,11 +24,15 @@ type Config struct {
 	Site          *web.Site
 	EditorialSite *web.Editorial
 	MediaPath     string // optional: liefert /media/* lokal aus (in Produktion übernimmt das Caddy)
+	// Media speichert hochgeladene Bilder (Ticket #25). Ohne Media lehnt das Backend Uploads ab.
+	Media *media.Store
 	// SecureCookies setzt das Secure-Attribut am Sitzungscookie (bei HTTPS).
 	SecureCookies bool
 	// TrustProxy liest die IP-Adresse aus X-Forwarded-For (hinter Caddy).
 	TrustProxy bool
-	Log        *slog.Logger
+	// RequireLogin zeigt die öffentliche Webseite nur angemeldeten Konten (Zugangsschutz vor dem Livegang, Ticket #49).
+	RequireLogin bool
+	Log          *slog.Logger
 }
 
 // New baut den vollständigen HTTP-Handler aus API, Medien und Webseite.
@@ -38,6 +43,7 @@ func New(cfg Config) http.Handler {
 		audit:         cfg.Audit,
 		accounts:      cfg.Accounts,
 		editorial:     cfg.Editorial,
+		media:         cfg.Media,
 		limiter:       auth.NewLimiter(loginMaxFailures, loginWindow),
 		secureCookies: cfg.SecureCookies,
 		log:           cfg.Log,
@@ -48,7 +54,35 @@ func New(cfg Config) http.Handler {
 	cfg.EditorialSite.Register(mux)
 	cfg.Site.Register(mux)
 	g := &guard{accounts: cfg.Accounts, trustProxy: cfg.TrustProxy, log: cfg.Log}
-	return recoverer(cfg.Log, logRequests(cfg.Log, g.wrap(mux)))
+	h := g.wrap(mux)
+	if cfg.RequireLogin {
+		h = (&gate{accounts: cfg.Accounts, log: cfg.Log}).wrap(h)
+	}
+	return recoverer(cfg.Log, logRequests(cfg.Log, hardenResponses(limitBody(h))))
+}
+
+// maxRequestBytes begrenzt jeden Anfragetext. Er liegt über dem größten Bild-Upload (media.MaxUploadBytes)
+// samt Multipart-Rahmen und schützt JSON-Endpunkte vor überlangen Anfragen.
+const maxRequestBytes = media.MaxUploadBytes + 1<<20
+
+// limitBody lässt höchstens maxRequestBytes aus dem Anfragetext lesen. Größere Anfragen scheitern beim Lesen.
+func limitBody(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(w, r.Body, maxRequestBytes)
+		next.ServeHTTP(w, r)
+	})
+}
+
+// hardenResponses setzt Sicherheits-Header, damit der Schutz auch ohne vorgeschalteten Proxy (z. B. in der
+// Entwicklung) gilt. Der Proxy in deploy/Caddyfile ergänzt CSP und HSTS.
+func hardenResponses(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("X-Frame-Options", "DENY")
+		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		next.ServeHTTP(w, r)
+	})
 }
 
 // mediaHandler liefert hochgeladene Bilder aus. Dateinamen ändern sich nie, daher ein Jahr Cache.
@@ -69,6 +103,7 @@ func mediaHandler(dir string) http.Handler {
 	}))
 }
 
+// statusWriter merkt sich den Antwortstatus für das Protokoll.
 type statusWriter struct {
 	http.ResponseWriter
 	status int
@@ -94,6 +129,7 @@ func logRequests(log *slog.Logger, next http.Handler) http.Handler {
 	})
 }
 
+// recoverer fängt Panics ab, protokolliert sie und antwortet mit 500, damit der Server weiterläuft.
 func recoverer(log *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {

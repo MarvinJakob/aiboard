@@ -1,0 +1,119 @@
+# Prüft jeden Pull Request in main und stellt nach jedem Merge den aktuellen Stand von main auf dem Hetzner-Server bereit.
+# Ablauf und Secrets: app/docs/betrieb.md, Abschnitt „Automatisches Deployment“.
+name: Prüfen und deployen
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Prüfungen (app/README.md)
+    # Nur für offene Pull Requests. Nach dem Merge prüft der Deploy-Job genau den Stand, den er ausliefert.
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/pruefungen
+
+  deploy:
+    name: Deployment auf Hetzner
+    if: github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.DEPLOY_URL }}
+    # Deployments nacheinander ausführen, laufende nicht abbrechen. GitHub behält nur den zuletzt
+    # wartenden Lauf. Das ist unschädlich, weil jeder Lauf den beim Start aktuellen Stand von main ausliefert.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    timeout-minutes: 30
+    steps:
+      # Nicht den Merge-Commit dieses Pull Requests, sondern den aktuellen Stand von main ausliefern.
+      # So kann ein später startender Lauf eines früheren Merges keine ältere Version ausliefern.
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: SSH-Zugang einrichten
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Stand bestimmen
+        id: ziel
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          export DEPLOY_SSH_KEY=$HOME/.ssh/deploy
+          commit=$(git rev-parse HEAD)
+          version=$(git rev-parse --short=7 HEAD)
+          laufend=$(app/deploy/deploy.sh current)
+          echo "Pull Request #$PR, Merge-Commit $GITHUB_SHA"
+          echo "Aktueller Stand von main: $commit, Image-Version $version"
+          echo "Auf dem Server: ${laufend:-keine Version}"
+          if [[ "$laufend" == "$commit" ]]; then
+            echo "Dieser Stand läuft bereits. Prüfungen und Deployment werden übersprungen."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # Schlägt eine Prüfung fehl, wird nicht deployed
+      - name: Prüfungen (app/README.md)
+        if: steps.ziel.outputs.skip == 'false'
+        uses: ./.github/actions/pruefungen
+
+      - name: Version bauen und starten
+        if: steps.ziel.outputs.skip == 'false'
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          COMMIT: ${{ steps.ziel.outputs.commit }}
+          VERSION: ${{ steps.ziel.outputs.version }}
+        run: |
+          export DEPLOY_SSH_KEY=$HOME/.ssh/deploy
+          app/deploy/deploy.sh release "$COMMIT" "$VERSION"
+
+      - name: Zusammenfassung
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          COMMIT: ${{ steps.ziel.outputs.commit }}
+          VERSION: ${{ steps.ziel.outputs.version }}
+          SKIP: ${{ steps.ziel.outputs.skip }}
+          DEPLOY_URL: ${{ vars.DEPLOY_URL }}
+        run: |
+          if [[ "$SKIP" == "true" ]]; then ergebnis="übersprungen, Stand lief bereits"; else ergebnis="bereitgestellt"; fi
+          {
+            echo "### Deployment"
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Pull Request | #$PR |"
+            echo "| Merge-Commit | \`$GITHUB_SHA\` |"
+            echo "| Bereitgestellter Stand von main | \`$COMMIT\` |"
+            echo "| Image | \`ki-web:$VERSION\` |"
+            echo "| Ergebnis | $ergebnis |"
+            echo "| Adresse | $DEPLOY_URL |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Healthcheck von außen
+        if: vars.DEPLOY_URL != ''
+        env:
+          DEPLOY_URL: ${{ vars.DEPLOY_URL }}
+        run: curl -fsS --retry 5 --retry-delay 5 --retry-all-errors "$DEPLOY_URL/api/health"
+
+      - name: SSH-Schlüssel entfernen
+        if: always()
+        run: rm -f ~/.ssh/deploy

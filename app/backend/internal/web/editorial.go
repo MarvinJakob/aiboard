@@ -67,6 +67,19 @@ func HomeFor(role service.Role) string {
 	return Base
 }
 
+// SafeTarget prüft ein Ziel nach der Anmeldung (Parameter „weiter“, Ticket #49). Erlaubt sind nur
+// Pfade derselben Webseite. Ziele wie //andere.example oder /\andere.example würden Browser auf eine
+// fremde Seite führen und werden abgelehnt.
+func SafeTarget(t string) (string, bool) {
+	if !strings.HasPrefix(t, "/") || strings.HasPrefix(t, "//") || strings.HasPrefix(t, "/\\") {
+		return "", false
+	}
+	if strings.ContainsAny(t, "\r\n\t") {
+		return "", false
+	}
+	return t, true
+}
+
 func (e *Editorial) assets(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimPrefix(path.Clean(r.URL.Path), Base+"/")
 	if _, err := fs.Stat(e.files, name); err != nil {
@@ -131,8 +144,12 @@ func (e *Editorial) page(w http.ResponseWriter, r *http.Request) {
 	need := route(rest)
 	switch {
 	case need == accessPublic && loggedIn:
-		// Bereits angemeldet: direkt zur passenden Startseite.
-		http.Redirect(w, r, HomeFor(id.Role), http.StatusSeeOther)
+		// Bereits angemeldet: direkt zum gemerkten Ziel (Ticket #49) oder zur passenden Startseite.
+		dest := HomeFor(id.Role)
+		if t, ok := SafeTarget(r.URL.Query().Get("weiter")); ok {
+			dest = t
+		}
+		http.Redirect(w, r, dest, http.StatusSeeOther)
 		return
 	case need == accessPublic:
 		e.serve(w, r, http.StatusOK)

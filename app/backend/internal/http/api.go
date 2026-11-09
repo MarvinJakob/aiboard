@@ -10,6 +10,7 @@ import (
 	"ki-web/backend/internal/api"
 	"ki-web/backend/internal/audit"
 	"ki-web/backend/internal/auth"
+	"ki-web/backend/internal/media"
 	"ki-web/backend/internal/service"
 )
 
@@ -19,6 +20,7 @@ type apiServer struct {
 	audit         *audit.Catalog
 	accounts      *service.Accounts
 	editorial     *service.Editorial
+	media         *media.Store
 	limiter       *auth.Limiter
 	secureCookies bool
 	log           *slog.Logger

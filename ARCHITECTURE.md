@@ -388,6 +388,7 @@ services:
     ports: ["80:80", "443:443"]
     environment:
       DOMAIN: ${DOMAIN}
+      REDIRECT_DOMAINS: ${REDIRECT_DOMAINS:-}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -426,7 +427,14 @@ Das Backend ist nur im internen Docker-Netz erreichbar. Nach außen öffnet nur 
 ### Caddyfile (Skizze)
 
 ```
-{$DOMAIN} {
+{$DOMAIN} {$REDIRECT_DOMAINS} {
+    # Weitere Adressen wie www.DOMAIN leiten dauerhaft auf DOMAIN um
+    @umleiten {
+        not host {$DOMAIN}
+        expression `"{$REDIRECT_DOMAINS}" != ""`
+    }
+    redir @umleiten https://{$DOMAIN}{uri} permanent
+
     encode zstd gzip
 
     header {

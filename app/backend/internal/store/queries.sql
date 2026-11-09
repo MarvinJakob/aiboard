@@ -61,6 +61,24 @@ SELECT id, storage_key, mime_type, width, height
 FROM media
 WHERE id IN (sqlc.slice('media_ids'));
 
+-- name: GetMedia :one
+SELECT id, storage_key, mime_type, width, height FROM media WHERE id = ?;
+
+-- name: CreateMedia :execlastid
+INSERT INTO media (storage_key, mime_type, width, height, created_at) VALUES (?, ?, ?, ?, ?);
+
+-- name: DeleteMedia :exec
+DELETE FROM media WHERE id = ?;
+
+-- name: DeleteMediaTranslations :exec
+DELETE FROM media_translations WHERE media_id = ?;
+
+-- name: InsertMediaTranslation :exec
+INSERT INTO media_translations (media_id, lang, alt_text) VALUES (?, ?, ?);
+
+-- name: SetPostCover :execrows
+UPDATE posts SET cover_media_id = ?, updated_at = ? WHERE id = ?;
+
 -- name: ListMediaTranslations :many
 SELECT media_id, lang, alt_text
 FROM media_translations
@@ -124,6 +142,10 @@ INSERT INTO posts (slug, status, featured, updated_at) VALUES (?, 'draft', ?, ?)
 -- name: UpdatePost :execrows
 UPDATE posts SET slug = ?, featured = ?, updated_at = ? WHERE id = ?;
 
+-- Loeschen eines Beitrags (Ticket #24). Sprachfassungen und Themenzuordnungen entfernt ON DELETE CASCADE.
+-- name: DeletePost :execrows
+DELETE FROM posts WHERE id = ?;
+
 -- name: DeletePostTranslations :exec
 DELETE FROM post_translations WHERE post_id = ?;
 
@@ -140,8 +162,40 @@ INSERT INTO post_topics (post_id, topic_id) VALUES (?, ?);
 UPDATE posts
 SET status = 'published',
     published_at = COALESCE(published_at, sqlc.arg(published_at)),
+    scheduled_at = NULL,
     updated_at = sqlc.arg(updated_at)
 WHERE id = sqlc.arg(id);
 
 -- name: UnpublishPost :execrows
 UPDATE posts SET status = 'draft', updated_at = ? WHERE id = ?;
+
+-- Geplante Veroeffentlichung (Ticket #23). Zeitpunkte in UTC, RFC 3339 ohne Sekundenbruchteile,
+-- damit der Textvergleich der zeitlichen Reihenfolge entspricht.
+
+-- name: SchedulePost :execrows
+UPDATE posts SET scheduled_at = ?, updated_at = ? WHERE id = ? AND status = 'draft';
+
+-- name: UnschedulePost :execrows
+UPDATE posts SET scheduled_at = NULL, updated_at = ? WHERE id = ?;
+
+-- name: ListDuePosts :many
+SELECT id, scheduled_at FROM posts
+WHERE status = 'draft' AND scheduled_at IS NOT NULL AND scheduled_at <= ?
+ORDER BY scheduled_at, id;
+
+-- Ticket #31: Eine automatische Veroeffentlichung traegt immer den geplanten Zeitpunkt als Datum,
+-- auch wenn der Beitrag frueher schon einmal veroeffentlicht war.
+-- name: PublishScheduledPost :execrows
+UPDATE posts
+SET status = 'published',
+    published_at = scheduled_at,
+    scheduled_at = NULL,
+    updated_at = sqlc.arg(updated_at)
+WHERE id = sqlc.arg(id) AND status = 'draft' AND scheduled_at IS NOT NULL
+  -- Ticket #30: Der Termin muss beim Schreiben noch faellig sein. Wurde er nach dem Einlesen
+  -- verschoben, aendert sich nichts.
+  AND scheduled_at <= sqlc.arg(now);
+
+-- name: UnscheduleDuePost :execrows
+UPDATE posts SET scheduled_at = NULL, updated_at = sqlc.arg(updated_at)
+WHERE id = sqlc.arg(id) AND status = 'draft' AND scheduled_at <= sqlc.arg(now);

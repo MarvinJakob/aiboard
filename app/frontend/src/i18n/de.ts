@@ -7,8 +7,11 @@ export const de = {
     home: 'Start',
     topics: 'Themen',
     blog: 'Blog',
+    audit: 'AI Audit',
+    profile: 'Profil',
     lang: 'Sprache',
     account: 'Anmeldung für die Redaktion',
+    theme: 'Dunkle Darstellung',
   },
   langName: { de: 'Deutsch', en: 'Englisch' },
   crumbs: 'Pfadnavigation',
@@ -103,10 +106,41 @@ export const de = {
   },
   footer: {
     tagline: 'Einordnungen und Erfahrungen rund um künstliche Intelligenz.',
-    privacyNote: 'Wir setzen keine Tracking-Cookies ein. Ihre Sprachwahl wird nur in Ihrem Browser gespeichert.',
+    privacyNote: 'Wir setzen keine Tracking-Cookies ein. Sprache und Darstellung speichern wir nur auf Ihren Wunsch in Ihrem Browser; Sie können das in den Cookie-Einstellungen ausschalten.',
     site: 'Website',
     imprint: 'Impressum',
     privacy: 'Datenschutz',
+  },
+  cookies: {
+    open: 'Cookie-Einstellungen',
+    title: 'Cookie-Einstellungen',
+    introNone:
+      'Diese Webseite setzt keine optionalen Cookies, keine Analyse- und keine Werbedienste ein. Es gibt daher nichts, wofür wir eine Zustimmung benötigen. Sie entscheiden nur, ob wir Ihre Sprach- und Darstellungswahl speichern dürfen.',
+    introOptional:
+      'Optionale Cookies und vergleichbare Technologien starten erst nach Ihrer Zustimmung. Scrollen, Weitersurfen oder Schließen gelten nicht als Zustimmung.',
+    inventoryTitle: 'Was gespeichert werden kann',
+    lang: 'Sprachwahl (Local Storage, Schlüssel „ki-perspektiven.lang“): merkt sich Deutsch oder Englisch. Anbieter: diese Webseite. Laufzeit: bis zum Löschen. Notwendig, weil Sie sie ausdrücklich wählen.',
+    theme:
+      'Darstellung (Local Storage, Schlüssel „ki-perspektiven.theme“): merkt sich hell oder dunkel. Anbieter: diese Webseite. Laufzeit: bis zum Löschen. Notwendig, weil Sie sie ausdrücklich wählen.',
+    consent:
+      'Ihre Auswahl hier (Local Storage, Schlüssel „ki-perspektiven.consent“): Auswahl, Zeitpunkt und Version, keine Kennung. Laufzeit: höchstens 180 Tage. Notwendig, um Ihre Entscheidung umzusetzen.',
+    session:
+      'Anmeldung der Redaktion (Cookie „ki_session“): nur nach ausdrücklicher Anmeldung unter /redaktion, nicht beim öffentlichen Besuch. Notwendig für die Anmeldung.',
+    revoke:
+      'Sie können Ihre Auswahl jederzeit über „Cookie-Einstellungen“ im Footer ändern. Ein Widerruf wirkt ab dem Klick und entfernt unsere gespeicherten Einträge. Es erfolgt keine Übermittlung in Drittländer.',
+    details: 'Mehr in der Datenschutzerklärung',
+    none: 'Keine Cookies speichern',
+    necessary: 'Nur notwendige Cookies',
+    all: 'Alle Cookies akzeptieren',
+    saved: {
+      none: 'Gewählt: Keine Cookies. Es wird nichts gespeichert.',
+      necessary: 'Gewählt: Nur notwendige Cookies. Gespeichert für höchstens 180 Tage.',
+      all: 'Gewählt: Alle Cookies. Gespeichert für höchstens 180 Tage.',
+    },
+    noneHint: 'Die Auswahl gilt nur, bis die Seite vollständig neu geladen wird. Danach kann sie erneut nötig sein.',
+    sessionHint: 'Sie sind in der Redaktion angemeldet. Diese Anmeldung bleibt bestehen.',
+    sessionLink: 'Zur Redaktion, um sich abzumelden',
+    close: 'Schließen',
   },
 };
 

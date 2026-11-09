@@ -68,6 +68,7 @@ func (s *Site) sitemap(w http.ResponseWriter, r *http.Request) {
 
 	add(service.Langs, "", latest)
 	add(service.Langs, "/blog", latest)
+	add(service.Langs, "/profil", time.Time{})
 	for _, t := range topics {
 		add(t.Translations, "/themen/"+t.Slug, topicLatest[t.Slug])
 	}

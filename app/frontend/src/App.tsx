@@ -10,6 +10,7 @@ import { Home } from './pages/Home';
 import { Legal } from './pages/Legal';
 import { NotFound } from './pages/NotFound';
 import { PostPage } from './pages/Post';
+import { Profile } from './pages/Profile';
 import { TopicPage } from './pages/Topic';
 
 /** Routen der öffentlichen Webseite (ARCHITECTURE.md, Abschnitt 3). Jede Ansicht hat eine echte URL. */
@@ -24,6 +25,7 @@ export const routes: RouteObject[] = [
       { path: `themen/${AUDIT_TOPIC}/:dimension`, element: <AuditDimensionPage /> },
       { path: 'blog', element: <Blog /> },
       { path: 'blog/:slug', element: <PostPage /> },
+      { path: 'profil', element: <Profile /> },
       { path: 'impressum', element: <Legal page="imprint" /> },
       { path: 'datenschutz', element: <Legal page="privacy" /> },
       { path: '*', element: <NotFound /> },

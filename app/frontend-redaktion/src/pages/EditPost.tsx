@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import { ApiError } from '../api/client';
 import {
@@ -9,44 +9,19 @@ import {
   useTopics,
   type EditorPost,
   type Lang,
-  type PostInput,
   type PostText,
 } from '../api/posts';
 import { Loading, Page } from '../components/Layout';
-import { StatusBadge, formatDate } from '../components/PostParts';
+import { StatusBadge, formatDate, formatWithZone, resolveLocalInput, toLocalInput } from '../components/PostParts';
 
-interface Form {
-  slug: string;
-  featured: boolean;
-  topics: string[];
-  texts: Record<Lang, PostText>;
-}
+import { AMBIGUOUS, NONEXISTENT, coverProblem, hasText, toForm, toInput, type Form } from '../lib/postForm';
 
 interface Notice {
   text: string;
   undo?: boolean; // „Rückgängig“ nach dem Zurücknehmen anbieten
 }
 
-const emptyText = (lang: Lang): PostText => ({ lang, title: '', summary: '', bodyMarkdown: '' });
-
-function toForm(p?: EditorPost): Form {
-  const texts = { de: emptyText('de'), en: emptyText('en') };
-  for (const t of p?.texts ?? []) texts[t.lang] = { ...t };
-  return { slug: p?.slug ?? '', featured: p?.featured ?? false, topics: p?.topics ?? [], texts };
-}
-
-function toInput(f: Form): PostInput {
-  return {
-    slug: f.slug.trim() || undefined,
-    featured: f.featured,
-    topics: f.topics,
-    texts: LANGS.map((l) => f.texts[l]).filter((t) => t.title.trim() || t.summary.trim() || t.bodyMarkdown.trim()),
-  };
-}
-
-const hasText = (t: PostText) => Boolean(t.title.trim() || t.summary.trim() || t.bodyMarkdown.trim());
-
-/** Beitrag anlegen oder bearbeiten (Anforderung 5). „neu“ legt beim ersten Speichern einen Entwurf an. */
+/** Beitrag anlegen oder bearbeiten (Anforderung 5). „neu“ legt beim ersten Speichern einen Beitrag „In Arbeit“ an. */
 export function EditPostPage() {
   const { id: param } = useParams();
   const id = param === 'neu' ? undefined : Number(param);
@@ -78,11 +53,34 @@ function Editor({ post }: { post?: EditorPost }) {
   const [notice, setNotice] = useState<Notice | null>((location.state as { notice?: Notice } | null)?.notice ?? null);
   const [error, setError] = useState('');
   const [confirmUnpublish, setConfirmUnpublish] = useState(false);
-  const ids = { slug: useId(), title: useId(), summary: useId(), body: useId(), error: useId() };
+  const [scheduleValue, setScheduleValue] = useState(() => (post?.scheduledAt ? toLocalInput(post.scheduledAt) : ''));
+  // Bei doppeldeutiger Ortszeit (Ende der Sommerzeit) wählt die Redaktion den gemeinten Zeitpunkt (Ticket #32).
+  const [scheduleChoice, setScheduleChoice] = useState<string | null>(null);
+  const resolved = resolveLocalInput(scheduleValue);
+  const ids = {
+    slug: useId(), title: useId(), summary: useId(), body: useId(), error: useId(), schedule: useId(), scheduleHint: useId(),
+    cover: useId(), coverHint: useId(), coverAlt: useId(), coverAltHint: useId(),
+  };
+  const coverInput = useRef<HTMLInputElement>(null);
 
   const dirty = JSON.stringify(toInput(form)) !== baseline;
   const published = post?.status === 'published';
   const busy = action.isPending;
+
+  // Ticket #33: Veröffentlicht der Hintergrundjob den geöffneten Beitrag, darauf hinweisen.
+  // Das Formular bleibt unverändert, ungespeicherte Eingaben gehen nicht verloren.
+  // Eigene Aktionen (Veröffentlichen, Rückgängig) melden sich selbst. ownUpdate merkt sich den Stand,
+  // den die letzte eigene Aktion geliefert hat; nur andere Stände stammen vom Hintergrundjob.
+  const lastStatus = useRef(post?.status);
+  const ownUpdate = useRef<string | null>(null);
+  useEffect(() => {
+    const before = lastStatus.current;
+    lastStatus.current = post?.status;
+    if (before === 'draft' && post?.status === 'published' && post.updatedAt !== ownUpdate.current) {
+      setError('');
+      setNotice({ text: 'Der geplante Zeitpunkt ist erreicht: Der Beitrag ist jetzt veröffentlicht.' });
+    }
+  }, [post?.status]);
   const text = form.texts[lang];
 
   // Ungespeicherte Änderungen nicht stillschweigend verlieren.
@@ -104,12 +102,15 @@ function Editor({ post }: { post?: EditorPost }) {
     setNotice(null);
     try {
       const saved = await steps();
+      ownUpdate.current = saved.updatedAt;
       if (!post) {
         navigate(`/beitraege/${saved.id}`, { replace: true, state: { notice: success } });
         return;
       }
       setForm(toForm(saved));
       setBaseline(JSON.stringify(toInput(toForm(saved))));
+      setScheduleValue(saved.scheduledAt ? toLocalInput(saved.scheduledAt) : '');
+      setScheduleChoice(saved.scheduledAt ?? null);
       setNotice(success);
     } catch (e) {
       setError(errorText(e));
@@ -119,7 +120,7 @@ function Editor({ post }: { post?: EditorPost }) {
   const save = () =>
     run(
       () => (post ? action.mutateAsync({ kind: 'save', id: post.id, input: toInput(form) }) : action.mutateAsync({ kind: 'create', input: toInput(form) })),
-      { text: published ? 'Änderungen gespeichert. Die Webseite zeigt jetzt die neue Fassung.' : 'Entwurf gespeichert.' },
+      { text: published ? 'Änderungen gespeichert. Die Webseite zeigt jetzt die neue Fassung.' : 'Gespeichert. Der Beitrag bleibt „In Arbeit“.' },
     );
 
   const publish = () =>
@@ -141,7 +142,80 @@ function Editor({ post }: { post?: EditorPost }) {
     });
   };
 
-  const title = post ? form.texts.de.title || form.texts.en.title || 'Ohne Titel' : 'Neuer Beitrag';
+  // Geplante Veröffentlichung (Ticket #23): Eingabe in lokaler Zeit, gespeichert wird UTC.
+  const schedule = () => {
+    const fail = (msg: string) => {
+      setNotice(null);
+      setError(msg);
+    };
+    let iso: string | null = null;
+    switch (resolved.kind) {
+      case 'empty':
+        return fail('Bitte Datum und Uhrzeit für die Veröffentlichung angeben.');
+      case 'nonexistent':
+        return fail(NONEXISTENT);
+      case 'ambiguous':
+        iso = resolved.options.find((o) => o === scheduleChoice) ?? null;
+        if (!iso) return fail(AMBIGUOUS);
+        break;
+      case 'ok':
+        iso = resolved.iso;
+    }
+    if (new Date(iso).getTime() <= Date.now()) {
+      return fail('Der Zeitpunkt liegt in der Vergangenheit. Bitte wählen Sie einen Zeitpunkt in der Zukunft.');
+    }
+    const at = iso;
+    return run(
+      async () => {
+        let target = post!;
+        if (dirty) target = await action.mutateAsync({ kind: 'save', id: target.id, input: toInput(form) });
+        return action.mutateAsync({ kind: 'schedule', id: target.id, publishAt: at });
+      },
+      { text: `Geplant: Der Beitrag erscheint am ${formatWithZone(at)} automatisch auf der Webseite.` },
+    );
+  };
+
+  // Titelbild (Ticket #25): Ungespeicherte Änderungen werden vorher gespeichert, damit sie nicht verloren gehen.
+  const uploadCover = (file: File) => {
+    const problem = coverProblem(file);
+    if (coverInput.current) coverInput.current.value = '';
+    if (problem) {
+      setNotice(null);
+      setError(problem);
+      return;
+    }
+    const replacing = Boolean(post?.cover);
+    return run(
+      async () => {
+        let target = post!;
+        if (dirty) target = await action.mutateAsync({ kind: 'save', id: target.id, input: toInput(form) });
+        return action.mutateAsync({ kind: 'setCover', id: target.id, file });
+      },
+      {
+        text: replacing
+          ? 'Titelbild ersetzt. Die Alternativtexte bleiben erhalten, bitte prüfen Sie, ob sie noch passen.'
+          : 'Titelbild gespeichert. Bitte ergänzen Sie in jeder Sprachfassung den Alternativtext.',
+      },
+    );
+  };
+
+  const removeCover = () =>
+    run(
+      async () => {
+        let target = post!;
+        if (dirty) target = await action.mutateAsync({ kind: 'save', id: target.id, input: toInput(form) });
+        return action.mutateAsync({ kind: 'removeCover', id: target.id });
+      },
+      { text: 'Titelbild entfernt. Die Beitragsseite zeigt wieder die Themengrafik.' },
+    );
+
+  const unschedule = () =>
+    run(() => action.mutateAsync({ kind: 'unschedule', id: post!.id }), { text: 'Zeitpunkt entfernt. Der Beitrag bleibt „In Arbeit“.' });
+
+  // Die Überschrift folgt dem gespeicherten Titel. Folgte sie der Eingabe, setzte Page bei jedem Zeichen
+  // den Fokus auf die Überschrift, und das Titelfeld verlöre ihn.
+  const savedTitle = (l: Lang) => post?.texts.find((t) => t.lang === l)?.title;
+  const title = post ? savedTitle('de') || savedTitle('en') || 'Ohne Titel' : 'Neuer Beitrag';
   const publicLang = useMemo<Lang>(() => (post?.texts.some((t) => t.lang === 'de') ? 'de' : 'en'), [post]);
 
   return (
@@ -153,7 +227,8 @@ function Editor({ post }: { post?: EditorPost }) {
         {post ? (
           <>
             Zuletzt geändert am {formatDate(post.updatedAt)}
-            {published && post.publishedAt && <>, veröffentlicht am {formatDate(post.publishedAt)}</>}.{' '}
+            {published && post.publishedAt && <>, veröffentlicht am {formatDate(post.publishedAt)}</>}
+            {!published && post.scheduledAt && <>, automatische Veröffentlichung am {formatWithZone(post.scheduledAt)}</>}.{' '}
             {published && (
               <a href={`/${publicLang}/blog/${post.slug}`} target="_blank" rel="noreferrer">
                 Auf der Webseite ansehen
@@ -161,7 +236,7 @@ function Editor({ post }: { post?: EditorPost }) {
             )}
           </>
         ) : (
-          'Der Entwurf ist erst nach dem Veröffentlichen auf der Webseite sichtbar.'
+          'Der Beitrag bleibt „In Arbeit“ und ist erst nach dem Veröffentlichen auf der Webseite sichtbar.'
         )}
       </p>
 
@@ -213,7 +288,73 @@ function Editor({ post }: { post?: EditorPost }) {
             />
             <span className="field-hint">Markdown, z. B. „## Zwischenüberschrift“, „**fett**“ oder „- Aufzählung“.</span>
           </div>
+          {post?.cover && (
+            <div className="field">
+              <label htmlFor={ids.coverAlt}>Alternativtext des Titelbilds ({LANG_NAMES[lang]})</label>
+              <input
+                id={ids.coverAlt}
+                lang={lang}
+                value={text.coverAlt ?? ''}
+                maxLength={300}
+                aria-describedby={ids.coverAltHint}
+                onChange={(e) => setText('coverAlt', e.target.value)}
+              />
+              <span className="field-hint" id={ids.coverAltHint}>
+                Beschreibt kurz, was das Bild zeigt, für Menschen, die es nicht sehen. Ohne Alternativtext lässt sich der
+                Beitrag nicht veröffentlichen.
+              </span>
+            </div>
+          )}
         </div>
+
+        <section className="card" aria-labelledby={ids.cover + '-title'}>
+          <h2 className="card-title" id={ids.cover + '-title'}>
+            Titelbild
+          </h2>
+          {post ? (
+            <>
+              {post.cover && (
+                <img
+                  className="cover-preview"
+                  src={post.cover.src}
+                  srcSet={post.cover.srcset}
+                  sizes="(max-width: 760px) 100vw, 640px"
+                  width={post.cover.width}
+                  height={post.cover.height}
+                  alt={post.cover.alt ? `Vorschau: ${post.cover.alt}` : 'Vorschau des Titelbilds, noch ohne Alternativtext'}
+                />
+              )}
+              <div className="field">
+                <label htmlFor={ids.cover}>{post.cover ? 'Bild ersetzen' : 'Bild hochladen'}</label>
+                <input
+                  ref={coverInput}
+                  id={ids.cover}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  aria-describedby={ids.coverHint}
+                  disabled={busy}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) void uploadCover(file);
+                  }}
+                />
+                <span className="field-hint" id={ids.coverHint}>
+                  JPEG, PNG oder WebP bis 5 MB. Das Bild erscheint auf der Beitragsseite direkt unter der Überschrift und als
+                  Vorschaubild beim Teilen.
+                </span>
+              </div>
+              {post.cover && (
+                <div className="schedule-actions">
+                  <button type="button" className="btn btn-danger press" disabled={busy} onClick={() => void removeCover()}>
+                    Bild entfernen
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="field-hint">Speichern Sie den Beitrag zuerst. Danach können Sie ein Titelbild hochladen.</p>
+          )}
+        </section>
 
         <div className="card">
           <fieldset className="field">
@@ -247,6 +388,72 @@ function Editor({ post }: { post?: EditorPost }) {
             </span>
           </div>
         </div>
+
+        {!published && (
+          <section className="card" aria-labelledby={ids.schedule + '-title'}>
+            <h2 className="card-title" id={ids.schedule + '-title'}>
+              Automatisch veröffentlichen
+            </h2>
+            {post ? (
+              <>
+                <div className="field">
+                  <label htmlFor={ids.schedule}>Datum und Uhrzeit</label>
+                  <input
+                    id={ids.schedule}
+                    type="datetime-local"
+                    value={scheduleValue}
+                    min={toLocalInput(new Date())}
+                    aria-describedby={ids.scheduleHint}
+                    onChange={(e) => {
+                      setScheduleValue(e.target.value);
+                      setScheduleChoice(null);
+                    }}
+                  />
+                  {resolved.kind === 'ok' && (
+                    <span className="field-hint schedule-resolved">Gilt: {formatWithZone(resolved.iso)}</span>
+                  )}
+                  {resolved.kind === 'nonexistent' && <span className="field-hint schedule-warning">{NONEXISTENT}</span>}
+                  {resolved.kind === 'ambiguous' && (
+                    <fieldset className="schedule-choice">
+                      <legend>Diese Uhrzeit gibt es wegen der Zeitumstellung zweimal. Welche ist gemeint?</legend>
+                      {resolved.options.map((o, i) => (
+                        <label key={o} className="check">
+                          <input
+                            type="radio"
+                            name={ids.schedule + '-choice'}
+                            value={o}
+                            checked={scheduleChoice === o}
+                            onChange={() => setScheduleChoice(o)}
+                          />
+                          {formatWithZone(o)} {i === 0 ? '(erstes Mal, noch Sommerzeit)' : '(zweites Mal, schon Winterzeit)'}
+                        </label>
+                      ))}
+                    </fieldset>
+                  )}
+                  <span className="field-hint" id={ids.scheduleHint}>
+                    {post.scheduledAt
+                      ? `Geplant für ${formatWithZone(post.scheduledAt)}. `
+                      : 'Angabe in Ortszeit. '}
+                    Bis dahin bleibt der Beitrag „In Arbeit“ und ist öffentlich nicht sichtbar. Titel, Kurztext und
+                    Beitragstext müssen vorhanden sein.
+                  </span>
+                </div>
+                <div className="schedule-actions">
+                  <button type="button" className="btn btn-secondary press" disabled={busy} onClick={() => void schedule()}>
+                    {post.scheduledAt ? 'Zeitpunkt ändern' : 'Zeitpunkt speichern'}
+                  </button>
+                  {post.scheduledAt && (
+                    <button type="button" className="btn btn-danger press" disabled={busy} onClick={() => void unschedule()}>
+                      Zeitpunkt entfernen
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="field-hint">Speichern Sie den Beitrag zuerst. Danach können Sie einen Zeitpunkt festlegen.</p>
+            )}
+          </section>
+        )}
 
         <div className="toolbar glass" role="toolbar" aria-label="Beitrag">
           <div className="toolbar-status" aria-live="polite">

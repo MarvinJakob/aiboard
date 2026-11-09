@@ -4,6 +4,7 @@ import { useTopics } from '../api/client';
 import { i18n } from '../i18n';
 import { DEFAULT_LANG, LangContext, href, isLang, useLang, type Lang } from '../lib/lang';
 import { Header } from './Header';
+import { CookieSettings } from './CookieSettings';
 import { NotFound } from '../pages/NotFound';
 
 /** Rahmen aller öffentlichen Seiten: Sprache aus der URL, Kopfzeile, Inhalt, Fußzeile. */
@@ -89,6 +90,9 @@ function Footer() {
               </li>
               <li>
                 <Link to={href(lang, '/datenschutz')}>{t('footer.privacy')}</Link>
+              </li>
+              <li>
+                <CookieSettings />
               </li>
             </ul>
           </div>
