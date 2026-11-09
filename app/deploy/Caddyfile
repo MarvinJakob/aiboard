@@ -1,4 +1,13 @@
-{$DOMAIN} {
+# DOMAIN ist die Hauptadresse. REDIRECT_DOMAINS (optional, durch Leerzeichen getrennt) sind weitere
+# Adressen wie www.DOMAIN oder die frühere sslip.io-Adresse. Caddy holt auch für sie Zertifikate und
+# leitet dauerhaft auf DOMAIN um. Ist REDIRECT_DOMAINS leer (z. B. lokal), leitet nichts um.
+{$DOMAIN} {$REDIRECT_DOMAINS} {
+	@umleiten {
+		not host {$DOMAIN}
+		expression `"{$REDIRECT_DOMAINS}" != ""`
+	}
+	redir @umleiten https://{$DOMAIN}{uri} permanent
+
 	encode zstd gzip
 
 	header {
