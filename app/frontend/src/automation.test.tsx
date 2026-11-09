@@ -82,7 +82,7 @@ describe('Ticket #77: Themenseite Prozessautomatisierung mit Vorteilen von n8n',
 
   it('zeigt die Vorteile von n8n nur auf dieser Themenseite', async () => {
     renderApp('/de/themen/data-analytics');
-    await screen.findByRole('heading', { level: 1, name: 'AI in Data Analytics' });
+    await screen.findByRole('heading', { level: 1,     name: 'KI in Data Analytics' });
     expect(screen.queryByRole('region', { name: 'Was für n8n spricht' })).not.toBeInTheDocument();
   });
 });

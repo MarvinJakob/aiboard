@@ -130,7 +130,7 @@ func TestHealth(t *testing.T) {
 func TestTopicsAreSeeded(t *testing.T) {
 	srv, _ := newServer(t, false)
 	list := getJSON[api.TopicList](t, srv, "/api/topics?lang=de", 200)
-	want := []string{"KI in der Softwareentwicklung", "AI Audit für Unternehmen", "AI in Data Analytics", "Prozessautomatisierung"}
+	want := []string{"KI in der Softwareentwicklung", "AI Audit für Unternehmen", "KI in Data Analytics", "Prozessautomatisierung"}
 	if len(list.Items) != len(want) {
 		t.Fatalf("%d Themen, erwartet %d", len(list.Items), len(want))
 	}
@@ -143,6 +143,34 @@ func TestTopicsAreSeeded(t *testing.T) {
 		d := getJSON[api.TopicDetail](t, srv, "/api/topics/"+tp.Slug+"?lang=de", 200)
 		if d.Intro == "" || len(d.Posts) != 0 {
 			t.Errorf("Themenseite %s ohne Beiträge: %+v", tp.Slug, d)
+		}
+	}
+}
+
+// Ticket #81: neue Metadaten in beiden Sprachen, Slug und zugeordnete Beiträge bleiben erhalten.
+func TestDataAnalyticsTopicMetadata(t *testing.T) {
+	srv, db := newServer(t, false)
+	_, err := db.Exec(`INSERT INTO posts (id, slug, status, published_at, updated_at) VALUES (100, 'daten-beitrag', 'published', '2026-11-09T10:00:00Z', '2026-11-09T10:00:00Z');
+		INSERT INTO post_translations (post_id, lang, title, summary, body_markdown) VALUES (100, 'de', 'Datenbeitrag', 'Kurz', 'Text');
+		INSERT INTO post_topics (post_id, topic_id) VALUES (100, (SELECT id FROM topics WHERE slug = 'data-analytics'));`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string][4]string{
+		"de": {"KI in Data Analytics", "Data Analytics",
+			"Wie aus einer schnellen KI-Antwort eine belastbare Analyse wird: Kennzahlen klären, Ergebnisse prüfen.",
+			"KI beantwortet Datenfragen in Alltagssprache, schreibt Analysecode und unterstützt Prognosen. Belastbar werden die Ergebnisse erst, wenn Kennzahlen eindeutig definiert sind und Antworten mit den Quelldaten abgeglichen werden. Diese Seite zeigt Einsatzfelder, Grenzen und einen Pilot."},
+		"en": {"AI in Data Analytics", "Data Analytics",
+			"How a quick AI answer becomes a reliable analysis: clarify metrics, check results.",
+			"AI answers data questions in everyday language, writes analysis code and supports forecasts. The results only become reliable once metrics are clearly defined and answers are checked against the source data. This page covers use cases, limits and a pilot."},
+	}
+	for lang, w := range want {
+		d := getJSON[api.TopicDetail](t, srv, "/api/topics/data-analytics?lang="+lang, 200)
+		if got := [4]string{d.Title, d.Label, d.Summary, d.Intro}; got != w || d.Slug != "data-analytics" || string(d.Lang) != lang {
+			t.Errorf("%s: %+v", lang, d)
+		}
+		if len(d.Posts) != 1 || d.Posts[0].Slug != "daten-beitrag" {
+			t.Errorf("%s: Beitrag fehlt: %+v", lang, d.Posts)
 		}
 	}
 }
