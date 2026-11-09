@@ -5,7 +5,7 @@ Die Anwendung läuft mit Docker Compose auf dem Hetzner-Cloud-Server `docker-ce-
 | | |
 |---|---|
 | Server | `docker-ce-ubuntu-2gb-nbg1-1`, IPv4 `78.47.14.178`, Nürnberg, 1 vCPU, 2 GB RAM, 2 GB Swap |
-| Adresse | <https://78-47-14-178.sslip.io> (vorläufig, siehe [Domain wechseln](#domain-wechseln)) |
+| Adresse | <https://marvinjakob.de> seit 2026-11-09. `www.marvinjakob.de` und die frühere Adresse `78-47-14-178.sslip.io` leiten dorthin um, siehe [Domain](#domain). |
 | Projektverzeichnis | `/opt/ki-web` |
 | Container | `caddy` (TLS, Medien) und `backend` (Image `ghcr.io/marvinjakob/ki-web:<VERSION>`) |
 | Daten | Docker-Volumes `ki-web_app_db` (SQLite), `ki-web_app_media` (Bilder), `ki-web_caddy_data` (Zertifikate, Zugriffsprotokoll) |
@@ -24,7 +24,8 @@ Die Datei `/opt/ki-web/.env` (Rechte `600`) enthält die Werte für den Betrieb.
 
 | Variable | Wert | Zweck |
 |---|---|---|
-| `DOMAIN` | `78-47-14-178.sslip.io` | Domain für Caddy und `PUBLIC_BASE_URL` |
+| `DOMAIN` | `marvinjakob.de` | Domain für Caddy und `PUBLIC_BASE_URL` |
+| `REDIRECT_DOMAINS` | `"www.marvinjakob.de 78-47-14-178.sslip.io"` | Weitere Adressen, durch Leerzeichen getrennt. Caddy holt auch für sie Zertifikate und leitet dauerhaft (`301`) mit Pfad und Query auf `DOMAIN` um. Ohne Eintrag leitet nichts um. |
 | `REGISTRY` | `ghcr.io/marvinjakob` | Präfix des Image-Namens |
 | `VERSION` | z. B. `a1b2c3d` | Laufende Version, setzt `deploy.sh` |
 | `PREVIOUS_VERSION` | z. B. `9d034c1` | Vorherige Version für den Rollback, setzt `deploy.sh` |
@@ -39,9 +40,9 @@ In `/opt/ki-web/.env` bleibt ausdrücklich `REQUIRE_LOGIN=true` gesetzt. Compose
 Nach jedem Deployment und Neustart ohne Sitzung prüfen:
 
 ```bash
-curl -sS -D - -o /dev/null https://78-47-14-178.sslip.io/en/profil
-curl -sS -D - https://78-47-14-178.sslip.io/api/posts?lang=de
-curl -fsS https://78-47-14-178.sslip.io/robots.txt
+curl -sS -D - -o /dev/null https://marvinjakob.de/en/profil
+curl -sS -D - https://marvinjakob.de/api/posts?lang=de
+curl -fsS https://marvinjakob.de/robots.txt
 ```
 
 Erwartet werden `303` zur Anmeldung mit internem Rücksprungziel, `401` ohne Inhaltsdaten und `Disallow: /`. Die Antworten des Backends tragen `X-Robots-Tag: noindex, nofollow`. Anmeldung samt Ressourcen und `/api/health` bleiben erreichbar. Mit einem gültigen Konto muss nach dem Login das ursprüngliche interne Ziel erscheinen; nach Abmeldung oder Sitzungsablauf ist es wieder gesperrt. Die Prüfung umfasst Startseite, Themen, Blog, Profil und AI Audit in beiden Sprachen. Medien liefert Caddy wie bisher direkt aus (siehe [README](../README.md#zugangsschutz-vor-dem-livegang)).
@@ -64,7 +65,7 @@ Einmalig auf dem Server:
 
 ```bash
 mkdir -p /opt/ki-web/build && cd /opt/ki-web
-umask 077 && printf 'DOMAIN=78-47-14-178.sslip.io\nREGISTRY=ghcr.io/marvinjakob\nVERSION=\nPREVIOUS_VERSION=\n' > .env
+umask 077 && printf 'DOMAIN=marvinjakob.de\nREDIRECT_DOMAINS="www.marvinjakob.de"\nREGISTRY=ghcr.io/marvinjakob\nVERSION=\nPREVIOUS_VERSION=\n' > .env
 ```
 
 Danach die erste Version wie unter [Neue Version bereitstellen](#neue-version-bereitstellen) ausliefern und das erste Admin-Konto anlegen. Das Passwort wird verdeckt abgefragt:
@@ -93,7 +94,7 @@ Einstellungen unter *Settings → Secrets and variables → Actions* des Reposit
 | `DEPLOY_HOST` | Secret | `root@78.47.14.178` |
 | `DEPLOY_SSH_KEY` | Secret | Privater Schlüssel nur für dieses Deployment (ed25519). Der öffentliche Teil steht auf dem Server in `/root/.ssh/authorized_keys`. |
 | `DEPLOY_KNOWN_HOSTS` | Secret | Host-Schlüssel des Servers, z. B. aus `ssh-keyscan -t ed25519 78.47.14.178` nach Abgleich des Fingerprints |
-| `DEPLOY_URL` | Variable | `https://78-47-14-178.sslip.io` |
+| `DEPLOY_URL` | Variable | `https://marvinjakob.de` |
 
 Eine Registry ist nicht nötig, weil das Image auf dem Server gebaut wird. Den Schlüssel bei Verdacht auf Missbrauch auf dem Server aus `authorized_keys` löschen und neu erzeugen.
 
@@ -148,7 +149,7 @@ zeigt laufende und vorherige Version, den Commit des Images, den Zustand der Con
 
 - Docker prüft das Backend alle 30 Sekunden mit `/server healthcheck`. Nach dem Start prüft es alle 2 Sekunden, bis der erste Check erfolgreich ist.
 - Beide Container haben `restart: unless-stopped`. Nach einem Neustart des Servers starten sie automatisch, Caddy erst, wenn das Backend gesund ist.
-- Von außen: `curl -fsS https://78-47-14-178.sslip.io/api/health`
+- Von außen: `curl -fsS https://marvinjakob.de/api/health`
 
 ## Logs
 
@@ -190,10 +191,22 @@ docker compose up -d --wait
 
 Vorbereitet ist die automatische Sicherung mit restic in Hetzner Object Storage: [deploy/backup/backup.sh](../deploy/backup/backup.sh) mit den Variablen `RESTIC_*`, `AWS_*` und `HEARTBEAT_URL` aus [.env.example](../.env.example) und einem Cron-Eintrag. Wiederherstellung und Prüfung in einer getrennten Testablage folgen mit der Einrichtung.
 
-## Domain wechseln
+## Domain
 
-Die Adresse `78-47-14-178.sslip.io` braucht keinen DNS-Eintrag, sie löst über den Dienst sslip.io auf die IP auf. Für eine eigene Domain:
+Die Webseite läuft seit 2026-11-09 unter `marvinjakob.de`. Die Domain liegt bei Strato. Die DNS-Einträge zeigen auf den Server:
 
-1. A-Eintrag auf `78.47.14.178` setzen (optional AAAA auf `2a01:4f8:1c16:81b6::1`).
-2. In `/opt/ki-web/.env` `DOMAIN` ändern.
-3. `app/deploy/deploy.sh switch VERSION` mit der laufenden Version ausführen. Caddy holt das neue Zertifikat, canonical-Links und Sitemap verwenden die neue Domain.
+| Name | Typ | Ziel |
+|---|---|---|
+| `marvinjakob.de` | A | `78.47.14.178` |
+| `marvinjakob.de` | AAAA | `2a01:4f8:1c16:81b6::1`, die Adresse von `eth0`. Das Netz `2a01:4f8:1c16:81b6::` allein ist nicht erreichbar. |
+| `www.marvinjakob.de` | CNAME | `marvinjakob.de` |
+
+`www.marvinjakob.de` und die frühere Adresse `78-47-14-178.sslip.io` stehen in `REDIRECT_DOMAINS`. Sie leiten mit Pfad und Query dauerhaft auf `https://marvinjakob.de` um, damit alte Links weiter funktionieren. Die sslip.io-Adresse braucht keinen DNS-Eintrag, sie löst über den Dienst sslip.io auf die IP auf.
+
+So wechselst du die Domain:
+
+1. A-Eintrag und optional AAAA-Eintrag der neuen Domain auf den Server setzen.
+2. In `/opt/ki-web/.env` `DOMAIN` ändern und die bisherige Domain in `REDIRECT_DOMAINS` aufnehmen.
+3. `cd /opt/ki-web && docker compose up -d --wait` ausführen. Caddy holt die neuen Zertifikate. canonical-Links und Sitemap verwenden die neue Domain.
+4. In GitHub die Variable `DEPLOY_URL` auf die neue Adresse setzen.
+5. Prüfen: `curl -fsS https://DOMAIN/api/health` und `curl -sS -D - -o /dev/null https://www.DOMAIN/`. Erwartet wird `301` mit `Location: https://DOMAIN/`.
