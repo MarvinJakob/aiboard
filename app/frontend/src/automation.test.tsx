@@ -24,7 +24,7 @@ describe('Ticket #77: Themenseite Prozessautomatisierung mit Vorteilen von n8n',
   it('ist über eine Themenkarte auf der Startseite erreichbar', async () => {
     const user = userEvent.setup();
     const { router } = renderApp('/de');
-    const card = await screen.findByRole('link', { name: /Prozessautomatisierung.*Zum Thema/s });
+    const card = await screen.findByRole('link', { name: 'Humans in the Loop mit n8n' });
     expect(card).toHaveAttribute('href', '/de/themen/prozessautomatisierung');
     await user.click(card);
     expect(router.state.location.pathname).toBe('/de/themen/prozessautomatisierung');

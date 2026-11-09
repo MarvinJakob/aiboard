@@ -1,5 +1,6 @@
 import { useRef, useState, type KeyboardEvent } from 'react';
-import { fill, home } from '../i18n/home';
+import { aiUses } from '../i18n/aiUses';
+import { fill } from '../i18n/sources';
 import { useLang } from '../lib/lang';
 import { Footnote } from './Footnote';
 
@@ -11,7 +12,7 @@ const KEYS: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -
  */
 export function AiTasks() {
   const { lang } = useLang();
-  const c = home[lang];
+  const c = aiUses[lang];
   const [index, setIndex] = useState(0);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const n = c.tasks.length;

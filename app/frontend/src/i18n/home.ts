@@ -1,66 +1,57 @@
 import type { Lang } from '../lib/lang';
+import { localizeSources, type RichText, type Source } from './sources';
 
-/** Eine Quelle aus der Liste am Ende der Startseite. Die Nummer ist der Index + 1. */
-interface Source {
-  label: string;
+/** Pfad der ausführlichen Einordnung zu KI-Einsatzfeldern (Seite AiUses). */
+export const AI_USES_PATH = '/ki-einsatzfelder';
+
+/** Eine Themenkarte im Abschnitt „Aktuell im Fokus“. */
+export interface FocusTopic {
+  /** Slug der Themenseite unter /{lang}/themen/{slug}. */
+  slug: string;
   title: string;
-  url: string;
-  note?: string;
+  /** Aufhänger: eine Frage oder eine überraschende Zahl, fett hervorgehoben. */
+  hook: RichText;
+  text: RichText;
+  link: string;
 }
 
 interface HomeContent {
   description: string;
-  eyebrow: string;
+  hook: RichText;
   display1: string;
   display2: string;
   lead: string;
+  ctaTopics: string;
   ctaAudit: string;
-  ctaWhat: string;
-  lensLabel: string;
-  lensCore: string;
-  lensNote: string;
-  lensTopic: string;
-  lens: Record<string, { line1: string; line2: string }>;
-  source: string;
-  factsTitle: string;
-  facts: { value: number; text: string; source: number }[];
-  factsCaption: string;
-  factsSources: string;
-  whatEyebrow: string;
-  whatTitle: string;
-  whatText: string;
-  definition: string;
-  definitionSource: string;
-  tasksLabel: string;
-  taskOf: string;
-  example: string;
-  tasks: { name: string; what: string; example: string; source: number }[];
-  limitsLabel: string;
-  limits: { title: string; text: string; sources: number[] }[];
-  topicsEyebrow: string;
-  topicsTitle: string;
-  topicsText: string;
-  auditEyebrow: string;
-  auditTitle: string;
-  auditText: string;
-  dimensionsLabel: string;
-  auditNote: string;
-  auditCta: string;
-  auditCtaFor: string;
-  blogEyebrow: string;
-  blogTitle: string;
-  personEyebrow: string;
-  personQuote: string;
-  personText: string;
-  personLink: string;
-  portraitAlt: string;
+  focusEyebrow: string;
+  focusTitle: string;
+  focusText: string;
+  topics: FocusTopic[];
+  basicsEyebrow: string;
+  basicsTitle: string;
+  basicsText: RichText;
+  checkTitle: string;
+  checkText: RichText[];
+  limitsTitle: string;
+  limitsText: RichText;
+  limits: { title: string; text: RichText }[];
+  moreText: string;
+  moreLink: string;
   sourcesTitle: string;
   sources: Source[];
 }
 
-// Quellen und Belege: research/2026-11-09 Was ist KI und was man damit machen kann.md.
-// Reihenfolge der Quellen wie im Landing-Page-Entwurf mock/landing/index.html, die Nummern verweisen darauf.
+// Belege für Zahlen und Studienaussagen der Textvorlage content/Landingpage.md (Stand 2026-11-09):
+// 1–3, 5: research/2026-11-09 Was ist KI und was man damit machen kann.md
+// 4: research/2026-11-05 Kosten von KI aus Nutzersicht.md, Quelle 15
+// 6: content/KI Tipps und Tricks.md, Quelle 19 (= frontend/src/content/topics/ki-tipps-und-tricks.de.md)
+// 7: research/2026-11-09 Modelle und Kosten - Preis und Leistung vergleichen.md, Quelle 8 (gpt-6-luna und gpt-6-astra)
 const SOURCES: Omit<Source, 'note'>[] = [
+  {
+    label: 'Statistisches Bundesamt (2025)',
+    title: 'Unternehmen mit Nutzung von KI nach Beschäftigtengrößenklassen',
+    url: 'https://www.destatis.de/DE/Themen/Branchen-Unternehmen/Unternehmen/IKT-in-Unternehmen-IKT-Branche/Tabellen/ikti-unternehmen-kuenstliche-intelligenz.html',
+  },
   {
     label: 'OECD (2024)',
     title: 'Explanatory memorandum on the updated OECD definition of an AI system',
@@ -68,38 +59,13 @@ const SOURCES: Omit<Source, 'note'>[] = [
   },
   {
     label: 'Europäische Kommission (2025)',
-    title: 'Guidelines on the definition of an artificial intelligence system (AI Act)',
+    title: 'Leitlinien zur Definition eines KI-Systems (AI Act)',
     url: 'https://ai-act-service-desk.ec.europa.eu/sites/default/files/2025-08/commission_guidelines_on_the_definition_of_an_artificial_intelligence_system_established_by_regulation_eu_20241689_ai_actenglish_nf2skcqfrtjdfggjavcodopcwz4_112455.PDF',
   },
   {
-    label: 'Statistisches Bundesamt (2025)',
-    title: 'Unternehmen mit Nutzung von KI nach Beschäftigtengrößenklassen',
-    url: 'https://www.destatis.de/DE/Themen/Branchen-Unternehmen/Unternehmen/IKT-in-Unternehmen-IKT-Branche/Tabellen/ikti-unternehmen-kuenstliche-intelligenz.html',
-  },
-  {
-    label: 'Eurostat (2026)',
-    title: 'The use of AI technologies in the European Union',
-    url: 'https://ec.europa.eu/eurostat/documents/7870049/23260410/KS-01-26-009-EN-N.pdf/37d063cb-28cf-3b4e-91f3-c3784c970842',
-  },
-  {
-    label: 'MASAI-Studie (2025), The Lancet Digital Health',
-    title: 'AI-supported mammography screening',
-    url: 'https://doi.org/10.1016/S2589-7500%2824%2900267-X',
-  },
-  {
-    label: 'ECMWF (2025)',
-    title: 'ECMWF’s ensemble AI forecasts become operational',
-    url: 'https://www.ecmwf.int/en/about/media-centre/news/2025/ecmwfs-ensemble-ai-forecasts-become-operational',
-  },
-  {
-    label: 'Brynjolfsson, Li, Raymond (2025), QJE',
-    title: 'Generative AI at Work',
-    url: 'https://doi.org/10.1093/qje/qjae044',
-  },
-  {
-    label: 'Degrave et al. (2022), Nature',
-    title: 'Magnetic control of tokamak plasmas through deep reinforcement learning',
-    url: 'https://www.nature.com/articles/s41586-021-04301-9',
+    label: 'METR (2025)',
+    title: 'Measuring the Impact of Early-2025 AI on Experienced Open-Source Developer Productivity',
+    url: 'https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/',
   },
   {
     label: 'BSI (2025)',
@@ -107,252 +73,269 @@ const SOURCES: Omit<Source, 'note'>[] = [
     url: 'https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/KI/Generative_KI-Modelle.pdf?__blob=publicationFile&v=5',
   },
   {
-    label: 'Bastani et al. (2025), PNAS',
-    title: 'Generative AI without guardrails can harm learning',
-    url: 'https://doi.org/10.1073/pnas.2422633122',
+    label: 'Li et al. (2026), Preprint',
+    title: 'SkillsBench, Version 4',
+    url: 'https://arxiv.org/abs/2602.12670v4',
+  },
+  {
+    label: 'OpenAI (2026)',
+    title: 'API Pricing',
+    url: 'https://developers.openai.com/api/docs/pricing',
   },
 ];
 
-/** Quellen einer Sprache: Hinweise und übersetzte Angaben je Quellennummer. */
-const sources = (notes: Record<number, string>, local: Record<number, Partial<Source>>): Source[] =>
-  SOURCES.map((s, i) => ({ ...s, ...local[i + 1], note: notes[i + 1] }));
-
-/** Texte der Startseite nach mock/landing/index.html (Ticket #73). */
+/** Texte der Startseite nach content/Landingpage.md, Stand 9. November 2026 (Ticket #78). */
 export const home: Record<Lang, HomeContent> = {
   de: {
     description:
       'KI Perspektiven ordnet künstliche Intelligenz verständlich ein: was sie kann, wo ihre Grenzen liegen und wie Unternehmen ihren KI-Reifegrad einschätzen.',
-    eyebrow: 'Wissen und Praxis rund um KI',
+    hook: ['Jedes vierte Unternehmen in Deutschland nutzt bereits KI.', 1, ' Die spannende Frage ist: wofür – und wie gut?'],
     display1: 'KI verstehen.',
     display2: 'Sinnvoll einsetzen.',
-    lead: 'Einordnungen, Erfahrungen und ein KI-Audit für Teams, die künstliche Intelligenz verantwortungsvoll nutzen wollen – ohne Hype, mit Quellen.',
+    lead: 'Einordnungen und Erfahrungen für Unternehmen, die künstliche Intelligenz verantwortungsvoll nutzen wollen. Ohne Hype, mit Substanz.',
+    ctaTopics: 'Themen entdecken',
     ctaAudit: 'KI-Reifegrad einschätzen',
-    ctaWhat: 'Was ist KI eigentlich?',
-    lensLabel: 'Drei Perspektiven auf KI',
-    lensCore: 'KI',
-    lensNote: 'Drei Perspektiven – ein Thema antippen',
-    lensTopic: 'Thema: {{title}}',
-    lens: {
-      softwareentwicklung: { line1: 'Software-', line2: 'entwicklung' },
-      'ai-audit': { line1: 'AI Audit', line2: 'für Unternehmen' },
-      'data-analytics': { line1: 'Data', line2: 'Analytics' },
-    },
-    source: 'Quelle {{n}}',
-    factsTitle: 'KI in Deutschland in Zahlen',
-    facts: [
-      { value: 26, text: 'der Unternehmen in Deutschland nutzten 2025 KI.', source: 3 },
-      { value: 57, text: 'sind es bei Unternehmen mit mehr als 250 Beschäftigten.', source: 3 },
-      { value: 32.3, text: 'der 16- bis 74-Jährigen nutzten generative KI.', source: 4 },
-    ],
-    factsCaption: 'KI in Deutschland, Berichtsjahr 2025',
-    factsSources: 'Quellen: Destatis, Eurostat',
-    whatEyebrow: 'Grundlagen',
-    whatTitle: 'Was ist KI – und was kann man damit machen?',
-    whatText:
-      'KI-Systeme leiten aus ihren Eingaben selbst ab, wie sie ein Ergebnis erzeugen. Das unterscheidet sie von Software, die nur von Menschen vorgegebene Regeln abarbeitet.',
-    definition:
-      'Ein KI-System erzeugt aus Eingaben Vorhersagen, Inhalte, Empfehlungen oder Entscheidungen, die physische oder virtuelle Umgebungen beeinflussen können.',
-    definitionSource: 'Sinngemäß nach der OECD-Definition von 2023',
-    tasksLabel: 'Sieben typische Aufgaben von KI',
-    taskOf: 'Aufgabe {{i}} von {{n}}',
-    example: 'Beispiel',
-    tasks: [
+    focusEyebrow: 'Aktuell im Fokus',
+    focusTitle: 'Was KI gerade spannend macht.',
+    focusText: 'Sechs Themen, die uns gerade beschäftigen. Jedes beginnt mit einer Frage, die sich lohnt. Die Auswahl wechselt.',
+    topics: [
       {
-        name: 'Erkennen',
-        what: 'Bilder, Videos, Ton oder Texte einordnen und Objekte darin finden.',
-        example: 'In der schwedischen MASAI-Studie wurden bei KI-unterstützter Mammografie 6,4 statt 5,0 Krebsfälle je 1.000 Untersuchungen entdeckt.',
-        source: 5,
-      },
-      { name: 'Auffälligkeiten entdecken', what: 'Muster und Ausreißer in großen Datenmengen finden.', example: 'Betrugserkennung in Transaktionsdaten.', source: 2 },
-      {
-        name: 'Vorhersagen',
-        what: 'Aus bisherigem Verhalten künftige Entwicklungen ableiten.',
-        example: 'Das Europäische Zentrum für mittelfristige Wettervorhersage betreibt seit 2025 Ensemble-Vorhersagen mit einem KI-Modell.',
-        source: 6,
+        slug: 'ai-audit',
+        title: 'AI Audit',
+        hook: ['Acht Dimensionen. Drei Reifegrade. Wo steht Ihr Unternehmen?'],
+        text: [
+          'Von Strategie und Wirtschaftlichkeit bis Sicherheit: Beantworten Sie einfache Ja/Nein-Fragen und sehen Sie sofort, wo Ihr Unternehmen steht und wo blinde Flecken liegen. Die Fragen der nächsten Stufe werden zu Ihrer To-do-Liste.',
+        ],
+        link: 'Selbsteinschätzung starten',
       },
       {
-        name: 'Personalisieren',
-        what: 'Ein Profil einer Person erstellen und Ausgaben daran anpassen.',
-        example: 'Empfehlungssysteme, die die Vorlieben einzelner Nutzerinnen und Nutzer nach und nach eingrenzen.',
-        source: 1,
+        slug: 'prozessautomatisierung',
+        title: 'Prozessautomatisierung',
+        hook: ['Welche Aufgabe würden Sie nie wieder von Hand erledigen?'],
+        text: [
+          'Daten abtippen, Anfragen weiterleiten, Berichte zusammenstellen: n8n verbindet Ihre Anwendungen zu automatischen Abläufen. KI kommt nur dort dazu, wo sie messbar hilft. Und bevor ein KI-Agent eine Nachricht versendet oder Daten ändert, gibt ein Mensch die Aktion frei.',
+        ],
+        link: 'Humans in the Loop mit n8n',
       },
       {
-        name: 'Interaktion unterstützen',
-        what: 'Sprache und andere Inhalte verstehen und erzeugen, etwa im Gespräch zwischen Mensch und Maschine.',
-        example: 'Mit einem KI-Assistenten lösten Supportbeschäftigte im Durchschnitt 15 Prozent mehr Anliegen pro Stunde.',
-        source: 7,
+        slug: 'softwareentwicklung',
+        title: 'Softwareentwicklung',
+        hook: ['Ein Verbot im Prompt verhindert noch keinen Zugriff.'],
+        text: [
+          'Dateien wie ',
+          { code: 'AGENTS.md' },
+          ' geben KI-Agenten Ziele, Arbeitsabläufe und Grenzen mit. Doch das Modell kann Regeln missverstehen oder übergehen. Verbindlich werden Grenzen erst durch passende Zugriffsrechte, Tests und Reviews. So leiten Sie KI-Assistenten mit Guardrails an.',
+        ],
+        link: 'KI-Assistenten mit Guardrails anleiten',
       },
       {
-        name: 'Zielgerichtet optimieren',
-        what: 'Die beste Lösung für ein vorgegebenes Ziel suchen.',
-        example: 'Ein mit Reinforcement Learning trainiertes System regelte das Plasma im Fusionsreaktor TCV.',
-        source: 8,
+        slug: 'data-analytics',
+        title: 'Data Analytics',
+        hook: ['Was genau ist eigentlich „der Umsatz im letzten Monat“?'],
+        text: [
+          'Mit oder ohne Retouren? Welcher Monat, welches Buchungsdatum? KI beantwortet Datenfragen in Alltagssprache, schreibt Analysecode und erstellt Prognosen. Belastbar wird die Antwort aber erst, wenn Ihre Kennzahlen eindeutig definiert sind und Ergebnisse mit den Quelldaten abgeglichen werden.',
+        ],
+        link: 'Daten verstehen und auswerten',
       },
       {
-        name: 'Mit Wissen schlussfolgern',
-        what: 'Neue Ergebnisse ableiten, die so nicht in den Daten stehen – etwa durch Modellierung und Simulation.',
-        example: 'Expertensysteme, die aus Symptomen auf eine Diagnose schließen.',
-        source: 2,
+        slug: 'ki-tipps-und-tricks',
+        title: 'KI-Tipps und Tricks',
+        hook: ['50,5 statt 33,9 Prozent.', 6],
+        text: [
+          'So viel mehr Aufgaben lösten KI-Agenten in einer Studie, wenn sie kuratierte Skills nutzen konnten. Skills halten wiederkehrende Arbeitsabläufe fest, etwa für eine Excel-Auswertung oder die systematische Fehlersuche. Aber nicht jeder Skill hilft: Kleine, fokussierte Skills schneiden besser ab als umfangreiche Sammlungen.',
+        ],
+        link: 'Skills, die Sie kennen sollten',
+      },
+      {
+        slug: 'modelle-und-kosten',
+        title: 'Modelle und Kosten',
+        hook: ['4,50 oder 450 US-Dollar?', 7],
+        text: [
+          'So weit liegen die Kosten für dieselben 10.000 Textaufrufe je nach Modell auseinander. Trotzdem ist das günstigste Modell nicht automatisch die beste Wahl: Ein teureres Modell kann insgesamt weniger kosten, wenn es Korrekturarbeit spart. Entscheidend sind die Gesamtkosten je akzeptiertem Ergebnis.',
+        ],
+        link: 'Das beste Preis-Leistungs-Verhältnis finden',
       },
     ],
-    limitsLabel: 'Was KI nicht garantiert',
+    basicsEyebrow: 'Grundlagen',
+    basicsTitle: 'Was ist KI – und was kann man damit machen?',
+    basicsText: [
+      'KI-Systeme leiten aus ihren Eingaben selbst ab, wie sie ein Ergebnis erzeugen: eine Vorhersage, einen Text, eine Empfehlung oder eine Entscheidung.',
+      2,
+      ' Das unterscheidet sie von Software, die nur Regeln abarbeitet, die Menschen vorgegeben haben.',
+      3,
+    ],
+    checkTitle: 'KI hilft dort, wo sich Ergebnisse prüfen lassen.',
+    checkText: [
+      [
+        'Programmieren ist dafür ein gutes Beispiel. Ob ein Vorschlag der KI funktioniert, zeigen automatische Tests, Code-Reviews und Prüfungen, bevor der Code übernommen wird. Viele Fehler fallen so früh auf.',
+      ],
+      [
+        'Prüfbar heißt aber nicht automatisch schneller. In einer randomisierten Studie brauchten erfahrene Entwicklerinnen und Entwickler mit KI-Werkzeugen aus dem Frühjahr 2025 sogar 19 Prozent länger.',
+        4,
+        ' Ob KI Ihnen Zeit spart, zeigt deshalb erst eine Messung in Ihrem eigenen Arbeitsablauf.',
+      ],
+    ],
+    limitsTitle: 'Wer versteht, wie KI funktioniert, erkennt ihre Grenzen.',
+    limitsText: [
+      'KI-Assistenten wie Chatbots basieren auf großen Sprachmodellen. Ein solches Modell erzeugt Text, indem es anhand gelernter Wahrscheinlichkeiten vorhersagt, welches Wort als Nächstes folgen könnte.',
+      5,
+      ' Daraus ergeben sich typische Grenzen:',
+    ],
     limits: [
-      { title: 'Keine richtigen Ergebnisse garantiert', text: 'Sprachmodelle können Inhalte erfinden, die glaubwürdig wirken – auch Literaturangaben.', sources: [9] },
-      { title: 'Kein aktuelles Wissen', text: 'Ohne Anbindung an aktuelle Daten kennt ein Modell nur den Stand seiner Trainingsdaten.', sources: [9] },
-      { title: 'Kein gewünschtes Verhalten', text: 'Ziele lassen sich schwer vollständig festlegen. Der Nutzen hängt von der Gestaltung des Einsatzes ab.', sources: [1, 10] },
+      {
+        title: 'Glaubwürdig heißt nicht richtig.',
+        text: ['Ein Sprachmodell kann Inhalte erfinden, die überzeugend klingen, bis hin zu erfundenen Literaturangaben.', 5],
+      },
+      {
+        title: 'Wissen hat ein Ablaufdatum.',
+        text: ['Ohne Zugriff auf aktuelle Daten kennt ein Modell nur den Stand seiner Trainingsdaten.', 5],
+      },
+      {
+        title: 'Nicht jede Aufgabe braucht ein Sprachmodell.',
+        text: ['Für Prognosen gibt es spezialisierte Modelle. Abläufe mit festen Regeln lassen sich ganz ohne KI automatisieren.', 3],
+      },
     ],
-    topicsEyebrow: 'Themen',
-    topicsTitle: 'Vier Schwerpunkte als Einstieg.',
-    topicsText: 'Jedes Thema hat eine Einführung und passende Beiträge.',
-    auditEyebrow: 'KI-Audit',
-    auditTitle: 'Wie bereit ist Ihr Unternehmen für KI?',
-    auditText:
-      'Acht Dimensionen, drei Reifegrade. Ein Reifegrad gilt nur, wenn alle darunterliegenden erfüllt sind. Die Fragen der nächsten Stufe werden zu Ihrer To-do-Liste.',
-    dimensionsLabel: 'Dimension auswählen',
-    auditNote: 'Ja/Nein-Fragen je Dimension · Ihre Antworten bleiben im Browser und werden nicht übertragen.',
-    auditCta: 'Selbsteinschätzung starten',
-    auditCtaFor: 'Selbsteinschätzung: {{title}}',
-    blogEyebrow: 'Blog',
-    blogTitle: 'Neu im Blog.',
-    personEyebrow: 'Hinter KI Perspektiven',
-    personQuote: '„Der Maßstab für sinnvolle KI: ein klares Problem, geeignete Daten und eine Lösung, die im Arbeitsalltag funktioniert.“',
-    personText: 'Marvin Jakob verbindet Softwareentwicklung, Cloud-Architektur und Business Analyse – seit 2011 in Software-Projekten.',
-    personLink: 'Zum Profil',
-    portraitAlt: 'Illustratives Porträt von Marvin Jakob',
+    moreText: 'Sie möchten wissen, wofür KI heute schon eingesetzt wird?',
+    moreLink: 'Zur ausführlichen Einordnung',
     sourcesTitle: 'Quellen',
-    sources: sources(
-      {
-        1: 'Definition, sieben Aufgaben, Personalisieren, Zielfestlegung.',
-        2: 'Abgrenzung zu regelbasierter Software, Betrugserkennung, Expertensysteme.',
-        3: '26 % und 57 %.',
-        4: '32,3 % nutzen generative KI.',
-        9: 'Halluzinieren, Wissensstand.',
-      },
-      {
-        2: { title: 'Leitlinien zur Definition eines KI-Systems (AI Act)' },
-        5: { title: 'KI-unterstützte Mammografie' },
-      },
-    ),
+    sources: localizeSources(SOURCES, {
+      1: '26 % der Unternehmen nutzten 2025 KI.',
+      2: 'Definition eines KI-Systems.',
+      3: 'Abgrenzung zu Software, die nur von Menschen vorgegebene Regeln ausführt.',
+      4: 'Randomisierte Studie: 19 % längere Bearbeitungszeit mit KI-Werkzeugen aus dem Frühjahr 2025.',
+      5: 'Funktionsweise von Sprachmodellen, Halluzinieren, Wissensstand.',
+      6: 'Erfolgsquote ohne kuratierte Skills 33,9 %, mit kuratierten Skills 50,5 %; kleine, fokussierte Skills schneiden besser ab.',
+      7: 'Preise von gpt-6-luna und gpt-6-astra, Stand 9. November 2026. Eigene Rechnung: 10.000 Aufrufe mit je 2.000 Eingabe- und 500 Ausgabetokens.',
+    }),
   },
   en: {
     description:
       'KI Perspektiven explains artificial intelligence in plain terms: what it can do, where its limits are and how companies assess their AI maturity.',
-    eyebrow: 'Knowledge and practice around AI',
+    hook: ['One in four companies in Germany already uses AI.', 1, ' The exciting question is: for what – and how well?'],
     display1: 'Understand AI.',
     display2: 'Use it wisely.',
-    lead: 'Perspectives, experiences and an AI audit for teams who want to use artificial intelligence responsibly – no hype, with sources.',
+    lead: 'Perspectives and experience for companies that want to use artificial intelligence responsibly. No hype, just substance.',
+    ctaTopics: 'Explore topics',
     ctaAudit: 'Assess your AI maturity',
-    ctaWhat: 'What is AI, actually?',
-    lensLabel: 'Three perspectives on AI',
-    lensCore: 'AI',
-    lensNote: 'Three perspectives – tap a topic',
-    lensTopic: 'Topic: {{title}}',
-    lens: {
-      softwareentwicklung: { line1: 'Software', line2: 'development' },
-      'ai-audit': { line1: 'AI Audit', line2: 'for companies' },
-      'data-analytics': { line1: 'Data', line2: 'Analytics' },
-    },
-    source: 'Source {{n}}',
-    factsTitle: 'AI in Germany in figures',
-    facts: [
-      { value: 26, text: 'of companies in Germany used AI in 2025.', source: 3 },
-      { value: 57, text: 'among companies with more than 250 employees.', source: 3 },
-      { value: 32.3, text: 'of people aged 16 to 74 used generative AI.', source: 4 },
-    ],
-    factsCaption: 'AI in Germany, reference year 2025',
-    factsSources: 'Sources: Destatis, Eurostat',
-    whatEyebrow: 'Basics',
-    whatTitle: 'What is AI – and what can you do with it?',
-    whatText:
-      'AI systems infer from their inputs how to generate an output. That sets them apart from software that only follows rules defined by people.',
-    definition:
-      'An AI system generates outputs such as predictions, content, recommendations or decisions from the input it receives, which can influence physical or virtual environments.',
-    definitionSource: 'Paraphrased from the 2023 OECD definition',
-    tasksLabel: 'Seven typical tasks of AI',
-    taskOf: 'Task {{i}} of {{n}}',
-    example: 'Example',
-    tasks: [
+    focusEyebrow: 'Currently in focus',
+    focusTitle: 'What makes AI exciting right now.',
+    focusText: 'Six topics we are currently working on. Each one starts with a question worth asking. The selection changes.',
+    topics: [
       {
-        name: 'Recognise',
-        what: 'Classify images, video, audio or text and find objects in them.',
-        example: 'In the Swedish MASAI study, AI-supported mammography detected 6.4 instead of 5.0 cancers per 1,000 screenings.',
-        source: 5,
-      },
-      { name: 'Detect anomalies', what: 'Find patterns and outliers in large amounts of data.', example: 'Fraud detection in transaction data.', source: 2 },
-      {
-        name: 'Predict',
-        what: 'Derive future developments from past behaviour.',
-        example: 'Since 2025, the European Centre for Medium-Range Weather Forecasts has been running ensemble forecasts with an AI model.',
-        source: 6,
+        slug: 'ai-audit',
+        title: 'AI Audit',
+        hook: ['Eight dimensions. Three maturity levels. Where does your company stand?'],
+        text: [
+          'From strategy and cost-effectiveness to security: answer simple yes/no questions and see straight away where your company stands and where its blind spots are. The questions of the next level become your to-do list.',
+        ],
+        link: 'Start self-assessment',
       },
       {
-        name: 'Personalise',
-        what: 'Build a profile of a person and adapt outputs to it.',
-        example: 'Recommender systems that gradually narrow down the preferences of individual users.',
-        source: 1,
+        slug: 'prozessautomatisierung',
+        title: 'Process Automation',
+        hook: ['Which task would you never want to do by hand again?'],
+        text: [
+          'Typing up data, forwarding requests, compiling reports: n8n connects your applications into automated workflows. AI is only added where it measurably helps. And before an AI agent sends a message or changes data, a person approves the action.',
+        ],
+        link: 'Humans in the loop with n8n',
       },
       {
-        name: 'Support interaction',
-        what: 'Understand and generate language and other content, for example in conversations between people and machines.',
-        example: 'With an AI assistant, support agents resolved 15 percent more issues per hour on average.',
-        source: 7,
+        slug: 'softwareentwicklung',
+        title: 'Software Development',
+        hook: ['A ban in the prompt does not prevent access.'],
+        text: [
+          'Files such as ',
+          { code: 'AGENTS.md' },
+          ' give AI agents goals, workflows and boundaries. But the model can misunderstand or disregard rules. Boundaries only become binding through suitable access permissions, tests and reviews. This is how you guide AI assistants with guardrails.',
+        ],
+        link: 'Guide AI assistants with guardrails',
       },
       {
-        name: 'Optimise for a goal',
-        what: 'Search for the best solution for a given goal.',
-        example: 'A system trained with reinforcement learning controlled the plasma in the TCV fusion reactor.',
-        source: 8,
+        slug: 'data-analytics',
+        title: 'Data Analytics',
+        hook: ['What exactly is “last month’s revenue”?'],
+        text: [
+          'Including or excluding returns? Which month, which booking date? AI answers data questions in everyday language, writes analysis code and produces forecasts. But the answer only becomes reliable once your metrics are clearly defined and results are checked against the source data.',
+        ],
+        link: 'Understand and analyse data',
       },
       {
-        name: 'Reason with knowledge',
-        what: 'Derive new results that are not directly in the data – for example through modelling and simulation.',
-        example: 'Expert systems that infer a diagnosis from symptoms.',
-        source: 2,
+        slug: 'ki-tipps-und-tricks',
+        title: 'AI Tips and Tricks',
+        hook: ['50.5 instead of 33.9 percent.', 6],
+        text: [
+          'That is how much more often AI agents solved tasks in a study when they could use curated skills. Skills capture recurring workflows, for example for an Excel analysis or systematic debugging. But not every skill helps: small, focused skills perform better than extensive collections.',
+        ],
+        link: 'Skills you should know',
+      },
+      {
+        slug: 'modelle-und-kosten',
+        title: 'Models and Costs',
+        hook: ['4.50 or 450 US dollars?', 7],
+        text: [
+          'That is how far apart the costs of the same 10,000 text requests can be, depending on the model. Even so, the cheapest model is not automatically the best choice: a more expensive model can cost less overall if it saves correction work. What matters is the total cost per accepted result.',
+        ],
+        link: 'Find the best value for money',
       },
     ],
-    limitsLabel: 'What AI does not guarantee',
+    basicsEyebrow: 'Basics',
+    basicsTitle: 'What is AI – and what can you do with it?',
+    basicsText: [
+      'AI systems infer from their inputs how to generate an output: a prediction, a text, a recommendation or a decision.',
+      2,
+      ' That sets them apart from software that only follows rules defined by people.',
+      3,
+    ],
+    checkTitle: 'AI helps where results can be checked.',
+    checkText: [
+      [
+        'Programming is a good example. Automated tests, code reviews and checks show whether an AI suggestion works before the code is accepted. This way, many errors are caught early.',
+      ],
+      [
+        'But checkable does not automatically mean faster. In a randomised study, experienced developers using AI tools from early 2025 actually took 19 percent longer.',
+        4,
+        ' That is why only a measurement in your own workflow shows whether AI saves you time.',
+      ],
+    ],
+    limitsTitle: 'Understanding how AI works means recognising its limits.',
+    limitsText: [
+      'AI assistants such as chatbots are based on large language models. Such a model generates text by using learned probabilities to predict which word could come next.',
+      5,
+      ' This leads to typical limits:',
+    ],
     limits: [
-      { title: 'No guarantee of correct results', text: 'Language models can invent content that looks credible – including references.', sources: [9] },
-      { title: 'No up-to-date knowledge', text: 'Without access to current data, a model only knows the state of its training data.', sources: [9] },
-      { title: 'No guaranteed intended behaviour', text: 'Goals are hard to specify completely. The benefit depends on how the use case is designed.', sources: [1, 10] },
-    ],
-    topicsEyebrow: 'Topics',
-    topicsTitle: 'Four focus areas to get started.',
-    topicsText: 'Each topic has an introduction and related articles.',
-    auditEyebrow: 'AI audit',
-    auditTitle: 'How ready is your company for AI?',
-    auditText:
-      'Eight dimensions, three maturity levels. A level only counts if all levels below it are met. The questions of the next level become your to-do list.',
-    dimensionsLabel: 'Choose a dimension',
-    auditNote: 'Yes/no questions per dimension · Your answers stay in your browser and are not transmitted.',
-    auditCta: 'Start self-assessment',
-    auditCtaFor: 'Self-assessment: {{title}}',
-    blogEyebrow: 'Blog',
-    blogTitle: 'New on the blog.',
-    personEyebrow: 'Behind KI Perspektiven',
-    personQuote: '“The yardstick for meaningful AI: a clear problem, suitable data and a solution that works in everyday work.”',
-    personText: 'Marvin Jakob combines software development, cloud architecture and business analysis – working on software projects since 2011.',
-    personLink: 'View profile',
-    portraitAlt: 'Illustrative portrait of Marvin Jakob',
-    sourcesTitle: 'Sources',
-    sources: sources(
       {
-        1: 'Definition, seven tasks, personalisation, setting objectives.',
-        2: 'Distinction from rule-based software, fraud detection, expert systems.',
-        3: '26% and 57%.',
-        4: '32.3% use generative AI.',
-        9: 'Hallucinations, knowledge cut-off.',
+        title: 'Plausible does not mean correct.',
+        text: ['A language model can invent content that sounds convincing, right down to made-up references.', 5],
       },
       {
-        2: { label: 'European Commission (2025)', title: 'Guidelines on the definition of an AI system (AI Act)' },
-        5: { label: 'MASAI study (2025), The Lancet Digital Health', title: 'AI-supported mammography' },
-        3: { label: 'Federal Statistical Office of Germany (2025)', title: 'Enterprises using AI by size class (in German)' },
-        9: { label: 'BSI (2025)', title: 'Generative AI models – opportunities and risks (in German)' },
+        title: 'Knowledge has an expiry date.',
+        text: ['Without access to current data, a model only knows the state of its training data.', 5],
+      },
+      {
+        title: 'Not every task needs a language model.',
+        text: ['There are specialised models for forecasts. Processes with fixed rules can be automated without any AI at all.', 3],
+      },
+    ],
+    moreText: 'Would you like to know what AI is already being used for today?',
+    moreLink: 'Read the detailed overview',
+    sourcesTitle: 'Sources',
+    sources: localizeSources(
+      SOURCES,
+      {
+        1: '26% of companies used AI in 2025.',
+        2: 'Definition of an AI system.',
+        3: 'Distinction from software that only executes rules defined by people.',
+        4: 'Randomised study: 19% longer completion time with AI tools from early 2025.',
+        5: 'How language models work, hallucinations, knowledge cut-off.',
+        6: 'Success rate 33.9% without and 50.5% with curated skills; small, focused skills perform better.',
+        7: 'Prices of gpt-6-luna and gpt-6-astra as of 9 November 2026. Own calculation: 10,000 requests with 2,000 input and 500 output tokens each.',
+      },
+      {
+        1: { label: 'Federal Statistical Office of Germany (2025)', title: 'Enterprises using AI by size class (in German)' },
+        3: { label: 'European Commission (2025)', title: 'Guidelines on the definition of an AI system (AI Act)' },
+        5: { title: 'Generative AI models – opportunities and risks (in German)' },
       },
     ),
   },
 };
-
-/** Ersetzt {{name}} durch den passenden Wert. */
-export const fill = (text: string, vars: Record<string, string | number>) =>
-  text.replace(/\{\{(\w+)\}\}/g, (_, k: string) => String(vars[k] ?? ''));
