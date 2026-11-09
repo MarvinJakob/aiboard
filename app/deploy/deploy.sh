@@ -80,6 +80,12 @@ status() {
   echo "Commit: $(docker image inspect -f '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$(image "$version")" 2>/dev/null)"
   docker compose ps --format 'table {{.Service}}\t{{.Image}}\t{{.Status}}'
   echo -n "Healthcheck https://$(envget DOMAIN)/api/health: "
+  # Bis zu 60 s warten, etwa bis Caddy beim ersten Start das Zertifikat hat
+  local i
+  for i in $(seq 1 30); do
+    curl -fsS -m 10 "https://$(envget DOMAIN)/api/health" 2> /dev/null && { echo; return 0; }
+    sleep 2
+  done
   curl -fsS -m 10 "https://$(envget DOMAIN)/api/health"
   echo
 }
