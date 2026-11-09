@@ -3,6 +3,20 @@ const PATHS = {
   chevLeft: <path d="M15 6l-6 6 6 6" />,
   chevRight: <path d="M9 6l6 6-6 6" />,
   arrowRight: <path d="M5 12h14M13 6l6 6-6 6" />,
+  arrowDown: <path d="M12 5v14M6 13l6 6 6-6" />,
+  alert: <path d="M12 9v4M12 17h.01M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />,
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </>
+  ),
+  target: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="4" />
+    </>
+  ),
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
   code: <path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16" />,
   shield: (
