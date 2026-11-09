@@ -37,6 +37,8 @@ Noch nicht enthalten: eine eigene Medienverwaltung (`/redaktion/medien`). Titelb
 
 ## Aufbau
 
+Die öffentliche Profilseite aus [Ticket #41](https://github.com/MarvinJakob/aiboard/issues/41) ist unter `/de/profil` und `/en/profil` erreichbar. Ihre Texte stehen in `frontend/src/content/profile.ts`; die ausgewählten Stationen (Personaldisposition 2023–2024 und Telematik 2019–2020) basieren auf dem lokalen Lebenslauf. Der Lebenslauf selbst wird nicht veröffentlicht. Die heutigen KI-Fragen sind redaktionelle Übergänge zu den drei Themen, keine Behauptung über frühere KI-Projekte. Bei Änderungen an Titel oder Beschreibung auch die serverseitigen Metadaten in `backend/internal/web/meta.go` aktualisieren.
+
 ```
 api/openapi.yaml        Verbindlicher Vertrag zwischen Frontend und Backend
 frontend/               Öffentliche Webseite (React, TypeScript, Vite)
