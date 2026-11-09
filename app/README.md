@@ -109,6 +109,8 @@ docker compose exec -it backend /server user create --email admin@example.de --r
 
 Lokal ohne Docker: `go run ./cmd/server user create --email admin@example.de` im Ordner `backend`. Weitere Konten legt ein Admin-Konto im Redaktionsfrontend an.
 
+Die drei Testkonten der bereitgestellten Entwicklungsumgebung aus Ticket #55 sind in [docs/testkonten-entwicklung.md](docs/testkonten-entwicklung.md) dokumentiert. Ihre individuellen Zugangsdaten liegen ausschließlich lokal unter `.token/testaccounts-55.json` im Projektstamm des Betreibers.
+
 **Wie in Produktion, ohne TLS:**
 
 ```bash
