@@ -436,6 +436,7 @@ describe('Ticket #21: AI Audit als eigener Navigationseintrag', () => {
       '/de/themen/softwareentwicklung',
       '/de/themen/data-analytics',
       '/de/themen/prozessautomatisierung',
+      '/de/themen/modelle-und-kosten',
     ]);
     expect(within(menu).queryByRole('link', { name: /AI Audit/ })).not.toBeInTheDocument();
     await user.click(within(menu).getByRole('link', { name: /AI in Data Analytics/ }));

@@ -24,6 +24,10 @@ const topicData: Record<string, Record<L, Omit<Topic, 'lang' | 'postCount' | 'sl
     de: { title: 'Prozessautomatisierung', label: 'Prozessautomatisierung', summary: 'Kurz Automatisierung', intro: 'Einführung Prozessautomatisierung' },
     en: { title: 'Process Automation', label: 'Process Automation', summary: 'Short automation', intro: 'Intro process automation' },
   },
+  'modelle-und-kosten': {
+    de: { title: 'Modelle und Kosten: Wie finde ich das beste Preis-/Leistungsverhältnis?', label: 'Modelle und Kosten', summary: 'Warum das günstigste Modell nicht automatisch die beste Wahl ist und wie Sie Preis und Leistung selbst vergleichen.', intro: 'Ein niedriger Preis je Token sagt wenig darüber aus, was ein brauchbares Ergebnis kostet. Diese Seite zeigt, welche Kosten in die Rechnung gehören, was öffentliche Vergleiche leisten und wie Sie mit eigenen Testaufgaben das passende Modell finden.' },
+    en: { title: 'Models and Costs: How do I find the best price-performance ratio?', label: 'Models and Costs', summary: 'Why the cheapest model is not automatically the best choice and how to compare price and performance yourself.', intro: 'A low price per token says little about what a usable result costs. This page shows which costs belong in the calculation, what public comparisons can and cannot do, and how to find the right model with your own test tasks.' },
+  },
 };
 
 export interface FakePost {

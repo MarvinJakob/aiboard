@@ -1,13 +1,28 @@
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { visit } from 'unist-util-visit';
-import type { Link, Root, Text } from 'mdast';
+import type { Link, Root, RootContent, Text } from 'mdast';
 import { jumpTo } from '../lib/jump';
 import { useLang } from '../lib/lang';
 import type { getTopicContent } from '../lib/topicContent';
 import { TranslationNotice } from './Status';
 
 const sourceId = (number: number) => `topic-source-${number}`;
+
+/** Relative Links der Textvorlage zeigen auf Dateien im Repository, ausgehend vom Ordner content/. */
+const TEMPLATE_BASE = 'https://github.com/MarvinJakob/aiboard/blob/main/content/';
+const resolveHref = (href: string | undefined) =>
+  href && !/^([a-z][a-z\d+.-]*:|#|\/)/i.test(href) ? new URL(href, TEMPLATE_BASE).href : href;
+
+/** Fasst einen Aufhänger, der vor der ersten Überschrift mit `---` abgeschlossen ist, zu einem hervorgehobenen Block zusammen. */
+function remarkHook() {
+  return (tree: Root) => {
+    const end = tree.children.findIndex((node) => node.type === 'thematicBreak' || node.type === 'heading');
+    if (end <= 0 || tree.children[end].type !== 'thematicBreak') return;
+    const hook = { type: 'topicHook', children: tree.children.slice(0, end), data: { hName: 'div', hProperties: { className: ['topic-hook'] } } };
+    tree.children.splice(0, end + 1, hook as unknown as RootContent);
+  };
+}
 
 /** Verknüpft nummerierte Belege mit der Quellenliste, ohne Code oder vorhandene Links zu verändern. */
 function remarkSources() {
@@ -48,9 +63,9 @@ export function TopicContent({ content }: { content: NonNullable<ReturnType<type
     <article className="topic-content" lang={content.lang}>
       {content.lang !== lang && <div lang={lang}><TranslationNotice text={t('fallbackTopic', { language: t(`langName.${content.lang}`) })} /></div>}
       <div className="prose prose--topic">
-        <Markdown skipHtml remarkPlugins={[remarkGfm, remarkSources]} components={{
+        <Markdown skipHtml remarkPlugins={[remarkGfm, remarkSources, remarkHook]} components={{
           a: ({ href, children, title }) => (
-            <a title={title} href={href} onClick={href?.startsWith('#topic-source-') ? (e) => jumpTo(e, href.slice(1)) : undefined}>
+            <a title={title} href={resolveHref(href)} onClick={href?.startsWith('#topic-source-') ? (e) => jumpTo(e, href.slice(1)) : undefined}>
               {children}
             </a>
           ),
