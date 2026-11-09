@@ -304,15 +304,12 @@ svg { display: block; }
 .fn a { padding: 0 2px; color: var(--text-2); font-size: 11px; font-weight: 650; text-decoration: none; }
 .fn a:hover { color: var(--accent); }
 
-/* Hero: warme Fläche mit zweispaltigem Raster. Der negative Abstand gleicht den Innenabstand von #main aus,
+/* Hero: warme Fläche ohne dekorative Grafik. Der negative Abstand gleicht den Innenabstand von #main aus,
    damit die Fläche direkt unter der Kopfzeile beginnt. */
 .hero-band { margin-top: -24px; padding-block: 48px 88px; background: var(--warm); }
-.hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 64px; align-items: center; }
-.hero-copy { min-width: 0; padding-block: 20px; }
+.hero-copy { max-width: 760px; padding-block: 20px; }
 .landing .hook { max-width: 560px; margin-bottom: 24px; font-size: clamp(1.0625rem, 1.2vw, 1.1875rem); font-weight: 650; line-height: 1.5; color: var(--text); }
 .landing .hook::before { content: ""; display: block; width: 28px; height: 2px; margin-bottom: 18px; background: var(--brand); }
-.hero-visual { overflow: hidden; border-radius: var(--radius-visual); background: var(--navy); box-shadow: 0 24px 60px -36px rgba(18, 38, 58, .65); }
-.hero-visual svg { width: 100%; height: auto; }
 .landing-hero { padding-top: 24px; }
 .landing-hero .back-link { display: flex; width: fit-content; margin-bottom: 16px; }
 .landing-hero .page-title { margin-bottom: 16px; }
@@ -651,7 +648,6 @@ svg { display: block; }
   .header-inner { gap: 14px; }
   .nav-main { gap: 2px; }
   .nav-btn { padding-inline: 11px; }
-  .hero-grid { gap: 36px; }
   .display { font-size: clamp(3rem, 6.5vw, 4.75rem); }
 }
 @media (max-width: 850px) {
@@ -664,7 +660,6 @@ svg { display: block; }
   .nav-main { gap: 0; }
   .nav-btn { padding-inline: 10px; font-size: .8125rem; }
   .hero-band { padding-block: 32px 64px; }
-  .hero-grid { gap: 28px; }
   .display { font-size: 3.375rem; }
   .landing .landing-head { gap: 32px; }
   .landing .topics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -712,10 +707,8 @@ svg { display: block; }
   .lang-switch { align-self: flex-start; }
 
   .hero-band { padding-block: 24px 56px; }
-  .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 36px; }
   .hero-copy { padding-block: 12px 0; }
   .display { font-size: clamp(2.5rem, 12.5vw, 3.375rem); }
-  .hero-visual { width: 100%; max-width: 470px; justify-self: center; }
   .landing .landing-head { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 28px; }
   .landing .topics, .landing .limits { grid-template-columns: minmax(0, 1fr); }
   .landing .topic { padding: 22px 20px 18px; }

@@ -232,6 +232,18 @@ describe('Anforderung 2: Navigation', () => {
 
 describe('Ticket #93: cimt × Apple-Design', () => {
   it.each([
+    ['de', 'KI verstehen.Sinnvoll einsetzen.', 'Themen entdecken', 'KI-Reifegrad einschätzen'],
+    ['en', 'Understand AI.Use it wisely.', 'Explore topics', 'Assess your AI maturity'],
+  ])('zeigt auf /%s den Hero ohne dekorative Grafik und behält beide Aktionen', async (lang, title, topics, audit) => {
+    renderApp(`/${lang}`);
+    const heading = await screen.findByRole('heading', { level: 1, name: title });
+    const hero = heading.closest('section')!;
+    expect(hero.querySelector('img, svg defs, .hero-visual')).toBeNull();
+    expect(within(hero).getByRole('link', { name: topics })).toHaveAttribute('href', '#fokus-title');
+    expect(within(hero).getByRole('link', { name: audit })).toHaveAttribute('href', `/${lang}/themen/ai-audit`);
+  });
+
+  it.each([
     ['/de', 'Menü'],
     ['/en/blog', 'Menu'],
   ])('klappt auf %s das mobile Menü auf und schließt es mit Esc, Linkwahl und Klick daneben', async (path, label) => {

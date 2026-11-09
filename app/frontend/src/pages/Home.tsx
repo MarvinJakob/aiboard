@@ -25,7 +25,7 @@ export function Home() {
   return (
     <div className="landing">
       <section className="hero-band" aria-labelledby="hero-title">
-        <div className="container hero-grid">
+        <div className="container">
           <div className="hero-copy">
             <p className="hook">{c.hook}</p>
             <h1 className="display" id="hero-title" tabIndex={-1} ref={h1}>
@@ -43,7 +43,6 @@ export function Home() {
               </Link>
             </div>
           </div>
-          <HeroVisual />
         </div>
       </section>
 
@@ -73,71 +72,6 @@ function Focus() {
         ))}
       </ul>
     </section>
-  );
-}
-
-/**
- * Dekorative Hero-Grafik nach mock/design_cimt: vier Stationen um einen orangefarbenen KI-Kern.
- * Sie ist sprachneutral und ohne Text gezeichnet, weil sie in beiden Sprachen erscheint; Screenreader überspringen sie.
- */
-function HeroVisual() {
-  const stations = [
-    { x: 108, y: 106, icon: 'm8 6-6 6 6 6m8-12 6 6-6 6m-3-15-2 18' },
-    { x: 376, y: 106, icon: 'M4 3v17h17M8 15v-4m5 4V7m5 8v-6' },
-    { x: 108, y: 298, icon: 'M2 9h6v6H2zM16 2h6v6h-6zM16 16h6v6h-6zM8 12h4m4-7h-4v14h4' },
-    { x: 376, y: 298, icon: 'M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9V15h7v-1.1A6 6 0 0 0 12 3Z' },
-  ];
-  return (
-    <div className="hero-visual" aria-hidden="true">
-      <svg viewBox="0 0 560 480">
-        <defs>
-          <pattern id="hero-dots" width="22" height="22" patternUnits="userSpaceOnUse">
-            <circle cx="1" cy="1" r="1" fill="#fff" opacity=".14" />
-          </pattern>
-          <radialGradient id="hero-glow">
-            <stop stopColor="#dc6e14" stopOpacity=".18" />
-            <stop offset="1" stopColor="#dc6e14" stopOpacity="0" />
-          </radialGradient>
-          <linearGradient id="hero-core" x2="1" y2="1">
-            <stop stopColor="#ef8e3f" />
-            <stop offset="1" stopColor="#dc6e14" />
-          </linearGradient>
-        </defs>
-        <rect width="560" height="480" fill="url(#hero-dots)" />
-        <circle cx="280" cy="240" r="224" fill="url(#hero-glow)" />
-        <g fill="none" stroke="#90a5b8">
-          <circle cx="280" cy="240" r="171" opacity=".22" />
-          <circle cx="280" cy="240" r="123" opacity=".3" strokeDasharray="3 8" />
-          <path d="M280 69v342M109 240h342" opacity=".15" />
-          <path d="M280 69a171 171 0 0 1 171 171M109 240a171 171 0 0 0 171 171" stroke="#dc6e14" strokeWidth="2" />
-          <path d="m184 182 53 24m86 68 53 24m-192 0 53-24m86-68 53-24" stroke="#dc6e14" opacity=".7" />
-        </g>
-        <g fill="#dc6e14">
-          <circle cx="280" cy="69" r="4" />
-          <circle cx="451" cy="240" r="4" />
-          <circle cx="280" cy="411" r="4" />
-          <circle cx="109" cy="240" r="4" />
-        </g>
-        {stations.map((s) => (
-          <g key={s.x + s.y * 1000}>
-            <rect x={s.x} y={s.y} width="76" height="76" rx="18" fill="#172f44" stroke="#3b5062" />
-            <path
-              d={s.icon}
-              transform={`translate(${s.x + 20} ${s.y + 20}) scale(1.5)`}
-              fill="none"
-              stroke="#f5a66b"
-              strokeWidth="1.3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </g>
-        ))}
-        <circle cx="280" cy="240" r="72" fill="#dc6e14" opacity=".09" />
-        <circle cx="280" cy="240" r="59" fill="url(#hero-core)" />
-        <circle cx="280" cy="240" r="49" fill="none" stroke="#ffb57b" opacity=".65" />
-        <path d="m280 214 6.5 15.5L302 236l-15.5 6.5L280 258l-6.5-15.5L258 236l15.5-6.5Z" fill="#12263a" />
-      </svg>
-    </div>
   );
 }
 
