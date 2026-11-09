@@ -4,8 +4,13 @@ info:
   version: 0.1.0
   description: |
     Verbindlicher Vertrag zwischen Frontend und Backend (siehe requirements/ARCHITECTURE.md, Abschnitt 5).
-    Stand Sprint 2: nur öffentliche Endpunkte. Sie liefern ausschließlich veröffentlichte Beiträge
-    und fachlich freigegebene Audit-Dimensionen.
+    Öffentliche Endpunkte liefern ausschließlich veröffentlichte Beiträge und fachlich freigegebene
+    Audit-Dimensionen.
+
+    Redaktion (ab Sprint 3): Die Anmeldung setzt ein HttpOnly-Sitzungscookie (`ki_session`). Alle Pfade
+    unter `/api/admin` verlangen eine gültige Sitzung (sonst `401`) und die passende Rolle (sonst `403`).
+    Schreibende Aufrufe mit Sitzung senden zusätzlich das CSRF-Token aus `GET /api/auth/me` im Header
+    `X-CSRF-Token` (sonst `403`). Einen Endpunkt zur Selbstregistrierung gibt es nicht.
 
     Sprachauswahl: Jede Ressource wird in der angefragten Sprache geliefert. Fehlt die Übersetzung,
     liefert das Backend die vorhandene Fassung (zuerst Deutsch). Das Feld `lang` nennt immer die
@@ -145,8 +150,324 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Health'
+  /api/auth/login:
+    post:
+      operationId: login
+      summary: Anmelden, setzt das Sitzungscookie
+      description: |
+        Unbekannte E-Mail-Adressen, falsche Passwörter und deaktivierte Konten liefern dieselbe Antwort `401`.
+        Nach zu vielen Fehlversuchen von derselben IP-Adresse antwortet das Backend mit `429`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Angemeldet
+          headers:
+            Set-Cookie:
+              description: Sitzungscookie `ki_session` (HttpOnly, SameSite=Lax, bei HTTPS Secure)
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          description: Zu viele Fehlversuche, später erneut versuchen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/auth/logout:
+    post:
+      operationId: logout
+      summary: Abmelden, löscht die Sitzung serverseitig
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      responses:
+        '204':
+          description: Abgemeldet
+          headers:
+            Set-Cookie:
+              description: Leert das Sitzungscookie
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/auth/me:
+    get:
+      operationId: getMe
+      summary: Angemeldete Person, Rolle und CSRF-Token
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: Angemeldet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/admin/posts:
+    get:
+      operationId: adminListPosts
+      summary: Alle Beiträge inklusive Entwürfe, zuletzt geänderte zuerst
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: Beiträge
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorPostList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      operationId: adminCreatePost
+      summary: Neuen Entwurf anlegen
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostInput'
+      responses:
+        '201':
+          description: Entwurf angelegt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorPost'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /api/admin/posts/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      operationId: adminGetPost
+      summary: Beitrag mit allen Sprachfassungen zum Bearbeiten laden
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: Beitrag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorPost'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: adminUpdatePost
+      summary: Texte, Themen und Einstellungen speichern
+      description: |
+        Ein veröffentlichter Beitrag bleibt veröffentlicht, die öffentliche Seite zeigt sofort die neue Fassung.
+        Er muss dafür in jeder Sprache Titel, Kurztext und Beitragstext behalten (sonst `422`).
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostInput'
+      responses:
+        '200':
+          description: Gespeichert
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorPost'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /api/admin/posts/{id}/publish:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      operationId: adminPublishPost
+      summary: Veröffentlichen
+      description: Verlangt Titel, Kurztext und Beitragstext in jeder vorhandenen Sprache (sonst `422`).
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      responses:
+        '200':
+          description: Veröffentlicht
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorPost'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /api/admin/posts/{id}/unpublish:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      operationId: adminUnpublishPost
+      summary: Veröffentlichung zurücknehmen
+      description: Der Beitrag wird wieder zum Entwurf und ist öffentlich nicht mehr erreichbar.
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      responses:
+        '200':
+          description: Zurückgenommen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorPost'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/admin/users:
+    get:
+      operationId: adminListUsers
+      summary: Redaktionskonten mit E-Mail-Adresse, Rolle und Status
+      description: Nur für Admin-Konten. Passwörter und Hashes gibt die API nie zurück.
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: Konten, sortiert nach E-Mail-Adresse
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      operationId: adminCreateUser
+      summary: Redaktionskonto mit Rolle editor und Startpasswort anlegen
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewUser'
+      responses:
+        '201':
+          description: Konto angelegt, es kann sich sofort anmelden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /api/admin/users/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    patch:
+      operationId: adminUpdateUser
+      summary: Konto deaktivieren oder reaktivieren
+      description: |
+        Beim Deaktivieren löscht das Backend alle Sitzungen des Kontos in derselben Transaktion.
+        Bereits geöffnete Sitzungen sind damit sofort ungültig. Das eigene Konto lässt sich nicht deaktivieren (`422`).
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPatch'
+      responses:
+        '200':
+          description: Geändert
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
 components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: ki_session
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
   parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
     Lang:
       name: lang
       in: query
@@ -163,6 +484,30 @@ components:
   responses:
     BadRequest:
       description: Ungültige Anfrage
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Nicht angemeldet oder Sitzung abgelaufen
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Rolle reicht nicht aus oder CSRF-Token fehlt
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Konflikt, z. B. bereits vergebenes URL-Kürzel oder E-Mail-Adresse
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unprocessable:
+      description: Eingaben unvollständig oder ungültig, die Meldung nennt den Grund
       content:
         application/json:
           schema:
@@ -319,6 +664,177 @@ components:
             updatedAt:
               type: string
               format: date-time
+    Role:
+      type: string
+      description: "`editor` verwaltet Beiträge, `admin` zusätzlich die Redaktionskonten"
+      enum: [editor, admin]
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    Me:
+      type: object
+      required: [id, email, role, csrfToken]
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+        csrfToken:
+          type: string
+          description: Für den Header `X-CSRF-Token` bei schreibenden Aufrufen
+    PostStatus:
+      type: string
+      enum: [draft, published]
+    PostText:
+      type: object
+      description: Fassung eines Beitrags in einer Sprache
+      required: [lang, title, summary, bodyMarkdown]
+      properties:
+        lang:
+          $ref: '#/components/schemas/Lang'
+        title:
+          type: string
+        summary:
+          type: string
+          description: Kurztext
+        bodyMarkdown:
+          type: string
+    PostInput:
+      type: object
+      required: [featured, topics, texts]
+      properties:
+        slug:
+          type: string
+          description: URL-Kürzel. Leer lassen, um es aus dem Titel zu erzeugen.
+        featured:
+          type: boolean
+          description: Im Karussell der Startseite hervorheben
+        topics:
+          type: array
+          description: Slugs der zugeordneten Themen
+          items:
+            type: string
+        texts:
+          type: array
+          description: Fassungen je Sprache. Leere Fassungen werden nicht gespeichert.
+          items:
+            $ref: '#/components/schemas/PostText'
+    EditorPost:
+      type: object
+      required: [id, slug, status, featured, topics, texts, updatedAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        slug:
+          type: string
+        status:
+          $ref: '#/components/schemas/PostStatus'
+        featured:
+          type: boolean
+        topics:
+          type: array
+          items:
+            type: string
+        texts:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostText'
+        publishedAt:
+          type: string
+          format: date-time
+          description: Erste Veröffentlichung
+        updatedAt:
+          type: string
+          format: date-time
+    EditorPostSummary:
+      type: object
+      required: [id, slug, status, title, featured, topics, translations, updatedAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        slug:
+          type: string
+        status:
+          $ref: '#/components/schemas/PostStatus'
+        title:
+          type: string
+          description: Deutscher Titel, sonst der Titel einer anderen Sprache
+        featured:
+          type: boolean
+        topics:
+          type: array
+          items:
+            type: string
+        translations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lang'
+        publishedAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    User:
+      type: object
+      description: Redaktionskonto ohne Passwortdaten
+      required: [id, email, role, active, createdAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+        active:
+          type: boolean
+          description: Deaktivierte Konten können sich nicht anmelden
+        createdAt:
+          type: string
+          format: date-time
+    UserList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    NewUser:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          description: Eindeutige E-Mail-Adresse, Groß- und Kleinschreibung zählt nicht
+        password:
+          type: string
+          description: Startpasswort mit mindestens 10 Zeichen
+    UserPatch:
+      type: object
+      required: [active]
+      properties:
+        active:
+          type: boolean
+    EditorPostList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EditorPostSummary'
     AuditCategory:
       type: string
       description: Einordnung der Dimension (organisatorisch, fachlich, technisch)

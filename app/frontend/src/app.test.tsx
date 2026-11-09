@@ -62,6 +62,15 @@ describe('Anforderung 2: Navigation', () => {
     },
   );
 
+  it.each([
+    ['/de', 'Anmeldung für die Redaktion'],
+    ['/en/blog', 'Sign in for editors'],
+  ])('verlinkt auf %s den Kontoeinstieg zur Anmeldung der Redaktion', async (path, label) => {
+    renderApp(path);
+    const nav = await screen.findByRole('navigation', { name: /navigation/i });
+    expect(within(nav).getByRole('link', { name: label })).toHaveAttribute('href', '/redaktion/anmelden');
+  });
+
   it('öffnet über einen Menüeintrag die Themenseite und über den Bloglink die Blogübersicht', async () => {
     const user = userEvent.setup();
     const { router } = renderApp('/de/blog/neu');

@@ -15,7 +15,15 @@
 | [9 Seiten für die Audit-Dimensionen](../requirements/Tickets/9%20Seiten%20f%C3%BCr%20die%20Audit-Dimensionen.md) | Acht Dimensionen aus `content/KI Audit.docx` unter `/{lang}/themen/ai-audit/{dimension}`, je mit Einführung, hervorgehobenen Vorteilen und den Reifegraden Einfach, Strukturiert und Intelligent. Meta-Tags und Sitemap sind ergänzt. |
 | [10 Quiz zur Selbsteinschätzung](../requirements/Tickets/10%20Quiz%20zur%20Selbsteinsch%C3%A4tzung.md) | Ja/Nein-Prüffragen je Dimension, Hinweis auf offene Fragen, Ergebnis mit nächstem Schritt, Auswertung nur im Browser. Regeln und Antwortsätze für die Abnahme: [docs/audit-abnahme.md](docs/audit-abnahme.md). |
 
-Noch nicht enthalten (Sprint 3): Redaktionsfrontend, Anmeldung, Benutzerverwaltung, Bild-Upload. Bis dahin legt eine Entwicklungs-Migration Testbeiträge an (`DEV_SEED=true`), darunter ein Entwurf und Beiträge ohne englische Fassung.
+## Stand: Sprint 3
+
+| Ticket | Umgesetzt |
+|---|---|
+| [6 Zugang zur Redaktion](https://github.com/MarvinJakob/aiboard/issues/6) | Kontosymbol in der Kopfzeile führt zu `/redaktion/anmelden`. Anmeldung mit E-Mail-Adresse und Passwort ohne Selbstregistrierung. Danach führt die Redaktion zur Beitragsliste und Admin-Konten zur Benutzerverwaltung. Sitzungen liegen in der Datenbank. Das Backend prüft Sitzung, Rolle und CSRF-Token bei jeder Redaktionsseite und jedem Aufruf unter `/api/admin`. Abmelden löscht die Sitzung serverseitig. |
+| [5 Redaktionssystem](https://github.com/MarvinJakob/aiboard/issues/5) | Beitragsliste mit Entwürfen und Status unter `/redaktion`. Editor unter `/redaktion/beitraege/{id}` mit deutscher und englischer Fassung (Titel, Kurztext, Markdown-Text), Themenzuordnung, Karussell-Markierung und URL-Kürzel. Veröffentlichen verlangt Titel, Kurztext und Beitragstext in jeder angefangenen Fassung. Änderungen an veröffentlichten Beiträgen sind sofort öffentlich. Zurücknehmen braucht eine Bestätigung, bietet danach „Rückgängig“ und macht den Beitrag überall unsichtbar (`404`). |
+| [11 Benutzerverwaltung der Redaktion](https://github.com/MarvinJakob/aiboard/issues/11) | Unter `/redaktion/benutzer` sehen Admin-Konten alle Konten mit Rolle und Status, legen Redaktionskonten mit eindeutiger E-Mail-Adresse und Startpasswort an und deaktivieren oder reaktivieren sie. Deaktivieren löscht alle Sitzungen des Kontos in derselben Transaktion. `/api/admin/users` antwortet Konten ohne Admin-Rolle mit `403`. |
+
+Noch nicht enthalten: Medienverwaltung mit Bild-Upload und Titelbildern (`/redaktion/medien`, nicht Teil der Akzeptanzkriterien von Anforderung 5). Eine Entwicklungs-Migration legt Testbeiträge und Testkonten an (`DEV_SEED=true`), darunter ein Entwurf und Beiträge ohne englische Fassung.
 
 ## Aufbau
 
@@ -23,16 +31,19 @@ Noch nicht enthalten (Sprint 3): Redaktionsfrontend, Anmeldung, Benutzerverwaltu
 api/openapi.yaml        Verbindlicher Vertrag zwischen Frontend und Backend
 frontend/               Öffentliche Webseite (React, TypeScript, Vite)
   src/api/schema.d.ts   Aus openapi.yaml erzeugt (nicht von Hand ändern)
+frontend-redaktion/     Redaktionsfrontend unter /redaktion, eigene Vite-Anwendung
+  src/api/schema.d.ts   Aus openapi.yaml erzeugt (nicht von Hand ändern)
 backend/                Go-Modul
-  cmd/server/           Einstiegspunkt: server, server healthcheck, server backup
+  cmd/server/           Einstiegspunkt: server, server healthcheck, server backup, server user create
+  internal/auth/        Passwort-Hashing (Argon2id), Sitzungs-Tokens, Begrenzung der Anmeldeversuche
   internal/api/         Aus openapi.yaml erzeugt (nicht von Hand ändern)
   internal/http/        Handler, Routing, Middleware
   internal/audit/       Inhalte des KI-Audits (content.json, eingebettet) und ihre Prüfung
-  internal/service/     Fachlogik: Sichtbarkeit und Sprachauswahl
+  internal/service/     Fachlogik: Sichtbarkeit, Sprachauswahl, Konten und Sitzungen
   internal/store/       Datenzugriff, von sqlc aus queries.sql erzeugt
-  internal/web/         Auslieferung des Frontends, Meta-Tags, Sitemap, robots.txt
+  internal/web/         Auslieferung beider Frontends mit Zugriffskontrolle, Meta-Tags, Sitemap, robots.txt
   internal/media/       Bild-URLs (Upload folgt in Sprint 3)
-  migrations/           Schema und Startthemen; dev/ enthält Testbeiträge
+  migrations/           Schema und Startthemen; dev/ enthält Testbeiträge und Testkonten
 deploy/                 Caddyfile und Sicherungsskript
 docs/adr/               Architekturentscheidungen
 docs/audit-abnahme.md   Regeln und Antwortsätze für die Abnahme des Quiz
@@ -42,10 +53,14 @@ docs/audit-abnahme.md   Regeln und Antwortsätze für die Abnahme des Quiz
 
 Voraussetzungen: Go 1.27, Node 24 oder neuer. Docker ist nur für die Compose-Variante nötig.
 
-**Gebaute Anwendung starten** (Frontend eingebettet, Meta-Tags vom Backend):
+**Gebaute Anwendung starten** (beide Frontends eingebettet, Meta-Tags vom Backend):
 
 ```bash
 cd frontend && npm install && npm run build
+```
+
+```bash
+cd frontend-redaktion && npm install && npm run build
 ```
 
 ```bash
@@ -60,7 +75,22 @@ Danach ist die Seite unter <http://localhost:8080> erreichbar. Unter PowerShell 
 cd frontend && npm run dev
 ```
 
-Vite leitet `/api` und `/media` an das Backend weiter (<http://localhost:5173>).
+Vite leitet `/api` und `/media` an das Backend weiter (<http://localhost:5173>). Das Redaktionsfrontend startet ebenso mit `npm run dev` im Ordner `frontend-redaktion` und ist dann unter <http://localhost:5174/redaktion/> erreichbar.
+
+**Testkonten** (nur mit `DEV_SEED=true`):
+
+| E-Mail-Adresse | Passwort | Rolle |
+|---|---|---|
+| `redaktion@example.test` | `redaktion-test` | `editor`, landet nach der Anmeldung in der Beitragsliste |
+| `admin@example.test` | `admin-test-123` | `admin`, landet nach der Anmeldung in der Benutzerverwaltung |
+
+**Erstes Admin-Konto bei der Inbetriebnahme:** Das Passwort wird verdeckt abgefragt oder aus `USER_PASSWORD` gelesen.
+
+```bash
+docker compose exec -it backend /server user create --email admin@example.de --role admin
+```
+
+Lokal ohne Docker: `go run ./cmd/server user create --email admin@example.de` im Ordner `backend`. Weitere Konten legt ein Admin-Konto im Redaktionsfrontend an.
 
 **Wie in Produktion, ohne TLS:**
 
@@ -80,6 +110,10 @@ cd backend && go generate ./...
 cd frontend && npm run generate
 ```
 
+```bash
+cd frontend-redaktion && npm run generate
+```
+
 Tests:
 
 ```bash
@@ -90,11 +124,15 @@ cd backend && go vet ./... && go test ./...
 cd frontend && npm run typecheck && npm test
 ```
 
+```bash
+cd frontend-redaktion && npm run typecheck && npm test
+```
+
 Mit `make` stehen dieselben Schritte als `make generate`, `make test`, `make build` und `make run` bereit.
 
 Hinweise:
 
-- `npm install` nutzt `legacy-peer-deps` (siehe `frontend/.npmrc`), weil npm 11.1 bei der Auflösung optionaler Peer-Abhängigkeiten abbricht.
+- `npm install` nutzt in beiden Frontends `legacy-peer-deps` (siehe `.npmrc`), weil npm 11.1 bei der Auflösung optionaler Peer-Abhängigkeiten abbricht.
 - In `queries.sql` keine Umlaute verwenden. sqlc verrechnet sich sonst bei `sqlc.slice` in den Byte-Positionen.
 
 ## Konfiguration
@@ -109,12 +147,21 @@ Umgebungsvariablen, siehe [.env.example](.env.example):
 | `PUBLIC_BASE_URL` | `http://localhost:8080` | Basis für canonical, hreflang, Open Graph und Sitemap |
 | `DEV_SEED` | aus | Testbeiträge einspielen (nur Entwicklung) |
 | `SERVE_MEDIA` | aus | `/media/*` ohne Caddy direkt ausliefern (nur Entwicklung) |
+| `TRUST_PROXY` | aus | IP-Adresse für die Begrenzung der Anmeldeversuche aus `X-Forwarded-For` lesen. Nur hinter Caddy setzen (in `compose.yaml` aktiv). |
+| `USER_PASSWORD` | – | Nur für `server user create`: Passwort ohne Abfrage übergeben |
+
+Das Sitzungscookie erhält das Attribut `Secure`, wenn `PUBLIC_BASE_URL` mit `https://` beginnt.
 
 ## Abweichungen von ARCHITECTURE.md
 
 - **Datenmodell:** `topic_translations` hat zusätzlich `label` (Kurzname für Themen-Chips) und `summary` (eine Zeile Beschreibung für Themenmenü und Karten). Beides verlangt das Design-Konzept, das Datenmodell sah es nicht vor.
 - **Karussell:** `GET /api/posts?featured=true` liefert höchstens drei Beiträge. An erster Stelle steht immer der zuletzt veröffentlichte Beitrag, auch wenn er nicht hervorgehoben ist (Akzeptanzkriterium von Anforderung 1). Danach folgen die neuesten hervorgehobenen Beiträge.
-- **Kontoeinstieg:** Das Kontosymbol in der Kopfzeile fehlt noch. Es kommt mit der Anmeldung in Sprint 3 (Anforderung 6).
+- **Kontoeinstieg:** Das Kontosymbol führt zur Anmeldeseite `/redaktion/anmelden` im Redaktionsfrontend statt zu einem Dialog auf der öffentlichen Seite (Design-Konzept). So verlangt es Anforderung 6, und das Sitzungscookie entsteht nur in der Redaktion.
+- **Sitzungen:** Das Cookie enthält einen zufälligen Wert mit 256 Bit, die Datenbank speichert nur dessen SHA-256-Hash. Ein `SESSION_SECRET` ist dafür nicht nötig und entfällt. Eine Sitzung gilt 12 Stunden ab der Anmeldung. Das CSRF-Token gehört zur Sitzung und kommt aus `GET /api/auth/me`. Zusätzlich lehnt das Backend schreibende Aufrufe mit fremdem `Origin` ab.
+- **Rollen:** Admin-Konten dürfen neben der Benutzerverwaltung auch Beiträge verwalten. Redaktionskonten (`editor`) haben keinen Zugriff auf die Benutzerverwaltung.
+- **Beiträge:** Leere Sprachfassungen werden nicht gespeichert. Zum Speichern eines Entwurfs reicht ein Titel. Ein veröffentlichter Beitrag lässt sich nur vollständig speichern, damit die öffentliche Seite nie leer ist. Erneutes Veröffentlichen nach dem Zurücknehmen behält das erste Veröffentlichungsdatum. Fehlt das URL-Kürzel, entsteht es aus dem Titel (Umlaute werden umschrieben, bei Dopplungen folgt eine Nummer).
+- **Benutzerverwaltung:** Über die Oberfläche entstehen nur Konten mit der Rolle `editor`. Weitere Admin-Konten legt `server user create --role admin` an. Das eigene Konto lässt sich nicht deaktivieren, damit sich ein Admin nicht versehentlich aussperrt. Startpasswörter brauchen mindestens 10 Zeichen. Eine Pflicht zum Ändern des Startpassworts gibt es noch nicht.
+- **Anmeldeversuche:** Nach 10 Fehlversuchen von einer IP-Adresse sperrt das Backend weitere Versuche für 15 Minuten (`429`).
 - **Schriften:** Es werden keine WOFF2-Dateien ausgeliefert, weil das Design-Konzept System-Schriften vorsieht.
 - **Impressum und Datenschutz** sind Platzhalter in `frontend/src/content/legal` und müssen vor dem Livegang ersetzt werden.
 - **KI-Audit-Inhalte:** Die Inhalte stehen nicht in der Datenbank, sondern in `backend/internal/audit/content.json` (ADR 0009). Eine Dimension erscheint nur mit `"released": true`. Die Texte folgen `content/KI Audit.docx`. Daraus abgeleitet sind die Kurzbeschreibungen und die Vorteile je Dimension, die das Dokument nicht ausdrücklich nennt. Sie müssen fachlich bestätigt werden.

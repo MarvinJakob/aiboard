@@ -6,15 +6,18 @@
 generate:
 	cd backend && go generate ./...
 	cd frontend && npm run generate
+	cd frontend-redaktion && npm run generate
 
 ## Alle Tests und Typprüfungen
 test:
 	cd backend && go vet ./... && go test ./...
 	cd frontend && npm run typecheck && npm test
+	cd frontend-redaktion && npm run typecheck && npm test
 
-## Frontend bauen und in das Backend-Binary einbetten
+## Beide Frontends bauen und in das Backend-Binary einbetten
 build:
 	cd frontend && npm run build
+	cd frontend-redaktion && npm run build
 	cd backend && CGO_ENABLED=0 go build -o ../.build/server ./cmd/server
 
 ## Gebaute Anwendung mit Testbeiträgen starten (http://localhost:8080)

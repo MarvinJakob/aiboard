@@ -7,6 +7,7 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 )
 
@@ -46,6 +47,155 @@ func (q *Queries) CountPublishedPostsByTopic(ctx context.Context) ([]CountPublis
 	return items, nil
 }
 
+const createPost = `-- name: CreatePost :execlastid
+INSERT INTO posts (slug, status, featured, updated_at) VALUES (?, 'draft', ?, ?)
+`
+
+type CreatePostParams struct {
+	Slug      string
+	Featured  bool
+	UpdatedAt string
+}
+
+func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createPost, arg.Slug, arg.Featured, arg.UpdatedAt)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
+const createSession = `-- name: CreateSession :exec
+INSERT INTO sessions (id, user_id, csrf_token, expires_at, created_at)
+VALUES (?, ?, ?, ?, ?)
+`
+
+type CreateSessionParams struct {
+	ID        string
+	UserID    int64
+	CsrfToken string
+	ExpiresAt string
+	CreatedAt string
+}
+
+func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) error {
+	_, err := q.db.ExecContext(ctx, createSession,
+		arg.ID,
+		arg.UserID,
+		arg.CsrfToken,
+		arg.ExpiresAt,
+		arg.CreatedAt,
+	)
+	return err
+}
+
+const createUser = `-- name: CreateUser :execlastid
+
+INSERT INTO users (email, password_hash, role, active, created_at)
+VALUES (?, ?, ?, TRUE, ?)
+`
+
+type CreateUserParams struct {
+	Email        string
+	PasswordHash string
+	Role         string
+	CreatedAt    string
+}
+
+// ---------------------------------------------------------------------------
+// Konten und Sitzungen der Redaktion (Anforderungen 6 und 11)
+// ---------------------------------------------------------------------------
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createUser,
+		arg.Email,
+		arg.PasswordHash,
+		arg.Role,
+		arg.CreatedAt,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
+const deleteExpiredSessions = `-- name: DeleteExpiredSessions :execrows
+DELETE FROM sessions WHERE expires_at <= ?
+`
+
+func (q *Queries) DeleteExpiredSessions(ctx context.Context, expiresAt string) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteExpiredSessions, expiresAt)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const deletePostTopics = `-- name: DeletePostTopics :exec
+DELETE FROM post_topics WHERE post_id = ?
+`
+
+func (q *Queries) DeletePostTopics(ctx context.Context, postID int64) error {
+	_, err := q.db.ExecContext(ctx, deletePostTopics, postID)
+	return err
+}
+
+const deletePostTranslations = `-- name: DeletePostTranslations :exec
+DELETE FROM post_translations WHERE post_id = ?
+`
+
+func (q *Queries) DeletePostTranslations(ctx context.Context, postID int64) error {
+	_, err := q.db.ExecContext(ctx, deletePostTranslations, postID)
+	return err
+}
+
+const deleteSession = `-- name: DeleteSession :exec
+DELETE FROM sessions WHERE id = ?
+`
+
+func (q *Queries) DeleteSession(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, deleteSession, id)
+	return err
+}
+
+const deleteUserSessions = `-- name: DeleteUserSessions :exec
+DELETE FROM sessions WHERE user_id = ?
+`
+
+func (q *Queries) DeleteUserSessions(ctx context.Context, userID int64) error {
+	_, err := q.db.ExecContext(ctx, deleteUserSessions, userID)
+	return err
+}
+
+const getPostByID = `-- name: GetPostByID :one
+SELECT id, slug, status, published_at, featured, cover_media_id, updated_at FROM posts WHERE id = ?
+`
+
+func (q *Queries) GetPostByID(ctx context.Context, id int64) (Post, error) {
+	row := q.db.QueryRowContext(ctx, getPostByID, id)
+	var i Post
+	err := row.Scan(
+		&i.ID,
+		&i.Slug,
+		&i.Status,
+		&i.PublishedAt,
+		&i.Featured,
+		&i.CoverMediaID,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getPostIDBySlug = `-- name: GetPostIDBySlug :one
+SELECT id FROM posts WHERE slug = ?
+`
+
+func (q *Queries) GetPostIDBySlug(ctx context.Context, slug string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getPostIDBySlug, slug)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getPublishedPostBySlug = `-- name: GetPublishedPostBySlug :one
 SELECT id, slug, status, published_at, featured, cover_media_id, updated_at
 FROM posts
@@ -67,6 +217,38 @@ func (q *Queries) GetPublishedPostBySlug(ctx context.Context, slug string) (Post
 	return i, err
 }
 
+const getSession = `-- name: GetSession :one
+SELECT s.id, s.user_id, s.csrf_token, s.expires_at, u.email, u.role, u.active
+FROM sessions s
+JOIN users u ON u.id = s.user_id
+WHERE s.id = ?
+`
+
+type GetSessionRow struct {
+	ID        string
+	UserID    int64
+	CsrfToken string
+	ExpiresAt string
+	Email     string
+	Role      string
+	Active    bool
+}
+
+func (q *Queries) GetSession(ctx context.Context, id string) (GetSessionRow, error) {
+	row := q.db.QueryRowContext(ctx, getSession, id)
+	var i GetSessionRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.CsrfToken,
+		&i.ExpiresAt,
+		&i.Email,
+		&i.Role,
+		&i.Active,
+	)
+	return i, err
+}
+
 const getTopicBySlug = `-- name: GetTopicBySlug :one
 SELECT id, slug, sort_order FROM topics WHERE slug = ?
 `
@@ -76,6 +258,118 @@ func (q *Queries) GetTopicBySlug(ctx context.Context, slug string) (Topic, error
 	var i Topic
 	err := row.Scan(&i.ID, &i.Slug, &i.SortOrder)
 	return i, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, email, password_hash, role, active, created_at FROM users WHERE email = ?
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Role,
+		&i.Active,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, email, password_hash, role, active, created_at FROM users WHERE id = ?
+`
+
+func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Role,
+		&i.Active,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const insertPostTopic = `-- name: InsertPostTopic :exec
+INSERT INTO post_topics (post_id, topic_id) VALUES (?, ?)
+`
+
+type InsertPostTopicParams struct {
+	PostID  int64
+	TopicID int64
+}
+
+func (q *Queries) InsertPostTopic(ctx context.Context, arg InsertPostTopicParams) error {
+	_, err := q.db.ExecContext(ctx, insertPostTopic, arg.PostID, arg.TopicID)
+	return err
+}
+
+const insertPostTranslation = `-- name: InsertPostTranslation :exec
+INSERT INTO post_translations (post_id, lang, title, summary, body_markdown) VALUES (?, ?, ?, ?, ?)
+`
+
+type InsertPostTranslationParams struct {
+	PostID       int64
+	Lang         string
+	Title        string
+	Summary      string
+	BodyMarkdown string
+}
+
+func (q *Queries) InsertPostTranslation(ctx context.Context, arg InsertPostTranslationParams) error {
+	_, err := q.db.ExecContext(ctx, insertPostTranslation,
+		arg.PostID,
+		arg.Lang,
+		arg.Title,
+		arg.Summary,
+		arg.BodyMarkdown,
+	)
+	return err
+}
+
+const listAllPosts = `-- name: ListAllPosts :many
+
+SELECT id, slug, status, published_at, featured, cover_media_id, updated_at FROM posts ORDER BY updated_at DESC, id DESC
+`
+
+// ---------------------------------------------------------------------------
+// Redaktion: Beitraege verwalten (Anforderung 5)
+// ---------------------------------------------------------------------------
+func (q *Queries) ListAllPosts(ctx context.Context) ([]Post, error) {
+	rows, err := q.db.QueryContext(ctx, listAllPosts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Post{}
+	for rows.Next() {
+		var i Post
+		if err := rows.Scan(
+			&i.ID,
+			&i.Slug,
+			&i.Status,
+			&i.PublishedAt,
+			&i.Featured,
+			&i.CoverMediaID,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listMedia = `-- name: ListMedia :many
@@ -439,6 +733,40 @@ func (q *Queries) ListTopics(ctx context.Context) ([]Topic, error) {
 	return items, nil
 }
 
+const listUsers = `-- name: ListUsers :many
+SELECT id, email, password_hash, role, active, created_at FROM users ORDER BY email
+`
+
+func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, listUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.PasswordHash,
+			&i.Role,
+			&i.Active,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const ping = `-- name: Ping :one
 SELECT 1
 `
@@ -448,4 +776,84 @@ func (q *Queries) Ping(ctx context.Context) (int64, error) {
 	var column_1 int64
 	err := row.Scan(&column_1)
 	return column_1, err
+}
+
+const publishPost = `-- name: PublishPost :execrows
+UPDATE posts
+SET status = 'published',
+    published_at = COALESCE(published_at, ?1),
+    updated_at = ?2
+WHERE id = ?3
+`
+
+type PublishPostParams struct {
+	PublishedAt sql.NullString
+	UpdatedAt   string
+	ID          int64
+}
+
+func (q *Queries) PublishPost(ctx context.Context, arg PublishPostParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, publishPost, arg.PublishedAt, arg.UpdatedAt, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const setUserActive = `-- name: SetUserActive :execrows
+UPDATE users SET active = ? WHERE id = ?
+`
+
+type SetUserActiveParams struct {
+	Active bool
+	ID     int64
+}
+
+func (q *Queries) SetUserActive(ctx context.Context, arg SetUserActiveParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, setUserActive, arg.Active, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const unpublishPost = `-- name: UnpublishPost :execrows
+UPDATE posts SET status = 'draft', updated_at = ? WHERE id = ?
+`
+
+type UnpublishPostParams struct {
+	UpdatedAt string
+	ID        int64
+}
+
+func (q *Queries) UnpublishPost(ctx context.Context, arg UnpublishPostParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, unpublishPost, arg.UpdatedAt, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const updatePost = `-- name: UpdatePost :execrows
+UPDATE posts SET slug = ?, featured = ?, updated_at = ? WHERE id = ?
+`
+
+type UpdatePostParams struct {
+	Slug      string
+	Featured  bool
+	UpdatedAt string
+	ID        int64
+}
+
+func (q *Queries) UpdatePost(ctx context.Context, arg UpdatePostParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updatePost,
+		arg.Slug,
+		arg.Featured,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
