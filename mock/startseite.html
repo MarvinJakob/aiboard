@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KI Perspektiven – Startseite (Mock)</title>
+<style>
+:root{
+  --bg:#EEF1F6;--surface:#fff;--text:#0D1320;--text-2:#4A5466;--accent:#0A5FD6;
+  --border:rgba(13,19,32,.08);--fill:rgba(13,19,32,.06);
+  --glass-tint:rgba(255,255,255,.52);--glass-edge:rgba(255,255,255,.65);
+  --glass-filter:blur(22px) saturate(180%);
+  --ease-out:cubic-bezier(.22,1,.36,1);--dur-fast:160ms;--dur-base:300ms;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0A0C11;--surface:#151922;--text:#F1F3F7;--text-2:#AAB2C0;--accent:#5EA3FF;
+  --border:rgba(255,255,255,.08);--fill:rgba(255,255,255,.07);
+  --glass-tint:rgba(28,32,42,.48);--glass-edge:rgba(255,255,255,.14);
+}}
+@media (prefers-reduced-transparency:reduce){:root{--glass-tint:var(--surface);--glass-filter:none}}
+*{box-sizing:border-box;margin:0}
+body{font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+body::before{content:"";position:fixed;inset:0;z-index:-1;
+  background:radial-gradient(60% 50% at 15% 10%,rgba(10,95,214,.22),transparent),
+             radial-gradient(50% 45% at 85% 20%,rgba(150,80,255,.18),transparent)}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:8px}
+.glass{background:var(--glass-tint);-webkit-backdrop-filter:var(--glass-filter);backdrop-filter:var(--glass-filter);
+  border:1px solid var(--glass-edge);box-shadow:0 8px 32px rgba(0,0,0,.12)}
+header{position:sticky;top:12px;z-index:10;max-width:1040px;margin:12px auto 0;padding:8px 12px 8px 20px;
+  border-radius:999px;display:flex;align-items:center;gap:16px}
+.logo{font-weight:700;letter-spacing:-.01em}
+nav{flex:1;display:flex;justify-content:center;gap:4px}
+nav a,.pill{padding:8px 16px;border-radius:999px;font-size:15px;transition:background var(--dur-fast)}
+nav a:hover,.pill:hover{background:var(--fill)}
+.lang{display:flex;background:var(--fill);border-radius:999px;padding:2px}
+.lang span{padding:4px 12px;border-radius:999px;font-size:13px}
+.lang .on{background:var(--surface);font-weight:600}
+main{max-width:1040px;margin:0 auto;padding:40px 20px 64px}
+h1{font-size:clamp(32px,5vw,52px);line-height:1.1;letter-spacing:-.02em;max-width:18ch}
+.lead{color:var(--text-2);font-size:18px;max-width:52ch;margin:16px 0 32px}
+h2{font-size:24px;margin:56px 0 20px}
+.hero{position:relative;border-radius:28px;overflow:hidden;min-height:340px;color:#fff;
+  background:linear-gradient(135deg,#0A5FD6,#6B3FD6 60%,#C04BB5);display:flex;align-items:flex-end}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 30%,rgba(0,0,0,.55))}
+.hero-body{position:relative;z-index:1;padding:32px;max-width:640px}
+.tag{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.9}
+.hero h3{font-size:clamp(24px,3.5vw,34px);line-height:1.2;margin:8px 0}
+.hero-ctrl{position:absolute;z-index:1;right:20px;bottom:20px;display:flex;align-items:center;gap:8px;
+  padding:8px 12px;border-radius:999px;background:rgba(0,0,0,.35);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.25)}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.5)}
+.dot.on{background:#fff;width:22px;border-radius:8px}
+.arrow{width:28px;height:28px;border-radius:50%;border:0;background:rgba(255,255,255,.2);color:#fff;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:24px;
+  transition:transform var(--dur-base) var(--ease-out)}
+.card:hover{transform:translateY(-4px)}
+.icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:22px;background:var(--fill);margin-bottom:16px}
+.card h3{font-size:20px;margin-bottom:6px}
+.card p{color:var(--text-2);font-size:15px}
+.meta{margin-top:16px;font-size:14px;color:var(--accent);font-weight:600}
+.posts{background:var(--surface);border:1px solid var(--border);border-radius:24px;overflow:hidden}
+.post{display:flex;justify-content:space-between;gap:16px;padding:18px 24px;border-top:1px solid var(--border);transition:background var(--dur-fast)}
+.post:first-child{border-top:0}
+.post:hover{background:var(--fill)}
+.post small{color:var(--text-2);white-space:nowrap}
+footer{max-width:1040px;margin:0 auto;padding:24px 20px 40px;color:var(--text-2);font-size:14px;
+  display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between}
+footer nav{flex:none;gap:16px}
+@media (max-width:640px){header{border-radius:28px;flex-wrap:wrap}nav{order:3;flex-basis:100%}.post{flex-direction:column;gap:4px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="glass">
+  <a class="logo" href="#">KI Perspektiven</a>
+  <nav aria-label="Hauptnavigation"><a href="#themen">Themen</a><a href="#blog">Blog</a></nav>
+  <div class="lang" role="group" aria-label="Sprache"><span class="on">DE</span><span>EN</span></div>
+  <a class="pill" href="#">Redaktion</a>
+</header>
+
+<main>
+  <h1>KI verstehen. Sinnvoll einsetzen.</h1>
+  <p class="lead">Klare Einordnungen, praktische Beispiele und Orientierung für Fach- und Führungskräfte sowie Entwicklungsteams.</p>
+
+  <section aria-label="Aktuelle Beiträge">
+    <div class="hero">
+      <div class="hero-body">
+        <span class="tag">Neu · KI-Audit</span>
+        <h3>Wie bereit ist Ihr Unternehmen für KI? Der Selbsttest in fünf Dimensionen</h3>
+        <p>Beantworten Sie wenige Fragen und erhalten Sie eine verständliche Auswertung.</p>
+      </div>
+      <div class="hero-ctrl" aria-label="Steuerung">
+        <button class="arrow" aria-label="Zurück">‹</button>
+        <span class="dot on"></span><span class="dot"></span><span class="dot"></span>
+        <button class="arrow" aria-label="Weiter">›</button>
+      </div>
+    </div>
+  </section>
+
+  <h2 id="themen">Themen</h2>
+  <div class="grid">
+    <a class="card" href="#"><div class="icon">🔍</div><h3>KI-Audit</h3><p>Reifegrad bestimmen und Handlungsfelder erkennen.</p><div class="meta">12 Beiträge →</div></a>
+    <a class="card" href="#"><div class="icon">📊</div><h3>Datenanalyse</h3><p>Aus Daten Entscheidungen machen – mit KI-Unterstützung.</p><div class="meta">8 Beiträge →</div></a>
+    <a class="card" href="#"><div class="icon">💻</div><h3>Softwareentwicklung</h3><p>Wie KI-Assistenten den Entwicklungsalltag verändern.</p><div class="meta">15 Beiträge →</div></a>
+  </div>
+
+  <h2 id="blog">Aktuelle Beiträge</h2>
+  <div class="posts">
+    <a class="post" href="#"><span>Was „AI Slop“ für Ihre Content-Strategie bedeutet</span><small>05.11.2026 · KI-Audit</small></a>
+    <a class="post" href="#"><span>Erste Schritte mit KI in der Datenanalyse</span><small>02.11.2026 · Datenanalyse</small></a>
+    <a class="post" href="#"><span>Code-Reviews mit KI: Chancen und Grenzen</span><small>29.10.2026 · Softwareentwicklung</small></a>
+    <a class="post" href="#"><span>Fünf Fragen vor dem ersten KI-Projekt</span><small>24.10.2026 · KI-Audit</small></a>
+  </div>
+</main>
+
+<footer>
+  <span>© 2026 KI Perspektiven</span>
+  <nav aria-label="Rechtliches"><a href="#">Impressum</a><a href="#">Datenschutz</a></nav>
+</footer>
+</body>
+</html>
