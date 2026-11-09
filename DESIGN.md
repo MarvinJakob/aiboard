@@ -51,7 +51,7 @@ Ebene 0  Hintergrund   ruhiger, langsam wandernder Farbverlauf    –
 3. **Regular ist der Standard.** Die Variante weichzeichnet den Hintergrund und gleicht die Helligkeit an. Sie eignet sich für Kopfzeile, Menü und Dialog, also für Elemente mit viel Text. [Q2]
 4. **Clear nur über bildstarken Flächen.** Auf der Webseite betrifft das nur die Steuerung im Beitrags-Karussell. Liegt Clear-Glas über hellem Bildmaterial, kommt eine dunkle Abdunklung mit etwa 35 % Deckkraft darunter. [Q2]
 5. **Kein Glas auf Glas.** Ein Element mit `backdrop-filter` bildet eine *Backdrop Root*. Verschachteltes Glas sieht dann nur noch den Inhalt seines Elternelements und wirkt falsch. Deshalb liegt das Glas der Kopfzeile auf einer eigenen Hintergrundschicht und das Themenmenü daneben (siehe Abschnitt 5). [Q7]
-6. **Scroll-Kanten-Effekt.** Unter der Kopfzeile wird der Inhalt beim Scrollen weich unscharf und blasser, damit die Kopfzeile lesbar bleibt. [Q2]
+6. **Scroll-Kanten-Effekt.** Unter der Kopfzeile blendet ein weicher Farbverlauf den Inhalt beim Scrollen ab, damit die Kopfzeile lesbar bleibt. Die Scroll-Kante verwendet keinen Blur-Filter über dem Text (Ticket [#72](https://github.com/MarvinJakob/aiboard/issues/72)). Die Glasflächen der Bedienelemente behalten ihren Backdrop-Blur. Dies passt den aus [Q2] abgeleiteten Effekt zugunsten scharfer Schrift an.
 7. **Systemeinstellungen haben Vorrang.** Bei reduzierter Transparenz oder erhöhtem Kontrast wird Glas zu einer opaken Fläche. [Q2] [Q4] [Q5]
 
 ### Inventar
