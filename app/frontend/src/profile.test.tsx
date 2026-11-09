@@ -53,3 +53,44 @@ describe('Ticket 41: Profilseite', () => {
     }
   });
 });
+
+describe('Ticket 42: Profil in der Hauptnavigation', () => {
+  const paths = ['', '/blog', '/blog/neu', '/themen/softwareentwicklung', '/themen/ai-audit', '/themen/ai-audit/daten-und-wissen', '/impressum', '/datenschutz', '/gibt-es-nicht'];
+
+  it.each(['de', 'en'])('verlinkt das Profil von allen öffentlichen Seitentypen in %s ohne aktive Markierung', async (lang) => {
+    const { router } = renderApp(`/${lang}`);
+    for (const path of paths) {
+      await act(() => router.navigate(`/${lang}${path}`));
+      const nav = screen.getByRole('navigation', { name: /^(Hauptnavigation|Main navigation)$/ });
+      const link = within(nav).getByRole('link', { name: lang === 'de' ? 'Profil' : 'Profile' });
+      expect(link).toHaveAttribute('href', `/${lang}/profil`);
+      expect(link).not.toHaveAttribute('aria-current');
+      expect(link).not.toHaveClass('is-active');
+    }
+  });
+
+  it.each(['de', 'en'])('öffnet das Profil in %s per Tastatur, markiert es aktiv und wechselt die Sprache', async (lang) => {
+    const user = userEvent.setup();
+    const { router } = renderApp(`/${lang}/blog`);
+    const nav = screen.getByRole('navigation', { name: /^(Hauptnavigation|Main navigation)$/ });
+    const link = within(nav).getByRole('link', { name: lang === 'de' ? 'Profil' : 'Profile' });
+    for (let i = 0; i < 12 && document.activeElement !== link; i++) await user.tab();
+    expect(link).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(router.state.location.pathname).toBe(`/${lang}/profil`);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Marvin Jakob' })).toBeInTheDocument();
+    expect(link).toHaveAttribute('aria-current', 'page');
+    expect(link).toHaveClass('is-active');
+    const next = lang === 'de' ? 'en' : 'de';
+    await user.click(screen.getByRole('button', { name: next === 'en' ? 'English' : 'Deutsch' }));
+    const translated = within(nav).getByRole('link', { name: next === 'en' ? 'Profile' : 'Profil' });
+    expect(translated).toHaveAttribute('href', `/${next}/profil`);
+    expect(translated).toHaveAttribute('aria-current', 'page');
+    expect(translated).toHaveClass('is-active');
+    await act(() => router.navigate(`/${next}/profil/`));
+    expect(translated).toHaveAttribute('aria-current', 'page');
+    await user.click(within(nav).getByRole('link', { name: 'Blog' }));
+    expect(translated).not.toHaveAttribute('aria-current');
+    expect(translated).not.toHaveClass('is-active');
+  });
+});

@@ -10,6 +10,7 @@ export const en: Messages = {
     topics: 'Topics',
     blog: 'Blog',
     audit: 'AI Audit',
+    profile: 'Profile',
     lang: 'Language',
     account: 'Sign in for editors',
     theme: 'Dark mode',

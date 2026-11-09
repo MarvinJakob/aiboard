@@ -13,6 +13,8 @@ export function Header() {
   const { lang, t } = useLang();
   const { pathname } = useLocation();
   const inBlog = pathname.startsWith(`/${lang}/blog`);
+  const profilePath = href(lang, '/profil');
+  const inProfile = pathname === profilePath || pathname === `${profilePath}/`;
   // Das AI Audit ist ein eigener Navigationsbereich (Ticket #21), seine Seiten bleiben unter /themen/ai-audit.
   const auditRoot = auditPath(lang);
   const inAudit = pathname === auditRoot || pathname.startsWith(`${auditRoot}/`);
@@ -38,6 +40,13 @@ export function Header() {
             aria-current={pathname === auditRoot ? 'page' : inAudit ? 'true' : undefined}
           >
             {t('nav.audit')}
+          </Link>
+          <Link
+            className={`nav-btn press${inProfile ? ' is-active' : ''}`}
+            to={profilePath}
+            aria-current={inProfile ? 'page' : undefined}
+          >
+            {t('nav.profile')}
           </Link>
         </div>
         <div className="nav-actions">
