@@ -166,8 +166,22 @@ Umgebungsvariablen, siehe [.env.example](.env.example):
 | `SERVE_MEDIA` | aus | `/media/*` ohne Caddy direkt ausliefern (nur Entwicklung) |
 | `TRUST_PROXY` | aus | IP-Adresse für die Begrenzung der Anmeldeversuche aus `X-Forwarded-For` lesen. Nur hinter Caddy setzen (in `compose.yaml` aktiv). |
 | `USER_PASSWORD` | – | Nur für `server user create`: Passwort ohne Abfrage übergeben |
+| `REQUIRE_LOGIN` | aus (in `compose.yaml`: an) | Zugangsschutz vor dem Livegang: Die Webseite sieht nur, wer angemeldet ist (Ticket #49). |
 
 Das Sitzungscookie erhält das Attribut `Secure`, wenn `PUBLIC_BASE_URL` mit `https://` beginnt.
+
+### Zugangsschutz vor dem Livegang
+
+Solange Impressum und Datenschutz Platzhalter sind, zeigt die Produktion die Webseite nur angemeldeten Konten (`REQUIRE_LOGIN`, Ticket #49):
+
+- Ohne Sitzung führt jede Seite zur Anmeldung `/redaktion/anmelden?weiter=…`. Nach der Anmeldung geht es zur aufgerufenen Seite zurück. Die öffentliche API antwortet mit `401`.
+- Frei bleiben die Anmeldung samt Redaktionsfrontend, `/api/auth/*`, `/api/admin/*` (eigene Prüfung) und `/api/health`.
+- `robots.txt` sperrt die ganze Seite, alle Antworten tragen `X-Robots-Tag: noindex, nofollow`.
+- Bilder unter `/media/*` liefert Caddy direkt aus. Sie bleiben über ihre zufälligen Dateinamen erreichbar, sind aber ohne Anmeldung nirgends verlinkt.
+- Testpersonen erhalten ein eigenes Konto, z. B. `docker compose exec -it backend /server user create --email ADRESSE --role editor`. Ein reines Lesekonto gibt es noch nicht.
+- Zum Livegang `REQUIRE_LOGIN=false` in die `.env` schreiben und `docker compose up -d` ausführen.
+
+Lokal mit Schutz testen: `REQUIRE_LOGIN=true DEV_SEED=true DATABASE_PATH=../.build/dev.db go run ./cmd/server`.
 
 ## Abweichungen von ARCHITECTURE.md
 

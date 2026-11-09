@@ -30,7 +30,9 @@ type Config struct {
 	SecureCookies bool
 	// TrustProxy liest die IP-Adresse aus X-Forwarded-For (hinter Caddy).
 	TrustProxy bool
-	Log        *slog.Logger
+	// RequireLogin zeigt die öffentliche Webseite nur angemeldeten Konten (Zugangsschutz vor dem Livegang, Ticket #49).
+	RequireLogin bool
+	Log          *slog.Logger
 }
 
 // New baut den vollständigen HTTP-Handler aus API, Medien und Webseite.
@@ -52,7 +54,11 @@ func New(cfg Config) http.Handler {
 	cfg.EditorialSite.Register(mux)
 	cfg.Site.Register(mux)
 	g := &guard{accounts: cfg.Accounts, trustProxy: cfg.TrustProxy, log: cfg.Log}
-	return recoverer(cfg.Log, logRequests(cfg.Log, g.wrap(mux)))
+	h := g.wrap(mux)
+	if cfg.RequireLogin {
+		h = (&gate{accounts: cfg.Accounts, log: cfg.Log}).wrap(h)
+	}
+	return recoverer(cfg.Log, logRequests(cfg.Log, h))
 }
 
 // mediaHandler liefert hochgeladene Bilder aus. Dateinamen ändern sich nie, daher ein Jahr Cache.
