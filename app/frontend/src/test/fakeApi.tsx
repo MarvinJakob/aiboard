@@ -20,9 +20,13 @@ const topicData: Record<string, Record<L, Omit<Topic, 'lang' | 'postCount' | 'sl
     de: { title: 'AI in Data Analytics', label: 'Data Analytics', summary: 'Kurz Data', intro: 'Einführung Data Analytics' },
     en: { title: 'AI in Data Analytics', label: 'Data Analytics', summary: 'Short data', intro: 'Intro data analytics' },
   },
+  prozessautomatisierung: {
+    de: { title: 'Prozessautomatisierung', label: 'Prozessautomatisierung', summary: 'Kurz Automatisierung', intro: 'Einführung Prozessautomatisierung' },
+    en: { title: 'Process Automation', label: 'Process Automation', summary: 'Short automation', intro: 'Intro process automation' },
+  },
 };
 
-interface FakePost {
+export interface FakePost {
   slug: string;
   date: string;
   featured: boolean;
