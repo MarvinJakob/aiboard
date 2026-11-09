@@ -119,6 +119,8 @@ func (s *Site) resolve(r *http.Request, parts []string) (int, Meta, error) {
 		return http.StatusOK, s.staticMeta(lang, "blog", "/blog"), nil
 	case len(rest) == 1 && rest[0] == "profil":
 		return http.StatusOK, s.staticMeta(lang, "profile", "/profil"), nil
+	case len(rest) == 1 && rest[0] == "ki-einsatzfelder":
+		return http.StatusOK, s.staticMeta(lang, "aiUses", "/ki-einsatzfelder"), nil
 	case len(rest) == 1 && rest[0] == "impressum":
 		return http.StatusOK, s.staticMeta(lang, "imprint", "/impressum"), nil
 	case len(rest) == 1 && rest[0] == "datenschutz":

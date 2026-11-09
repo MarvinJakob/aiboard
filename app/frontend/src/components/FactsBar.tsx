@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { home } from '../i18n/home';
+import { aiUses } from '../i18n/aiUses';
 import { prefersReducedMotion } from '../lib/jump';
 import { useLang, type Lang } from '../lib/lang';
 import { Footnote } from './Footnote';
@@ -13,10 +13,10 @@ const percent = (v: number, lang: Lang, decimals: number) =>
     maximumFractionDigits: decimals,
   }).format(v / 100);
 
-/** Kennzahlen zur KI-Nutzung in Deutschland mit Quellenverweis (mock/landing, Abschnitt Kennzahlen). */
+/** Kennzahlen zur KI-Nutzung in Deutschland mit Quellenverweis (Seite KI-Einsatzfelder). */
 export function FactsBar() {
   const { lang } = useLang();
-  const c = home[lang];
+  const c = aiUses[lang];
   return (
     <section className="container" aria-labelledby="facts-title">
       <h2 className="sr-only" id="facts-title">

@@ -1,115 +1,81 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import { usePosts, useTopics, type PostSummary, type Topic } from '../api/client';
-import portrait from '../assets/marvin-jakob.jpg';
-import { AiTasks } from '../components/AiTasks';
-import { Art } from '../components/Art';
-import { AuditTeaser } from '../components/AuditTeaser';
-import { FactsBar } from '../components/FactsBar';
-import { Footnote, sourceId } from '../components/Footnote';
 import { Icon } from '../components/Icon';
-import { TopicLens } from '../components/TopicLens';
-import { home } from '../i18n/home';
+import { Rich } from '../components/Rich';
+import { SourceList } from '../components/SourceList';
+import { AI_USES_PATH, home, type FocusTopic } from '../i18n/home';
+import { auditPath } from '../lib/audit';
 import { jumpTo } from '../lib/jump';
 import { href, useLang } from '../lib/lang';
-import { formatDate, useHead, usePageFocus } from '../lib/page';
-import { seedOf, topicColor } from '../lib/topicStyle';
+import { useHead, usePageFocus } from '../lib/page';
 
-const BLOG_POSTS = 3;
+/** Ziel des Buttons „Themen entdecken“. */
+const FOCUS_ID = 'fokus-title';
 
 /**
- * Startseite nach dem Landing-Page-Entwurf mock/landing/index.html (Ticket #73):
- * Hero, Kennzahlen, Was ist KI?, Themen, KI-Audit, Neu im Blog, Profil und Quellen.
+ * Startseite nach der Textvorlage content/Landingpage.md (Ticket #78): Hook, Aktuell im Fokus und Grundlagen,
+ * danach die Quellen zu den belegten Zahlen. Alle Texte stehen in i18n/home.ts; die Themenkarten sind statisch,
+ * weil jede Karte einen eigenen Aufhänger und Linktext aus der Vorlage hat, den die Themen-API nicht kennt.
  */
 export function Home() {
   const { lang, t } = useLang();
   const c = home[lang];
   const h1 = usePageFocus<HTMLHeadingElement>();
-  const topics = useTopics(lang);
-  const [hot, setHot] = useState<string | null>(null);
   useHead(t('siteName'), c.description);
 
   return (
     <div className="landing">
       <section className="container landing-hero" aria-labelledby="hero-title">
-        <div>
-          <p className="eyebrow">{c.eyebrow}</p>
-          <h1 className="display" id="hero-title" tabIndex={-1} ref={h1}>
-            {c.display1}
-            <br />
-            <span>{c.display2}</span>
-          </h1>
-          <p className="lead">{c.lead}</p>
-          <div className="hero-actions">
-            <a className="btn btn-primary btn-lift press" href="#audit-title" onClick={(e) => jumpTo(e, 'audit-title')}>
-              {c.ctaAudit} <Icon name="arrowRight" />
-            </a>
-            <a className="text-link" href="#ki-title" onClick={(e) => jumpTo(e, 'ki-title')}>
-              {c.ctaWhat} <Icon name="arrowDown" />
-            </a>
-          </div>
+        <p className="hook">
+          <Rich text={c.hook} />
+        </p>
+        <h1 className="display" id="hero-title" tabIndex={-1} ref={h1}>
+          {c.display1}
+          <br />
+          <span>{c.display2}</span>
+        </h1>
+        <p className="lead">{c.lead}</p>
+        <div className="hero-actions">
+          <a className="btn btn-primary btn-lift press" href={`#${FOCUS_ID}`} onClick={(e) => jumpTo(e, FOCUS_ID)}>
+            {c.ctaTopics} <Icon name="arrowDown" />
+          </a>
+          <Link className="btn btn-secondary press" to={auditPath(lang)}>
+            {c.ctaAudit} <Icon name="arrowRight" />
+          </Link>
         </div>
-        <TopicLens topics={topics.data} hot={hot} onHot={setHot} />
       </section>
 
-      <FactsBar />
-      <WhatIsAi />
-      <Topics topics={topics} hot={hot} onHot={setHot} />
-      <AuditTeaser />
-      <NewPosts />
-      <Person />
-      <Sources />
+      <Focus />
+      <Basics />
+      <SourceList title={c.sourcesTitle} sources={c.sources} />
     </div>
   );
 }
 
-function WhatIsAi() {
+function Focus() {
   const { lang } = useLang();
   const c = home[lang];
   return (
-    <section className="container section" aria-labelledby="ki-title">
-      <div className="what">
-        <div className="definition">
-          <p className="eyebrow">{c.whatEyebrow}</p>
-          <h2 id="ki-title" tabIndex={-1}>
-            {c.whatTitle}
+    <section className="container section" aria-labelledby={FOCUS_ID}>
+      <div className="landing-head">
+        <div>
+          <p className="eyebrow">{c.focusEyebrow}</p>
+          <h2 id={FOCUS_ID} tabIndex={-1}>
+            {c.focusTitle}
           </h2>
-          <p className="muted">
-            {c.whatText}
-            <Footnote n={2} />
-          </p>
-          <blockquote>
-            <p>{c.definition}</p>
-            <footer>
-              {c.definitionSource}
-              <Footnote n={1} />
-            </footer>
-          </blockquote>
         </div>
-        <AiTasks />
+        <p className="muted">{c.focusText}</p>
       </div>
-
-      <ul className="limits" aria-label={c.limitsLabel}>
-        {c.limits.map((l, i) => (
-          <li className="limit" key={l.title}>
-            <h3>
-              <Icon name={(['alert', 'clock', 'target'] as const)[i]} />
-              {l.title}
-            </h3>
-            <p>
-              {l.text}
-              {l.sources.map((n) => (
-                <Footnote key={n} n={n} />
-              ))}
-            </p>
-          </li>
+      <ul className="topics">
+        {c.topics.map((tp) => (
+          <TopicCard key={tp.slug} topic={tp} />
         ))}
       </ul>
     </section>
   );
 }
 
-// Grafiken der Themenkarten aus dem Entwurf. Unbekannte Themen erhalten den Verlauf ohne Linienbild.
+// Grafiken der Themenkarten. Unbekannte Themen erhalten den Verlauf der Softwareentwicklung ohne Linienbild.
 const TOPIC_ART: Record<string, { bg: string; art?: ReactNode }> = {
   softwareentwicklung: {
     bg: 'linear-gradient(135deg, #6366f1, #8b5cf6 50%, #22d3ee)',
@@ -162,58 +128,43 @@ const TOPIC_ART: Record<string, { bg: string; art?: ReactNode }> = {
       </>
     ),
   },
+  'ki-tipps-und-tricks': {
+    bg: 'linear-gradient(135deg, #db2777, #a855f7 55%, #fbbf24)',
+    art: (
+      <>
+        <g fill="none" stroke="rgba(255,255,255,.6)" strokeWidth="2">
+          <path d="M150 50a30 30 0 0 0-18 54v14h36v-14a30 30 0 0 0-18-54Z" />
+          <path d="M138 128h24M142 138h16" />
+          <path d="M150 30v-8M110 50l-6-6M190 50l6-6M100 82h-8M200 82h8" />
+        </g>
+        <circle cx="255" cy="155" r="60" fill="rgba(255,255,255,.12)" />
+      </>
+    ),
+  },
+  'modelle-und-kosten': {
+    bg: 'linear-gradient(135deg, #4f46e5, #0ea5e9 55%, #10b981)',
+    art: (
+      <>
+        <g fill="none" stroke="rgba(255,255,255,.6)" strokeWidth="2">
+          <path d="M150 40v100M110 60h80" />
+          <path d="m110 60-20 40h40l-20-40ZM190 60l-20 30h40l-20-30Z" />
+          <path d="M125 140h50" />
+        </g>
+        <circle cx="45" cy="35" r="60" fill="rgba(255,255,255,.12)" />
+      </>
+    ),
+  },
 };
 
-function Topics({
-  topics,
-  hot,
-  onHot,
-}: {
-  topics: ReturnType<typeof useTopics>;
-  hot: string | null;
-  onHot: (slug: string | null) => void;
-}) {
-  const { lang, t } = useLang();
-  const c = home[lang];
-  return (
-    <section className="container section" aria-labelledby="themen-title">
-      <div className="landing-head">
-        <div>
-          <p className="eyebrow">{c.topicsEyebrow}</p>
-          <h2 id="themen-title">{c.topicsTitle}</h2>
-        </div>
-        <p className="muted">{c.topicsText}</p>
-      </div>
-      {topics.isPending ? (
-        <p className="loading" role="status">
-          {t('loading')}
-        </p>
-      ) : topics.isError ? (
-        <SectionError onRetry={() => void topics.refetch()} />
-      ) : (
-        <div className="topics">
-          {topics.data.map((tp) => (
-            <TopicCard key={tp.slug} topic={tp} hot={hot === tp.slug} onHot={onHot} />
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
-function TopicCard({ topic, hot, onHot }: { topic: Topic; hot: boolean; onHot: (slug: string | null) => void }) {
-  const { lang, t } = useLang();
+/**
+ * Themenkarte mit fett gesetztem Aufhänger. Nur der Textlink führt zur Themenseite; per CSS deckt er die
+ * ganze Karte ab. So bleiben die Quellenverweise im Aufhänger eigene Links statt verschachtelter Links.
+ */
+function TopicCard({ topic }: { topic: FocusTopic }) {
+  const { lang } = useLang();
   const art = TOPIC_ART[topic.slug] ?? { bg: TOPIC_ART.softwareentwicklung.bg };
-  const contentLang = topic.lang !== lang ? topic.lang : undefined;
   return (
-    <Link
-      className={`topic${hot ? ' is-hot' : ''}`}
-      to={href(lang, `/themen/${topic.slug}`)}
-      onPointerEnter={() => onHot(topic.slug)}
-      onPointerLeave={() => onHot(null)}
-      onFocus={() => onHot(topic.slug)}
-      onBlur={() => onHot(null)}
-    >
+    <li className="topic">
       <div className="topic-art" style={{ background: art.bg }} aria-hidden="true">
         {art.art && (
           <svg viewBox="0 0 300 180" preserveAspectRatio="xMidYMid slice">
@@ -222,129 +173,72 @@ function TopicCard({ topic, hot, onHot }: { topic: Topic; hot: boolean; onHot: (
         )}
       </div>
       <div className="topic-body">
-        <span className="label">
-          <span className="dot" style={{ '--c': topicColor(topic.slug) } as CSSProperties} aria-hidden="true" />
-          <span lang={contentLang}>{topic.label}</span>
-        </span>
-        <h3 lang={contentLang}>{topic.title}</h3>
-        <p lang={contentLang}>{topic.summary}</p>
-        <span className="text-link">
-          {t('toTopic')} <Icon name="arrowRight" />
-        </span>
-      </div>
-    </Link>
-  );
-}
-
-function NewPosts() {
-  const { lang, t } = useLang();
-  const c = home[lang];
-  const posts = usePosts(lang);
-  const latest = (posts.data ?? []).slice(0, BLOG_POSTS);
-  // Ohne veröffentlichte Beiträge entfällt der Abschnitt.
-  if (posts.isSuccess && latest.length === 0) return null;
-  return (
-    <section className="container section" aria-labelledby="blog-title">
-      <div className="landing-head">
-        <div>
-          <p className="eyebrow">{c.blogEyebrow}</p>
-          <h2 id="blog-title">{c.blogTitle}</h2>
-        </div>
-        <Link className="text-link" to={href(lang, '/blog')}>
-          {t('allPosts')} <Icon name="arrowRight" />
+        <h3>{topic.title}</h3>
+        <p className="topic-hook">
+          <strong>
+            <Rich text={topic.hook} />
+          </strong>
+        </p>
+        <p>
+          <Rich text={topic.text} />
+        </p>
+        <Link className="text-link topic-link" to={href(lang, `/themen/${topic.slug}`)}>
+          {topic.link} <Icon name="arrowRight" />
         </Link>
       </div>
-      {posts.isPending ? (
-        <p className="loading" role="status">
-          {t('loading')}
-        </p>
-      ) : posts.isError ? (
-        <SectionError onRetry={() => void posts.refetch()} />
-      ) : (
-        <ul className="posts">
-          {latest.map((p) => (
-            <PostCard key={p.slug} post={p} />
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-}
-
-function PostCard({ post }: { post: PostSummary }) {
-  const { lang, t } = useLang();
-  const contentLang = post.lang !== lang ? post.lang : undefined;
-  return (
-    <li>
-      <Link className="post" to={href(lang, `/blog/${post.slug}`)}>
-        <Art className="post-art" topic={post.topics[0]?.slug} seed={seedOf(post.slug)} image={post.cover} sizes="(max-width: 760px) 100vw, 360px" />
-        <div className="post-body">
-          <p className="meta">
-            <time dateTime={post.publishedAt}>{formatDate(post.publishedAt, lang)}</time>
-            {post.topics.map((tp) => (
-              <span className="tag" key={tp.slug}>
-                <span className="dot" style={{ '--c': topicColor(tp.slug) } as CSSProperties} aria-hidden="true" />
-                {tp.label}
-              </span>
-            ))}
-            {contentLang && <span className="tag tag--lang">{t('onlyIn', { language: t(`langName.${post.lang}`) })}</span>}
-          </p>
-          <h3 lang={contentLang}>{post.title}</h3>
-          <p lang={contentLang}>{post.summary}</p>
-        </div>
-      </Link>
     </li>
   );
 }
 
-function Person() {
+function Basics() {
   const { lang } = useLang();
   const c = home[lang];
   return (
-    <section className="container section" aria-labelledby="person-title">
-      <div className="person">
-        <img src={portrait} alt={c.portraitAlt} width={220} height={220} loading="lazy" decoding="async" />
+    <section className="container section" aria-labelledby="ki-title">
+      <div className="basics">
         <div>
-          <h2 className="eyebrow" id="person-title">
-            {c.personEyebrow}
-          </h2>
-          <blockquote>{c.personQuote}</blockquote>
-          <p>{c.personText}</p>
-          <Link className="text-link" to={href(lang, '/profil')}>
-            {c.personLink} <Icon name="arrowRight" />
-          </Link>
+          <p className="eyebrow">{c.basicsEyebrow}</p>
+          <h2 id="ki-title">{c.basicsTitle}</h2>
+          <p className="lead">
+            <Rich text={c.basicsText} />
+          </p>
+        </div>
+        <div className="check">
+          <h3>{c.checkTitle}</h3>
+          {c.checkText.map((p, i) => (
+            <p className="muted" key={i}>
+              <Rich text={p} />
+            </p>
+          ))}
         </div>
       </div>
-    </section>
-  );
-}
 
-function Sources() {
-  const { lang } = useLang();
-  const c = home[lang];
-  return (
-    <section className="container sources" aria-labelledby="quellen-title">
-      <h2 id="quellen-title">{c.sourcesTitle}</h2>
-      <ol>
-        {c.sources.map((s, i) => (
-          <li key={s.url} id={sourceId(i + 1)} tabIndex={-1}>
-            {s.label}: <a href={s.url}>{s.title}</a>
-            {s.note && ` – ${s.note}`}
+      <div className="limits-intro">
+        <h3>{c.limitsTitle}</h3>
+        <p className="muted">
+          <Rich text={c.limitsText} />
+        </p>
+      </div>
+      <ul className="limits">
+        {c.limits.map((l, i) => (
+          <li className="limit" key={l.title}>
+            <p>
+              <strong>
+                <Icon name={(['alert', 'clock', 'target'] as const)[i]} />
+                {l.title}
+              </strong>{' '}
+              <Rich text={l.text} />
+            </p>
           </li>
         ))}
-      </ol>
-    </section>
-  );
-}
+      </ul>
 
-function SectionError({ onRetry }: { onRetry: () => void }) {
-  const { t } = useLang();
-  return (
-    <div className="empty" role="alert">
-      <p>{t('error.title')}</p>
-      <button className="btn btn-secondary press" type="button" onClick={onRetry}>
-        {t('error.retry')}
-      </button>
-    </div>
+      <p className="more">
+        {c.moreText}{' '}
+        <Link className="text-link" to={href(lang, AI_USES_PATH)}>
+          {c.moreLink} <Icon name="arrowRight" />
+        </Link>
+      </p>
+    </section>
   );
 }
