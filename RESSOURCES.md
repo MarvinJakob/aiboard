@@ -11,6 +11,7 @@ Dieses Repository enthält die Webseite „KI Perspektiven“, einen klickbaren 
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Technisches Konzept: Frontend und Backend, API, Datenmodell und Betrieb. |
 | [DESIGN.md](DESIGN.md) | Gestaltungskonzept mit Farben, Typografie, Komponenten und Vorgaben zur Barrierefreiheit. |
 | [mock/design/index.html](mock/design/index.html) | Klickbarer HTML-Entwurf zur Vorschau des Designs. |
+| [mock/landing/index.html](mock/landing/index.html) | Landing-Page-Entwurf mit Einordnung „Was ist KI?“, Themen, interaktivem KI-Audit-Teaser und Blog. |
 | [mock/profil/index.html](mock/profil/index.html) | Profilentwurf für Marvin Jakob mit AI-Schwerpunkten und Projekterfahrung. |
 | [ressources/profil/](ressources/profil/) | Porträtbilder für den Profilentwurf. |
 | [app/README.md](app/README.md) | Einstieg in die lokale Entwicklung: Anwendung starten, Tests ausführen, Code erzeugen und Konfiguration nachschlagen. |
