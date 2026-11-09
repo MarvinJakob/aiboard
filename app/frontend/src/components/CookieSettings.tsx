@@ -77,7 +77,7 @@ export function CookieSettings() {
         <div className="consent-backdrop">
           <div
             ref={dialog}
-            className="consent glass"
+            className="consent"
             role="dialog"
             aria-modal="true"
             aria-labelledby="consent-title"

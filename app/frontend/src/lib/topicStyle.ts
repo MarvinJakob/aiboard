@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { IconName } from '../components/Icon';
 
-// Themenfarben dienen nur Grafiken, Icons und Farbpunkten (Design.md, Abschnitt 4).
+// Themenfarben dienen nur Grafiken, Icons und Farbpunkten; Bedeutung tragen immer Text und Symbol.
 // Die generierten Verläufe sind Platzhalter, bis die Bildsprache geklärt ist (Design.md, Abschnitt 12).
 interface Palette {
   c1: string;
@@ -12,13 +12,15 @@ interface Palette {
   dot: string;
 }
 
+// cimt × Apple (DESIGN_CIMT.md): Alle Grafiken stehen auf dunklem Blau mit orangefarbenen und blaugrauen
+// Lichtern. Die Themen unterscheiden sich über Mischung und Lage der Lichter sowie ihr Symbol.
 const PALETTES: Record<string, Palette> = {
-  software: { c1: 'rgba(129,140,248,.95)', c2: 'rgba(192,132,252,.9)', c3: 'rgba(34,211,238,.75)', b1: '#1e1b4b', b2: '#3730a3', dot: '#6366f1' },
-  audit: { c1: 'rgba(45,212,191,.9)', c2: 'rgba(74,222,128,.75)', c3: 'rgba(56,189,248,.8)', b1: '#042f2e', b2: '#0f5e6e', dot: '#0d9488' },
-  data: { c1: 'rgba(251,146,60,.95)', c2: 'rgba(244,63,94,.85)', c3: 'rgba(250,204,21,.8)', b1: '#431407', b2: '#9a3412', dot: '#ea580c' },
-  automation: { c1: 'rgba(56,189,248,.9)', c2: 'rgba(59,130,246,.85)', c3: 'rgba(52,211,153,.75)', b1: '#082f49', b2: '#1e40af', dot: '#0284c7' },
-  skills: { c1: 'rgba(244,114,182,.95)', c2: 'rgba(192,132,252,.9)', c3: 'rgba(251,191,36,.8)', b1: '#500724', b2: '#86198f', dot: '#db2777' },
-  costs: { c1: 'rgba(250,204,21,.9)', c2: 'rgba(132,204,22,.85)', c3: 'rgba(52,211,153,.75)', b1: '#1a2e05', b2: '#3f6212', dot: '#65a30d' },
+  software: { c1: 'rgba(220,110,20,.7)', c2: 'rgba(144,165,184,.35)', c3: 'rgba(245,166,107,.4)', b1: '#12263a', b2: '#1d3a54', dot: '#dc6e14' },
+  audit: { c1: 'rgba(144,165,184,.45)', c2: 'rgba(220,110,20,.55)', c3: 'rgba(95,125,149,.5)', b1: '#0f2131', b2: '#23455f', dot: '#5f7d95' },
+  data: { c1: 'rgba(245,166,107,.6)', c2: 'rgba(220,110,20,.5)', c3: 'rgba(144,165,184,.3)', b1: '#172f44', b2: '#2a2f3a', dot: '#f39b56' },
+  automation: { c1: 'rgba(95,125,149,.6)', c2: 'rgba(245,166,107,.45)', c3: 'rgba(220,110,20,.4)', b1: '#12263a', b2: '#2b4a63', dot: '#8fa3b4' },
+  skills: { c1: 'rgba(220,110,20,.55)', c2: 'rgba(245,166,107,.5)', c3: 'rgba(95,125,149,.45)', b1: '#1c292f', b2: '#33404a', dot: '#b85a12' },
+  costs: { c1: 'rgba(144,165,184,.4)', c2: 'rgba(220,110,20,.45)', c3: 'rgba(245,166,107,.35)', b1: '#0d1d2b', b2: '#203a4f', dot: '#3f6585' },
 };
 
 const TOPICS: Record<string, { palette: keyof typeof PALETTES; icon: IconName }> = {

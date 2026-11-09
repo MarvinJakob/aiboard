@@ -12,6 +12,7 @@ export const de = {
     lang: 'Sprache',
     account: 'Anmeldung für die Redaktion',
     theme: 'Dunkle Darstellung',
+    menu: 'Menü',
   },
   langName: { de: 'Deutsch', en: 'Englisch' },
   crumbs: 'Pfadnavigation',

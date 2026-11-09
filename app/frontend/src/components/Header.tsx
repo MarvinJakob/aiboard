@@ -8,7 +8,15 @@ import type { NavState } from '../lib/page';
 import { artBackground, topicStyle } from '../lib/topicStyle';
 import { Icon } from './Icon';
 
-/** Gemeinsame Kopfzeile aller öffentlichen Seiten (Anforderungen 2 und 7). */
+/**
+ * Gemeinsame Kopfzeile aller öffentlichen Seiten (Anforderungen 2 und 7) als schwebende Kapsel im
+ * cimt × Apple-Design (DESIGN_CIMT.md, Abschnitte 4 bis 6). Der Glaseffekt entsteht allein per CSS.
+ *
+ * Bis 650 px Breite klappt ein Menübutton Navigation und Sprachwahl auf; Darstellung und Kontoeinstieg
+ * bleiben in der oberen Zeile. Das Menü schließt bei Linkwahl, Seitenwechsel, Klick außerhalb,
+ * Fokuswechsel aus der Kopfzeile und `Esc` (dann mit Fokus zurück auf den Menübutton).
+ * Auf breiten Ansichten ist der Button per CSS ausgeblendet und das Menü immer sichtbar.
+ */
 export function Header() {
   const { lang, t } = useLang();
   const { pathname } = useLocation();
@@ -20,37 +28,86 @@ export function Header() {
   const inAudit = pathname === auditRoot || pathname.startsWith(`${auditRoot}/`);
   const inTopic = pathname.startsWith(`/${lang}/themen/`) && !inAudit;
 
+  const [menuOpen, setMenuOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const menuId = useId();
+
+  useEffect(() => setMenuOpen(false), [pathname, lang]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (!navRef.current?.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('click', onClick);
+    return () => document.removeEventListener('click', onClick);
+  }, [menuOpen]);
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Escape' || !menuOpen) return;
+    // Ein offenes Themenmenü schließt zuerst; das übernimmt TopicsMenu selbst.
+    if (navRef.current?.querySelector('.nav-topics [aria-expanded="true"]')) return;
+    setMenuOpen(false);
+    toggleRef.current?.focus();
+  };
+
   return (
     <header className="site-header">
-      <nav className="bar" aria-label={t('nav.label')}>
-        {/* Glas auf eigener Schicht, damit das Themenmenü kein Glas-auf-Glas wird (Design.md, Abschnitt 5) */}
-        <span className="bar-glass glass" aria-hidden="true" />
-        <Link className="brand press" to={href(lang)} aria-label={t('nav.brand')}>
-          <span className="brand-mark" aria-hidden="true" />
+      <nav
+        className="container header-inner"
+        aria-label={t('nav.label')}
+        ref={navRef}
+        onKeyDown={onKeyDown}
+        onBlur={(e) => {
+          if (menuOpen && e.relatedTarget && !navRef.current?.contains(e.relatedTarget as Node)) setMenuOpen(false);
+        }}
+      >
+        <Link className="brand" to={href(lang)} aria-label={t('nav.brand')}>
+          <BrandMark />
           <span className="brand-name">{t('siteName')}</span>
         </Link>
-        <div className="nav-main">
-          <TopicsMenu active={inTopic} />
-          <Link className="nav-btn press" to={href(lang, '/blog')} aria-current={inBlog ? 'page' : undefined}>
-            {t('nav.blog')}
-          </Link>
-          <Link
-            className={`nav-btn press${inAudit ? ' is-active' : ''}`}
-            to={auditRoot}
-            aria-current={pathname === auditRoot ? 'page' : inAudit ? 'true' : undefined}
-          >
-            {t('nav.audit')}
-          </Link>
-          <Link
-            className={`nav-btn press${inProfile ? ' is-active' : ''}`}
-            to={profilePath}
-            aria-current={inProfile ? 'page' : undefined}
-          >
-            {t('nav.profile')}
-          </Link>
+        <button
+          ref={toggleRef}
+          className="menu-toggle"
+          type="button"
+          aria-expanded={menuOpen}
+          aria-controls={menuId}
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <span className="menu-lines" aria-hidden="true" />
+          {t('nav.menu')}
+        </button>
+        <div
+          className={`header-menu${menuOpen ? ' is-open' : ''}`}
+          id={menuId}
+          onClick={(e) => {
+            if ((e.target as Element).closest('a')) setMenuOpen(false);
+          }}
+        >
+          <div className="nav-main">
+            <TopicsMenu active={inTopic} />
+            <Link className="nav-btn press" to={href(lang, '/blog')} aria-current={inBlog ? 'page' : undefined}>
+              {t('nav.blog')}
+            </Link>
+            <Link
+              className={`nav-btn press${inAudit ? ' is-active' : ''}`}
+              to={auditRoot}
+              aria-current={pathname === auditRoot ? 'page' : inAudit ? 'true' : undefined}
+            >
+              {t('nav.audit')}
+            </Link>
+            <Link
+              className={`nav-btn press${inProfile ? ' is-active' : ''}`}
+              to={profilePath}
+              aria-current={inProfile ? 'page' : undefined}
+            >
+              {t('nav.profile')}
+            </Link>
+          </div>
+          <LangSwitch />
         </div>
         <div className="nav-actions">
-          <LangSwitch />
           <ThemeToggle />
           {/* Kontoeinstieg (Anforderung 6): führt zur Anmeldung im eigenständigen Redaktionsfrontend,
               daher ein normaler Link statt einer Route dieser App. */}
@@ -60,6 +117,15 @@ export function Header() {
         </div>
       </nav>
     </header>
+  );
+}
+
+/** Wortmarke „ki.“ mit orangefarbenem Punkt, rein dekorativ (DESIGN_CIMT.md, Abschnitt 4). */
+export function BrandMark() {
+  return (
+    <span className="brand-mark" aria-hidden="true">
+      ki<span>.</span>
+    </span>
   );
 }
 
@@ -122,7 +188,8 @@ function TopicsMenu({ active }: { active: boolean }) {
         <span>{t('nav.topics')}</span>
         <Icon name="chevDown" className="chev" strokeWidth={2} />
       </button>
-      <div className={`popover glass${open ? ' is-open' : ''}`} id={menuId}>
+      {/* Opake Fläche: Glas bleibt der Navigationskapsel vorbehalten (DESIGN_CIMT.md, Abschnitt 5). */}
+      <div className={`popover${open ? ' is-open' : ''}`} id={menuId}>
         <ul className="menu-list" ref={listRef}>
           {topics?.filter((tp) => tp.slug !== AUDIT_TOPIC).map((tp) => {
             const to = href(lang, `/themen/${tp.slug}`);

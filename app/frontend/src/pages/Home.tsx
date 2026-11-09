@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Icon } from '../components/Icon';
 import { Rich } from '../components/Rich';
@@ -7,6 +6,7 @@ import { auditPath } from '../lib/audit';
 import { jumpTo } from '../lib/jump';
 import { href, useLang } from '../lib/lang';
 import { useHead, usePageFocus } from '../lib/page';
+import { topicStyle } from '../lib/topicStyle';
 
 /** Ziel des Buttons „Themen entdecken“. */
 const FOCUS_ID = 'fokus-title';
@@ -24,23 +24,26 @@ export function Home() {
 
   return (
     <div className="landing">
-      <section className="container landing-hero" aria-labelledby="hero-title">
-        <p className="hook">
-          {c.hook}
-        </p>
-        <h1 className="display" id="hero-title" tabIndex={-1} ref={h1}>
-          {c.display1}
-          <br />
-          <span>{c.display2}</span>
-        </h1>
-        <p className="lead">{c.lead}</p>
-        <div className="hero-actions">
-          <a className="btn btn-primary btn-lift press" href={`#${FOCUS_ID}`} onClick={(e) => jumpTo(e, FOCUS_ID)}>
-            {c.ctaTopics} <Icon name="arrowDown" />
-          </a>
-          <Link className="btn btn-secondary press" to={auditPath(lang)}>
-            {c.ctaAudit} <Icon name="arrowRight" />
-          </Link>
+      <section className="hero-band" aria-labelledby="hero-title">
+        <div className="container hero-grid">
+          <div className="hero-copy">
+            <p className="hook">{c.hook}</p>
+            <h1 className="display" id="hero-title" tabIndex={-1} ref={h1}>
+              {c.display1}
+              <br />
+              <span>{c.display2}</span>
+            </h1>
+            <p className="lead">{c.lead}</p>
+            <div className="hero-actions">
+              <a className="btn btn-primary press" href={`#${FOCUS_ID}`} onClick={(e) => jumpTo(e, FOCUS_ID)}>
+                {c.ctaTopics} <Icon name="arrowDown" />
+              </a>
+              <Link className="btn btn-secondary press" to={auditPath(lang)}>
+                {c.ctaAudit} <Icon name="arrowRight" />
+              </Link>
+            </div>
+          </div>
+          <HeroVisual />
         </div>
       </section>
 
@@ -65,110 +68,91 @@ function Focus() {
         <p className="muted">{c.focusText}</p>
       </div>
       <ul className="topics">
-        {c.topics.map((tp) => (
-          <TopicCard key={tp.slug} topic={tp} />
+        {c.topics.map((tp, i) => (
+          <TopicCard key={tp.slug} topic={tp} index={i} />
         ))}
       </ul>
     </section>
   );
 }
 
-// Grafiken der Themenkarten. Unbekannte Themen erhalten den Verlauf der Softwareentwicklung ohne Linienbild.
-const TOPIC_ART: Record<string, { bg: string; art?: ReactNode }> = {
-  softwareentwicklung: {
-    bg: 'linear-gradient(135deg, #6366f1, #8b5cf6 50%, #22d3ee)',
-    art: (
-      <>
-        <g fill="none" stroke="rgba(255,255,255,.55)" strokeWidth="2">
-          <path d="M110 70 80 90l30 20M190 70l30 20-30 20M165 60l-30 60" />
+/**
+ * Dekorative Hero-Grafik nach mock/design_cimt: vier Stationen um einen orangefarbenen KI-Kern.
+ * Sie ist sprachneutral und ohne Text gezeichnet, weil sie in beiden Sprachen erscheint; Screenreader überspringen sie.
+ */
+function HeroVisual() {
+  const stations = [
+    { x: 108, y: 106, icon: 'm8 6-6 6 6 6m8-12 6 6-6 6m-3-15-2 18' },
+    { x: 376, y: 106, icon: 'M4 3v17h17M8 15v-4m5 4V7m5 8v-6' },
+    { x: 108, y: 298, icon: 'M2 9h6v6H2zM16 2h6v6h-6zM16 16h6v6h-6zM8 12h4m4-7h-4v14h4' },
+    { x: 376, y: 298, icon: 'M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9V15h7v-1.1A6 6 0 0 0 12 3Z' },
+  ];
+  return (
+    <div className="hero-visual" aria-hidden="true">
+      <svg viewBox="0 0 560 480">
+        <defs>
+          <pattern id="hero-dots" width="22" height="22" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="1" fill="#fff" opacity=".14" />
+          </pattern>
+          <radialGradient id="hero-glow">
+            <stop stopColor="#dc6e14" stopOpacity=".18" />
+            <stop offset="1" stopColor="#dc6e14" stopOpacity="0" />
+          </radialGradient>
+          <linearGradient id="hero-core" x2="1" y2="1">
+            <stop stopColor="#ef8e3f" />
+            <stop offset="1" stopColor="#dc6e14" />
+          </linearGradient>
+        </defs>
+        <rect width="560" height="480" fill="url(#hero-dots)" />
+        <circle cx="280" cy="240" r="224" fill="url(#hero-glow)" />
+        <g fill="none" stroke="#90a5b8">
+          <circle cx="280" cy="240" r="171" opacity=".22" />
+          <circle cx="280" cy="240" r="123" opacity=".3" strokeDasharray="3 8" />
+          <path d="M280 69v342M109 240h342" opacity=".15" />
+          <path d="M280 69a171 171 0 0 1 171 171M109 240a171 171 0 0 0 171 171" stroke="#dc6e14" strokeWidth="2" />
+          <path d="m184 182 53 24m86 68 53 24m-192 0 53-24m86-68 53-24" stroke="#dc6e14" opacity=".7" />
         </g>
-        <circle cx="250" cy="30" r="60" fill="rgba(255,255,255,.12)" />
-      </>
-    ),
-  },
-  'ai-audit': {
-    bg: 'linear-gradient(135deg, #0d9488, #22c55e 55%, #38bdf8)',
-    art: (
-      <>
-        <g fill="none" stroke="rgba(255,255,255,.55)" strokeWidth="2">
-          <rect x="105" y="45" width="90" height="100" rx="12" />
-          <path d="M125 80h50M125 100h50M125 120h30" />
-          <path d="m170 120 8 8 16-18" />
+        <g fill="#dc6e14">
+          <circle cx="280" cy="69" r="4" />
+          <circle cx="451" cy="240" r="4" />
+          <circle cx="280" cy="411" r="4" />
+          <circle cx="109" cy="240" r="4" />
         </g>
-        <circle cx="40" cy="160" r="70" fill="rgba(255,255,255,.12)" />
-      </>
-    ),
-  },
-  'data-analytics': {
-    bg: 'linear-gradient(135deg, #ea580c, #ec4899 55%, #facc15)',
-    art: (
-      <>
-        <g fill="none" stroke="rgba(255,255,255,.6)" strokeWidth="2">
-          <path d="M90 130V95M125 130V70M160 130V85M195 130V55" />
-          <path d="M85 135h120" />
-          <path d="m90 80 35-25 35 15 35-30" strokeDasharray="4 6" />
-        </g>
-        <circle cx="260" cy="150" r="60" fill="rgba(255,255,255,.12)" />
-      </>
-    ),
-  },
-  prozessautomatisierung: {
-    bg: 'linear-gradient(135deg, #0284c7, #2563eb 55%, #34d399)',
-    art: (
-      <>
-        <g fill="none" stroke="rgba(255,255,255,.6)" strokeWidth="2">
-          <rect x="70" y="60" width="44" height="34" rx="8" />
-          <rect x="186" y="96" width="44" height="34" rx="8" />
-          <path d="M114 77h26a12 12 0 0 1 12 12v12a12 12 0 0 0 12 12h22" />
-          <path d="m178 107 8 6-8 6" />
-        </g>
-        <circle cx="40" cy="30" r="60" fill="rgba(255,255,255,.12)" />
-      </>
-    ),
-  },
-  'ki-tipps-und-tricks': {
-    bg: 'linear-gradient(135deg, #db2777, #a855f7 55%, #fbbf24)',
-    art: (
-      <>
-        <g fill="none" stroke="rgba(255,255,255,.6)" strokeWidth="2">
-          <path d="M150 50a30 30 0 0 0-18 54v14h36v-14a30 30 0 0 0-18-54Z" />
-          <path d="M138 128h24M142 138h16" />
-          <path d="M150 30v-8M110 50l-6-6M190 50l6-6M100 82h-8M200 82h8" />
-        </g>
-        <circle cx="255" cy="155" r="60" fill="rgba(255,255,255,.12)" />
-      </>
-    ),
-  },
-  'modelle-und-kosten': {
-    bg: 'linear-gradient(135deg, #ca8a04, #65a30d 55%, #34d399)',
-    art: (
-      <>
-        <g fill="none" stroke="rgba(255,255,255,.6)" strokeWidth="2">
-          <path d="M150 40v100M110 60h80" />
-          <path d="m110 60-20 40h40l-20-40ZM190 60l-20 30h40l-20-30Z" />
-          <path d="M125 140h50" />
-        </g>
-        <circle cx="45" cy="35" r="60" fill="rgba(255,255,255,.12)" />
-      </>
-    ),
-  },
-};
+        {stations.map((s) => (
+          <g key={s.x + s.y * 1000}>
+            <rect x={s.x} y={s.y} width="76" height="76" rx="18" fill="#172f44" stroke="#3b5062" />
+            <path
+              d={s.icon}
+              transform={`translate(${s.x + 20} ${s.y + 20}) scale(1.5)`}
+              fill="none"
+              stroke="#f5a66b"
+              strokeWidth="1.3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </g>
+        ))}
+        <circle cx="280" cy="240" r="72" fill="#dc6e14" opacity=".09" />
+        <circle cx="280" cy="240" r="59" fill="url(#hero-core)" />
+        <circle cx="280" cy="240" r="49" fill="none" stroke="#ffb57b" opacity=".65" />
+        <path d="m280 214 6.5 15.5L302 236l-15.5 6.5L280 258l-6.5-15.5L258 236l15.5-6.5Z" fill="#12263a" />
+      </svg>
+    </div>
+  );
+}
 
 /**
  * Themenkarte mit fett gesetztem Aufhänger. Nur der Textlink führt zur Themenseite; per CSS deckt er die
  * ganze Karte ab. So bleibt die Karte ohne verschachtelte interaktive Elemente und hat einen klaren Linktext.
+ * Nummer und Symbol oben folgen den Themenkarten aus mock/design_cimt.
  */
-function TopicCard({ topic }: { topic: FocusTopic }) {
+function TopicCard({ topic, index }: { topic: FocusTopic; index: number }) {
   const { lang } = useLang();
-  const art = TOPIC_ART[topic.slug] ?? { bg: TOPIC_ART.softwareentwicklung.bg };
   return (
     <li className="topic">
-      <div className="topic-art" style={{ background: art.bg }} aria-hidden="true">
-        {art.art && (
-          <svg viewBox="0 0 300 180" preserveAspectRatio="xMidYMid slice">
-            {art.art}
-          </svg>
-        )}
+      <div className="topic-top" aria-hidden="true">
+        <span>{String(index + 1).padStart(2, '0')}</span>
+        <Icon name={topicStyle(topic.slug).icon} />
       </div>
       <div className="topic-body">
         <h3>{topic.title}</h3>
