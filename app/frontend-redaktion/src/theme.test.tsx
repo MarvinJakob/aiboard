@@ -12,6 +12,18 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('Ticket #20: Helle und dunkle Darstellung in der Redaktion', () => {
+  it.each([
+    ['Anmeldung', null, '/anmelden'],
+    ['Beitragsliste', EDITOR, '/'],
+    ['Benutzerverwaltung', ADMIN, '/benutzer'],
+  ])('startet die %s trotz dunkler Systemeinstellung hell', async (_name, me, path) => {
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true })));
+    fakeBackend(me, (r) => (r.path.startsWith('/api/admin') ? Response.json({ items: [] }) : undefined));
+    renderAt(path);
+    expect(await screen.findByRole('button', { name: 'Dunkle Darstellung' })).toHaveAttribute('aria-pressed', 'false');
+    expect(theme()).toBe('light');
+  });
+
   it('bietet den Schalter schon auf der Anmeldeseite an', async () => {
     fakeBackend();
     const user = userEvent.setup();
