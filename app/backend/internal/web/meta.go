@@ -88,11 +88,13 @@ func render(index []byte, m Meta) ([]byte, error) {
 }
 
 // texts enthält die Seitentitel und Beschreibungen für Seiten ohne Datenbankinhalt.
+// Die Startseitentexte stehen gleichlautend in frontend/src/i18n/home.ts (title, description); ein Test prüft das.
 var texts = map[service.Lang]map[string]string{
 	service.DE: {
 		"profile.title":  "Marvin Jakob – Profil",
 		"profile.desc":   "Marvin Jakob: IT-Berater und Full-Stack-Entwickler. Mein Hintergrund und meine Fragen zu KI in Softwareentwicklung, Data Analytics und AI Audit.",
-		"home.desc":      "KI Perspektiven ordnet künstliche Intelligenz verständlich ein: was sie kann, wo ihre Grenzen liegen und wie Unternehmen ihren KI-Reifegrad einschätzen.",
+		"home.title":     "KI verstehen. Sinnvoll einsetzen.",
+		"home.desc":      "Praxiswissen für den professionellen Einsatz von KI. Mit klarem Blick auf Nutzen, Grenzen und Verantwortung.",
 		"aiUses.title":   "Wofür KI heute eingesetzt wird",
 		"aiUses.desc":    "Sieben typische Aufgaben von KI mit belegten Beispielen und Zahlen zur KI-Nutzung in Deutschland.",
 		"blog.title":     "Blog",
@@ -107,7 +109,8 @@ var texts = map[service.Lang]map[string]string{
 	service.EN: {
 		"profile.title":  "Marvin Jakob – Profile",
 		"profile.desc":   "Marvin Jakob: IT consultant and full-stack developer. My background and questions about AI in software development, data analytics and AI audit.",
-		"home.desc":      "KI Perspektiven explains artificial intelligence in plain terms: what it can do, where its limits are and how companies assess their AI maturity.",
+		"home.title":     "Understand AI. Use it wisely.",
+		"home.desc":      "Practical knowledge for the professional use of AI. With a clear view of benefits, limits and responsibility.",
 		"aiUses.title":   "What AI is used for today",
 		"aiUses.desc":    "Seven typical tasks of AI with documented examples and figures on AI use in Germany.",
 		"blog.title":     "Blog",

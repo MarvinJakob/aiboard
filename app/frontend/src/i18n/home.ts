@@ -1,217 +1,313 @@
 import type { Lang } from '../lib/lang';
 
-/** Fließtext mit Inline-Code: Texte stehen unverändert, `{ code }` wird zu <code>. */
-export type RichText = (string | { code: string })[];
+/**
+ * Fließtext mit Auszeichnung: Texte stehen unverändert, `{ code }` wird zu <code>, `{ em }` zu <em>.
+ * `{ em }` entspricht der Hervorhebung `*…*` der Textvorlage.
+ */
+export type RichText = (string | { code: string } | { em: string })[];
 
 /** Pfad der ausführlichen Einordnung zu KI-Einsatzfeldern (Seite AiUses). */
 export const AI_USES_PATH = '/ki-einsatzfelder';
 
-/** Eine Themenkarte im Abschnitt „Aktuell im Fokus“. */
-export interface FocusTopic {
-  /** Slug der Themenseite unter /{lang}/themen/{slug}. */
-  slug: string;
+/** Die drei Themen der Startseite; der Slug ist zugleich Sprungziel und Pfad der Themenseite. */
+export type HomeTopicSlug = 'data-analytics' | 'softwareentwicklung' | 'modelle-und-kosten';
+
+/** Texte der Illustration „Wissen in Verbindung bringen“ (Data Analytics). */
+export interface DataArt {
+  label: string;
+  kicker: string;
+  sources: [mails: string, tickets: string, documents: string];
+  contextLabel: string;
+  context: [string, string];
+  analysis: string;
+  foot: string;
+}
+
+/** Texte der Illustration „Zusammenarbeit weiterdenken“ (Softwareentwicklung). */
+export interface CodeArt {
+  label: string;
+  kicker: string;
+  title: [string, string];
+  workflow: [task: string, agent: string, review: string];
+  skills: [title: string, text: string];
+  guardrails: [title: string, text: string];
+  responsibility: string;
+}
+
+/** Texte der Illustration „Die gesamte Aufgabe betrachten“ (Modelle und Kosten). */
+export interface CostsArt {
+  label: string;
+  kicker: string;
+  title: [string, string];
+  items: [model: string, tools: string, review: string];
+  total: [string, string];
+}
+
+/** Ein ausführlicher Themenabschnitt: Leitfrage, alle Absätze der Vorlage und Artikel-Verweis. */
+export interface HomeTopic<A> {
+  slug: HomeTopicSlug;
   title: string;
-  /** Aufhänger: eine Frage oder eine überraschende Zahl, fett hervorgehoben. */
-  hook: string;
-  /** Kurztext; RichText nur wegen Inline-Code wie `AGENTS.md`. */
-  text: RichText;
-  link: string;
+  /** Kurzzeile im Themenindex unter dem Hero. */
+  teaser: string;
+  question: string;
+  paragraphs: RichText[];
+  articleLink: string;
+  art: A;
 }
 
 interface HomeContent {
+  /** Seitentitel und Beschreibung; serverseitig gleichlautend in backend/internal/web/meta.go. */
+  title: string;
   description: string;
   hook: string;
   display1: string;
   display2: string;
-  lead: string;
+  lead: [string, string];
   ctaTopics: string;
+  ctaNews: string;
   ctaAudit: string;
-  focusEyebrow: string;
-  focusTitle: string;
-  focusText: string;
-  topics: FocusTopic[];
-  basicsEyebrow: string;
-  basicsTitle: string;
-  basicsText: string;
-  checkTitle: string;
-  checkText: string[];
-  limitsTitle: string;
-  limitsText: string;
-  limits: { title: string; text: string }[];
-  moreText: string;
-  moreLink: string;
+  ctaAbout: string;
+  indexLabel: string;
+  topicsEyebrow: string;
+  topicsTitle: [string, string];
+  topicsText: [string, string];
+  topics: [HomeTopic<DataArt>, HomeTopic<CodeArt>, HomeTopic<CostsArt>];
+  auditEyebrow: string;
+  auditTitle: [string, string];
+  auditText: string;
+  auditCta: string;
+  auditStepsLabel: string;
+  auditSteps: [string, string, string];
+  auditStepsText: [string, string];
+  profileEyebrow: string;
+  profileName: string;
+  profileAlt: string;
+  profileText: [string, string];
 }
 
-// Die Startseite zeigt keine Quellenverweise (Ticket #91). Belege für Zahlen und Studienaussagen
-// der Textvorlage content/Landingpage.md (Stand 2026-11-09), damit sie nachvollziehbar bleiben:
-// - „Jedes vierte Unternehmen“ (26 %): Statistisches Bundesamt, research/2026-11-09 Was ist KI und was man damit machen kann.md, Quelle 6
-// - Definition, Abgrenzung zu Regelsoftware, Sprachmodelle und Grenzen: OECD, EU-Kommission und BSI, ebenda, Quellen 2, 3 und 5
-// - 19 Prozent länger: METR (2025), research/2026-11-05 Kosten von KI aus Nutzersicht.md, Quelle 15
-// - 4,50 oder 450 US-Dollar: OpenAI-Preise für gpt-6-luna und gpt-6-astra,
-//   research/2026-11-09 Modelle und Kosten - Preis und Leistung vergleichen.md, Abschnitt 5
-
-/** Texte der Startseite nach content/Landingpage.md, Stand 9. November 2026 (Tickets #78 und #91). */
+/**
+ * Texte der Startseite (Ticket #101). Hero, Leitfragen, Absätze, Hervorhebungen und Artikel-Linktexte stammen
+ * wortgleich aus content/Landingpage_v03.md, Stand 10. November 2026; app.test.tsx prüft die Übereinstimmung.
+ * Zeichensetzung und Schreibweise der Vorlage bleiben bewusst unverändert. Zwischenüberschriften, Kurzzeilen
+ * im Themenindex, Illustrationen, KI-Reifegrad-Banner und Profil-Teaser folgen dem Mock mock/landing_v03/.
+ */
 export const home: Record<Lang, HomeContent> = {
   de: {
-    description:
-      'KI Perspektiven ordnet künstliche Intelligenz verständlich ein: was sie kann, wo ihre Grenzen liegen und wie Unternehmen ihren KI-Reifegrad einschätzen.',
-    hook: 'Jedes vierte Unternehmen in Deutschland nutzt bereits KI. Die spannende Frage ist: wofür – und wie gut?',
+    title: 'KI verstehen. Sinnvoll einsetzen.',
+    description: 'Praxiswissen für den professionellen Einsatz von KI. Mit klarem Blick auf Nutzen, Grenzen und Verantwortung.',
+    hook: 'KI kann viel. Entscheidend ist, wie wir sie einsetzen.',
     display1: 'KI verstehen.',
     display2: 'Sinnvoll einsetzen.',
-    lead: 'Einordnungen und Erfahrungen für Unternehmen, die künstliche Intelligenz verantwortungsvoll nutzen wollen. Ohne Hype, mit Substanz.',
+    lead: ['Praxiswissen für den professionellen Einsatz von KI.', 'Mit klarem Blick auf Nutzen, Grenzen und Verantwortung.'],
     ctaTopics: 'Themen entdecken',
+    ctaNews: 'News',
     ctaAudit: 'KI-Reifegrad einschätzen',
-    focusEyebrow: 'Aktuell im Fokus',
-    focusTitle: 'Was KI gerade spannend macht.',
-    focusText: 'Vier Themen, die uns gerade beschäftigen. Jedes beginnt mit einer Frage, die sich lohnt. Die Auswahl wechselt.',
+    ctaAbout: 'Über mich',
+    indexLabel: 'Direkt zu den Themen',
+    topicsEyebrow: 'Aktuell im Fokus',
+    topicsTitle: ['Gute Fragen.', 'Neue Perspektiven.'],
+    topicsText: ['Den Nutzen sehen. Die Grenzen kennen.', 'Und die richtigen Fragen stellen.'],
     topics: [
       {
-        slug: 'ai-audit',
-        title: 'AI Audit',
-        hook: 'Acht Dimensionen. Drei Reifegrade. Wo steht Ihr Unternehmen?',
-        text: [
-          'Von Strategie und Wirtschaftlichkeit bis Sicherheit: Beantworten Sie einfache Ja/Nein-Fragen und sehen Sie sofort, wo Ihr Unternehmen steht und wo blinde Flecken liegen. Die Fragen der nächsten Stufe werden zu Ihrer To-do-Liste.',
+        slug: 'data-analytics',
+        title: 'Data Analytics',
+        teaser: 'Unternehmenswissen nutzbar machen',
+        question: 'Was musst du der KI immer wieder erklären, damit sie deine Arbeit versteht?',
+        paragraphs: [
+          ['Was eine Abkürzung bedeutet. Warum ein Prozess so läuft. Welche Ausnahme bei einem Kunden gilt. Vieles davon ist für uns selbstverständlich. Für die KI müssen wir es erst zugänglich machen.'],
+          ['Dieses Unternehmenswissen steckt in Köpfen, Mails, Tickets und Dokumenten. Es ist über Jahre gewachsen und über viele Orte verteilt.'],
+          ['Wie wichtig dieses Wissen ist, zeigt sich auch bei der Datenanalyse. Eine Auswertung zeigt zum Beispiel, dass die Bearbeitungszeit im Support steigt. Um mögliche Ursachen zu verstehen, brauchen wir mehr als die Kennzahl: Welche Probleme werden gemeldet? Wo fehlen Informationen? Welche Rückfragen wiederholen sich? Hinweise darauf stehen oft in den Tickets selbst.'],
+          ['Hier wird Unternehmenswissen zum Kontext für Data Analytics.'],
+          ['Mit KI können wir neben strukturierten Daten auch Texte aus Tickets, Mails und Dokumenten untersuchen und miteinander in Beziehung setzen. So lässt sich Wissen in die Analyse einbeziehen, das bisher nur schwer auszuwerten war.'],
+          ['Damit daraus belastbare Erkenntnisse werden, müssen wir klären: Welche Quellen sind verlässlich? Wie aktuell sind sie? Wer darf darauf zugreifen? Und wie überprüfen wir die Ergebnisse?'],
+          ['Was bedeutet das für die Art, wie wir Daten analysieren und fachliche Fragen beantworten?'],
         ],
-        link: 'Selbsteinschätzung starten',
+        articleLink: 'Zum Artikel: Data Analytics mit KI',
+        art: {
+          label: 'Mails, Tickets und Dokumente liefern Kontext für Data Analytics',
+          kicker: 'Wissen in Verbindung bringen',
+          sources: ['Mails', 'Tickets', 'Dokumente'],
+          contextLabel: 'Unternehmenswissen',
+          context: ['Kontext macht', 'den Unterschied.'],
+          analysis: 'Data Analytics',
+          foot: 'Von einzelnen Informationen zu Zusammenhängen.',
+        },
       },
       {
         slug: 'softwareentwicklung',
         title: 'Softwareentwicklung',
-        hook: 'Ein Verbot im Prompt verhindert noch keinen Zugriff.',
-        text: [
-          'Dateien wie ',
-          { code: 'AGENTS.md' },
-          ' geben KI-Agenten Ziele, Arbeitsabläufe und Grenzen mit. Doch das Modell kann Regeln missverstehen oder übergehen. Verbindlich werden Grenzen erst durch passende Zugriffsrechte, Tests und Reviews. So leiten Sie KI-Assistenten mit Guardrails an.',
+        teaser: 'Mit Agenten zusammenarbeiten',
+        question: 'Wenn KI uns die langweilige Arbeit abnimmt, wird Softwareentwicklung endlich kreativer?',
+        paragraphs: [
+          ['Weniger Routine, mehr Raum für gute Ideen: Das ist eines der großen Versprechen von KI.'],
+          ['Wenn Code erstellen, Tests vorbereiten oder Dokumentation schreiben weniger Zeit kosten, könnten wir uns stärker darauf konzentrieren, Probleme zu verstehen, Lösungswege auszuprobieren und Software besser zu gestalten.'],
+          ['Wenn wir jeden Schritt kontrollieren und jeden Vorschlag nacharbeiten müssen, verschiebt sich die Arbeit oft nur.'],
+          ['Spannend wird es beim ', { em: 'Schritt vom KI-Assistenten zum KI-Agenten' }, '. Statt uns nur einzelne Vorschläge zu liefern, kann ein Agent zusammenhängende Aufgaben übernehmen'],
+          ['Er erschließt bestehenden Code, entwickelt und vergleicht Lösungsansätze, setzt Änderungen um und prüft sie mithilfe von Tests und Code-Reviews.'],
+          ['Diese Eigenständigkeit braucht Orientierung und Grenzen.'],
+          ['Mit ', { em: 'Skills' }, ' geben wir der KI bewährte Vorgehensweisen mit und machen Fachwissen für die KI nutzbar.'],
+          ['Durch ', { em: 'Guardrails' }, ' begrenzen wir ihren Handlungsspielraum um bei kritischen Aktionen die kontrolle zu behalten.'],
+          ['Beides hilft uns, Aufgaben gezielt an die KI zu übertragen. Wir legen fest, was sie tun soll und darf, prüfen ihre Ergebnisse und entscheiden, welche Änderungen wir übernehmen.'],
+          ['Die Verantwortung für das Ergebnis bleibt bei uns aber wir müssen nicht mehr jeden Arbeitsschritt selbst ausführen.'],
+          ['So bleibt mehr Zeit, um die richtigen Herausforderungen zu verstehen und Software zu entwickeln, die echten Mehrwert schafft.'],
+          ['Wie sieht diese Zusammenarbeit in der Praxis aus? Im Artikel ', { em: '„KI in der Softwareentwicklung“' }, ' gehen wir genauer darauf ein, welche Aufgaben KI-Agenten übernehmen können, wie Skills sie dabei unterstützen und wie wir mit Guardrails die Kontrolle behalten.'],
         ],
-        link: 'KI-Assistenten mit Guardrails anleiten',
-      },
-      {
-        slug: 'data-analytics',
-        title: 'Data Analytics',
-        hook: 'Was genau ist eigentlich „der Umsatz im letzten Monat“?',
-        text: [
-          'Mit oder ohne Retouren? Welcher Monat, welches Buchungsdatum? KI beantwortet Datenfragen in Alltagssprache, schreibt Analysecode und erstellt Prognosen. Belastbar wird die Antwort aber erst, wenn Ihre Kennzahlen eindeutig definiert sind und Ergebnisse mit den Quelldaten abgeglichen werden.',
-        ],
-        link: 'Daten verstehen und auswerten',
+        articleLink: 'Zum Artikel: KI in der Softwareentwicklung',
+        art: {
+          label: 'Ein KI-Agent setzt eine Aufgabe mit Skills um. Guardrails begrenzen seinen Handlungsspielraum. Menschen prüfen Tests und Review.',
+          kicker: 'Zusammenarbeit weiterdenken',
+          title: ['Vom Assistenten', 'zum Agenten.'],
+          workflow: ['Aufgabe', 'KI-Agent', 'Tests & Review'],
+          skills: ['Skills', 'Wissen & Vorgehen'],
+          guardrails: ['Guardrails', 'Orientierung & Grenzen'],
+          responsibility: 'Die Verantwortung bleibt bei uns.',
+        },
       },
       {
         slug: 'modelle-und-kosten',
         title: 'Modelle und Kosten',
-        hook: '4,50 oder 450 US-Dollar?',
-        text: [
-          'So weit liegen die Kosten für dieselben 10.000 Textaufrufe je nach Modell auseinander. Trotzdem ist das günstigste Modell nicht automatisch die beste Wahl: Ein teureres Modell kann insgesamt weniger kosten, wenn es Korrekturarbeit spart. Entscheidend sind die Gesamtkosten je akzeptiertem Ergebnis.',
+        teaser: 'Den Aufwand als Ganzes verstehen',
+        question: 'Was kostet uns ein günstiges KI-Modell, wenn wir jedes Ergebnis nacharbeiten müssen?',
+        paragraphs: [
+          ['Ein Text ist schnell erstellt. Aber stimmt der Inhalt? Fehlen wichtige Angaben? Und wie lange brauchen wir, bis wir das Ergebnis verwenden können?'],
+          ['Wer Modelle nur nach ihrem Preis vergleicht, übersieht leicht den Aufwand, der danach entsteht. Ein günstiger Aufruf kann teuer werden, wenn wir mehrere Versuche brauchen oder viel korrigieren müssen. Ein teureres Modell kann sich lohnen, wenn es uns diese Arbeit erspart.'],
+          ['Entscheidend ist deshalb: ', { em: 'Was kostet eine erfolgreich erledigte Aufgabe in der Qualität, die wir brauchen?' }],
+          ['Dazu gehören neben den Modellkosten auch Werkzeuge, Betrieb und unsere Zeit für Prüfung und Korrekturen.'],
+          ['Welche Qualität nötig ist, hängt von der Aufgabe ab. Für einen ersten Textentwurf gelten andere Anforderungen als für das Auslesen von Rechnungsdaten.'],
+          ['Öffentliche Ranglisten helfen uns, mögliche Modelle auszuwählen. Wie gut sie zu unserer Arbeit passen, zeigt sich aber erst an eigenen Aufgaben.'],
+          ['Dafür legen wir fest, was ein brauchbares Ergebnis ausmacht, testen verschiedene Modelle mit denselben Fällen und vergleichen Qualität, Zeitaufwand und Gesamtkosten.'],
+          ['So können wir erkennen, wo ein günstiges Modell ausreicht und wann sich ein leistungsfähigeres lohnt.'],
+          ['Wie gehen wir dabei vor? Im Artikel ', { em: '„Modelle und Kosten“' }, ' zeigen wir, welche Kosten in den Vergleich gehören und wie wir mit eigenen Testaufgaben das passende Modell finden.'],
         ],
-        link: 'Das beste Preis-Leistungs-Verhältnis finden',
+        articleLink: 'Zum Artikel: Modelle und Kosten',
+        art: {
+          label: 'Modellkosten, Werkzeuge und Betrieb sowie Prüfung und Korrektur ergeben die Kosten einer erfolgreich erledigten Aufgabe.',
+          kicker: 'Die gesamte Aufgabe betrachten',
+          title: ['Günstiger Aufruf.', 'Gutes Ergebnis?'],
+          items: ['Modellkosten', 'Werkzeuge & Betrieb', 'Prüfung & Korrektur'],
+          total: ['Kosten pro', 'erfolgreicher Aufgabe'],
+        },
       },
     ],
-    basicsEyebrow: 'Grundlagen',
-    basicsTitle: 'Was ist KI – und was kann man damit machen?',
-    basicsText:
-      'KI-Systeme leiten aus ihren Eingaben selbst ab, wie sie ein Ergebnis erzeugen: eine Vorhersage, einen Text, eine Empfehlung oder eine Entscheidung. Das unterscheidet sie von Software, die nur Regeln abarbeitet, die Menschen vorgegeben haben.',
-    checkTitle: 'KI hilft dort, wo sich Ergebnisse prüfen lassen.',
-    checkText: [
-      'Programmieren ist dafür ein gutes Beispiel. Ob ein Vorschlag der KI funktioniert, zeigen automatische Tests, Code-Reviews und Prüfungen, bevor der Code übernommen wird. Viele Fehler fallen so früh auf.',
-      'Prüfbar heißt aber nicht automatisch schneller. In einer randomisierten Studie brauchten erfahrene Entwicklerinnen und Entwickler mit KI-Werkzeugen aus dem Frühjahr 2025 sogar 19 Prozent länger. Ob KI Ihnen Zeit spart, zeigt deshalb erst eine Messung in Ihrem eigenen Arbeitsablauf.',
-    ],
-    limitsTitle: 'Wer versteht, wie KI funktioniert, erkennt ihre Grenzen.',
-    limitsText:
-      'KI-Assistenten wie Chatbots basieren auf großen Sprachmodellen. Ein solches Modell erzeugt Text, indem es anhand gelernter Wahrscheinlichkeiten vorhersagt, welches Wort als Nächstes folgen könnte. Daraus ergeben sich typische Grenzen:',
-    limits: [
-      {
-        title: 'Glaubwürdig heißt nicht richtig.',
-        text: 'Ein Sprachmodell kann Inhalte erfinden, die überzeugend klingen, bis hin zu erfundenen Literaturangaben.',
-      },
-      {
-        title: 'Wissen hat ein Ablaufdatum.',
-        text: 'Ohne Zugriff auf aktuelle Daten kennt ein Modell nur den Stand seiner Trainingsdaten.',
-      },
-      {
-        title: 'Nicht jede Aufgabe braucht ein Sprachmodell.',
-        text: 'Für Prognosen gibt es spezialisierte Modelle. Abläufe mit festen Regeln lassen sich ganz ohne KI automatisieren.',
-      },
-    ],
-    moreText: 'Sie möchten wissen, wofür KI heute schon eingesetzt wird?',
-    moreLink: 'Zur ausführlichen Einordnung',
+    auditEyebrow: 'Der nächste Schritt',
+    auditTitle: ['KI-Reifegrad', 'einschätzen.'],
+    auditText: 'Wo steht dein Unternehmen beim Einsatz von KI?',
+    auditCta: 'Zum KI-Audit',
+    auditStepsLabel: 'Drei Reifegrade',
+    auditSteps: ['Einfach', 'Strukturiert', 'Intelligent'],
+    auditStepsText: ['Den eigenen Stand verstehen.', 'Den nächsten Schritt erkennen.'],
+    profileEyebrow: 'Die Perspektive dahinter',
+    profileName: 'Marvin Jakob.',
+    profileAlt: 'Porträt von Marvin Jakob',
+    profileText: ['Softwareentwicklung, Cloud-Architektur und Business Analyse.', 'Ein praxisnaher Blick auf den professionellen Einsatz von KI.'],
   },
   en: {
-    description:
-      'KI Perspektiven explains artificial intelligence in plain terms: what it can do, where its limits are and how companies assess their AI maturity.',
-    hook: 'One in four companies in Germany already uses AI. The exciting question is: for what – and how well?',
+    title: 'Understand AI. Use it wisely.',
+    description: 'Practical knowledge for the professional use of AI. With a clear view of benefits, limits and responsibility.',
+    hook: 'AI can do a lot. What matters is how we use it.',
     display1: 'Understand AI.',
     display2: 'Use it wisely.',
-    lead: 'Perspectives and experience for companies that want to use artificial intelligence responsibly. No hype, just substance.',
+    lead: ['Practical knowledge for the professional use of AI.', 'With a clear view of benefits, limits and responsibility.'],
     ctaTopics: 'Explore topics',
+    ctaNews: 'News',
     ctaAudit: 'Assess your AI maturity',
-    focusEyebrow: 'Currently in focus',
-    focusTitle: 'What makes AI exciting right now.',
-    focusText: 'Four topics we are currently working on. Each one starts with a question worth asking. The selection changes.',
+    ctaAbout: 'About me',
+    indexLabel: 'Jump to the topics',
+    topicsEyebrow: 'Currently in focus',
+    topicsTitle: ['Good questions.', 'New perspectives.'],
+    topicsText: ['See the benefits. Know the limits.', 'And ask the right questions.'],
     topics: [
       {
-        slug: 'ai-audit',
-        title: 'AI Audit',
-        hook: 'Eight dimensions. Three maturity levels. Where does your company stand?',
-        text: [
-          'From strategy and cost-effectiveness to security: answer simple yes/no questions and see straight away where your company stands and where its blind spots are. The questions of the next level become your to-do list.',
+        slug: 'data-analytics',
+        title: 'Data Analytics',
+        teaser: 'Making company knowledge usable',
+        question: 'What do you keep having to explain to AI so that it understands your work?',
+        paragraphs: [
+          ['What an abbreviation means. Why a process works the way it does. Which exception applies to a particular customer. Much of this is obvious to us. For AI, we first have to make it accessible.'],
+          ['This company knowledge sits in people’s heads, emails, tickets and documents. It has grown over years and is spread across many places.'],
+          ['How important this knowledge is also shows in data analysis. An evaluation shows, for example, that processing times in support are rising. To understand possible causes, we need more than the metric: Which problems are reported? Where is information missing? Which follow-up questions keep coming up? The clues are often in the tickets themselves.'],
+          ['This is where company knowledge becomes context for data analytics.'],
+          ['With AI, we can examine not only structured data but also texts from tickets, emails and documents and relate them to each other. This brings knowledge into the analysis that used to be hard to evaluate.'],
+          ['For this to produce reliable insights, we need to clarify: Which sources are reliable? How up to date are they? Who may access them? And how do we check the results?'],
+          ['What does this mean for the way we analyse data and answer business questions?'],
         ],
-        link: 'Start self-assessment',
+        articleLink: 'Read the article: Data Analytics with AI',
+        art: {
+          label: 'Emails, tickets and documents provide context for data analytics',
+          kicker: 'Connecting knowledge',
+          sources: ['Emails', 'Tickets', 'Documents'],
+          contextLabel: 'Company knowledge',
+          context: ['Context makes', 'the difference.'],
+          analysis: 'Data Analytics',
+          foot: 'From individual pieces of information to connections.',
+        },
       },
       {
         slug: 'softwareentwicklung',
         title: 'Software Development',
-        hook: 'A ban in the prompt does not prevent access.',
-        text: [
-          'Files such as ',
-          { code: 'AGENTS.md' },
-          ' give AI agents goals, workflows and boundaries. But the model can misunderstand or disregard rules. Boundaries only become binding through suitable access permissions, tests and reviews. This is how you guide AI assistants with guardrails.',
+        teaser: 'Working together with agents',
+        question: 'If AI takes the boring work off our hands, will software development finally become more creative?',
+        paragraphs: [
+          ['Less routine, more room for good ideas: that is one of the big promises of AI.'],
+          ['If writing code, preparing tests or documenting takes less time, we could focus more on understanding problems, trying out solutions and designing better software.'],
+          ['If we have to check every step and rework every suggestion, the work often just shifts.'],
+          ['It gets exciting with the ', { em: 'step from AI assistant to AI agent' }, '. Instead of only giving us individual suggestions, an agent can take on connected tasks.'],
+          ['It explores existing code, develops and compares approaches, implements changes and checks them with tests and code reviews.'],
+          ['This autonomy needs direction and limits.'],
+          ['With ', { em: 'skills' }, ', we give AI proven ways of working and make expert knowledge usable for AI.'],
+          ['With ', { em: 'guardrails' }, ', we limit its room for action so that we stay in control of critical actions.'],
+          ['Both help us delegate tasks to AI in a targeted way. We define what it should and may do, check its results and decide which changes we accept.'],
+          ['Responsibility for the result stays with us, but we no longer have to carry out every step ourselves.'],
+          ['That leaves more time to understand the right challenges and build software that creates real value.'],
+          ['What does this collaboration look like in practice? In the article ', { em: '“AI in Software Development”' }, ' we look more closely at which tasks AI agents can take on, how skills support them and how guardrails keep us in control.'],
         ],
-        link: 'Guide AI assistants with guardrails',
-      },
-      {
-        slug: 'data-analytics',
-        title: 'Data Analytics',
-        hook: 'What exactly is “last month’s revenue”?',
-        text: [
-          'Including or excluding returns? Which month, which booking date? AI answers data questions in everyday language, writes analysis code and produces forecasts. But the answer only becomes reliable once your metrics are clearly defined and results are checked against the source data.',
-        ],
-        link: 'Understand and analyse data',
+        articleLink: 'Read the article: AI in Software Development',
+        art: {
+          label: 'An AI agent completes a task using skills. Guardrails limit its room for action. People review tests and code.',
+          kicker: 'Rethinking collaboration',
+          title: ['From assistant', 'to agent.'],
+          workflow: ['Task', 'AI agent', 'Tests & review'],
+          skills: ['Skills', 'Knowledge & approach'],
+          guardrails: ['Guardrails', 'Direction & limits'],
+          responsibility: 'Responsibility stays with us.',
+        },
       },
       {
         slug: 'modelle-und-kosten',
         title: 'Models and Costs',
-        hook: '4.50 or 450 US dollars?',
-        text: [
-          'That is how far apart the costs of the same 10,000 text requests can be, depending on the model. Even so, the cheapest model is not automatically the best choice: a more expensive model can cost less overall if it saves correction work. What matters is the total cost per accepted result.',
+        teaser: 'Seeing the effort as a whole',
+        question: 'What does a cheap AI model cost us if we have to rework every result?',
+        paragraphs: [
+          ['A text is quickly created. But is the content correct? Is important information missing? And how long does it take until we can use the result?'],
+          ['Anyone who compares models only by price easily overlooks the effort that follows. A cheap call can become expensive if we need several attempts or a lot of corrections. A more expensive model can pay off if it saves us this work.'],
+          ['What matters is therefore: ', { em: 'What does a successfully completed task cost at the quality we need?' }],
+          ['Besides model costs, this includes tools, operations and our time for reviews and corrections.'],
+          ['The quality required depends on the task. A first text draft has different requirements than extracting invoice data.'],
+          ['Public rankings help us shortlist possible models. How well they fit our work, however, only shows on our own tasks.'],
+          ['To do this, we define what makes a result usable, test different models with the same cases and compare quality, time spent and total costs.'],
+          ['This shows us where a cheap model is enough and when a more capable one pays off.'],
+          ['How do we go about it? In the article ', { em: '“Models and Costs”' }, ' we show which costs belong in the comparison and how we find the right model with our own test tasks.'],
         ],
-        link: 'Find the best value for money',
+        articleLink: 'Read the article: Models and Costs',
+        art: {
+          label: 'Model costs, tools and operations, plus review and correction add up to the cost of a successfully completed task.',
+          kicker: 'Looking at the whole task',
+          title: ['Cheap call.', 'Good result?'],
+          items: ['Model costs', 'Tools & operations', 'Review & correction'],
+          total: ['Cost per', 'successful task'],
+        },
       },
     ],
-    basicsEyebrow: 'Basics',
-    basicsTitle: 'What is AI – and what can you do with it?',
-    basicsText:
-      'AI systems infer from their inputs how to generate an output: a prediction, a text, a recommendation or a decision. That sets them apart from software that only follows rules defined by people.',
-    checkTitle: 'AI helps where results can be checked.',
-    checkText: [
-      'Programming is a good example. Automated tests, code reviews and checks show whether an AI suggestion works before the code is accepted. This way, many errors are caught early.',
-      'But checkable does not automatically mean faster. In a randomised study, experienced developers using AI tools from early 2025 actually took 19 percent longer. That is why only a measurement in your own workflow shows whether AI saves you time.',
-    ],
-    limitsTitle: 'Understanding how AI works means recognising its limits.',
-    limitsText:
-      'AI assistants such as chatbots are based on large language models. Such a model generates text by using learned probabilities to predict which word could come next. This leads to typical limits:',
-    limits: [
-      {
-        title: 'Plausible does not mean correct.',
-        text: 'A language model can invent content that sounds convincing, right down to made-up references.',
-      },
-      {
-        title: 'Knowledge has an expiry date.',
-        text: 'Without access to current data, a model only knows the state of its training data.',
-      },
-      {
-        title: 'Not every task needs a language model.',
-        text: 'There are specialised models for forecasts. Processes with fixed rules can be automated without any AI at all.',
-      },
-    ],
-    moreText: 'Would you like to know what AI is already being used for today?',
-    moreLink: 'Read the detailed overview',
+    auditEyebrow: 'The next step',
+    auditTitle: ['Assess your', 'AI maturity.'],
+    auditText: 'Where does your company stand in its use of AI?',
+    auditCta: 'Go to the AI audit',
+    auditStepsLabel: 'Three maturity levels',
+    auditSteps: ['Basic', 'Structured', 'Intelligent'],
+    auditStepsText: ['Understand where you stand.', 'Recognise the next step.'],
+    profileEyebrow: 'The perspective behind it',
+    profileName: 'Marvin Jakob.',
+    profileAlt: 'Portrait of Marvin Jakob',
+    profileText: ['Software development, cloud architecture and business analysis.', 'A practical view of the professional use of AI.'],
   },
 };
