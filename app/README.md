@@ -201,7 +201,7 @@ Das Sitzungscookie erhält das Attribut `Secure`, wenn `PUBLIC_BASE_URL` mit `ht
 
 ### Zugangsschutz vor dem Livegang
 
-Solange Impressum und Datenschutz Platzhalter sind, zeigt die Produktion die Webseite nur angemeldeten Konten (`REQUIRE_LOGIN`, Ticket #49):
+Bis zur Freigabe für den öffentlichen Betrieb zeigt die Produktion die Webseite nur angemeldeten Konten (`REQUIRE_LOGIN`, Ticket #49). Die Datenschutzerklärung enthält weiterhin Platzhalter; der Stand des Impressums ist in [docs/impressum-abnahme.md](docs/impressum-abnahme.md) dokumentiert (Ticket #103):
 
 - Ohne Sitzung führt jede Seite zur Anmeldung `/redaktion/anmelden?weiter=…`. Nach der Anmeldung geht es zur aufgerufenen Seite zurück. Die öffentliche API antwortet mit `401`.
 - Frei bleiben die Anmeldung samt Redaktionsfrontend, `/api/auth/*`, `/api/admin/*` (eigene Prüfung) und `/api/health`.
@@ -232,7 +232,7 @@ Lokal mit Schutz testen: `REQUIRE_LOGIN=true DEV_SEED=true DATABASE_PATH=../.bui
 - **Titelbilder:** Erlaubt sind höchstens 5 MB (Ticket #25) statt der 10 MB aus ARCHITECTURE.md, Abschnitt 7. Ein Titelbild gehört genau zu einem Beitrag: Beim Ersetzen oder Entfernen löscht das Backend das alte Bild samt Dateien sofort, statt auf einen späteren Aufräumjob zu warten. Die Alternativtexte bleiben beim Ersetzen erhalten. Lokal ohne Caddy liefert `SERVE_MEDIA=true` die Bilder unter `/media/*` aus.
 - **Zeitumstellung:** Der Editor nennt zu jedem Termin Zeitzone und UTC. Eine wegen der Sommerzeit nicht existierende Uhrzeit lehnt er ab, bei einer doppelt vorkommenden Uhrzeit muss die Redaktion wählen, welche gilt (Ticket #32).
 - **Schriften:** Es werden keine WOFF2-Dateien ausgeliefert, weil das Design-Konzept System-Schriften vorsieht.
-- **Impressum und Datenschutz** sind Platzhalter in `frontend/src/content/legal` und müssen vor dem Livegang ersetzt werden.
+- **Impressum und Datenschutz:** Das Impressum in `frontend/src/content/legal/impressum.{de,en}.md` nennt den persönlichen Diensteanbieter Marvin Jakob, seine freigegebene Privatanschrift, Telefon und E-Mail sowie die journalistisch-redaktionelle Verantwortung (Ticket #103). Die Datenschutzerklärung bleibt ein Platzhalter und muss vor dem Livegang ersetzt werden. Die Freigabe und Prüfung des Impressums stehen in [docs/impressum-abnahme.md](docs/impressum-abnahme.md); der Zugangsschutz bleibt unverändert.
 - **Images und Domain im Betrieb:** Das Image wird auf dem Server gebaut und nicht aus einer Registry gezogen. `REGISTRY` legt nur den Namen fest. Die Seite läuft unter `marvinjakob.de`. `www.marvinjakob.de` und die frühere Adresse `78-47-14-178.sslip.io` leiten über `REDIRECT_DOMAINS` dorthin um. Details in der [Betriebsanleitung](docs/betrieb.md#domain).
 - **KI-Audit-Inhalte:** Die Inhalte stehen nicht in der Datenbank, sondern in `backend/internal/audit/content.json` (ADR 0009). Eine Dimension erscheint nur mit `"released": true`. Die Texte folgen `content/KI Audit.docx`. Daraus abgeleitet sind die Kurzbeschreibungen und die Vorteile je Dimension, die das Dokument nicht ausdrücklich nennt. Marvin Jakob hat die Texte aller acht Dimensionsseiten einschließlich der dokumentierten Abweichungen am 2026-11-06 fachlich freigegeben; Textstand und Nachweis stehen in [docs/audit-dimensionsfreigabe.md](docs/audit-dimensionsfreigabe.md) (Ticket #29).
 - **Reifegrad 0:** Ist Stufe 1 nicht erfüllt, zeigt das Quiz „Nicht angewendet“. Anforderung 10 nennt nur die drei Reifegrade, das Fachdokument sieht diesen Fall aber vor.

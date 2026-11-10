@@ -1,4 +1,4 @@
-import Markdown from 'react-markdown';
+import Markdown, { defaultUrlTransform } from 'react-markdown';
 import type { Lang } from '../lib/lang';
 import { useLang } from '../lib/lang';
 import { useHead, usePageFocus } from '../lib/page';
@@ -13,6 +13,12 @@ const TEXTS: Record<'imprint' | 'privacy', Record<Lang, string>> = {
   privacy: { de: privacyDe, en: privacyEn },
 };
 
+// react-markdown entfernt tel:-Links standardmäßig. Nur Telefonnummern ergänzen;
+// für alle anderen URLs bleibt die eingebaute Sicherheitsprüfung erhalten.
+function legalUrlTransform(url: string) {
+  return /^tel:\+?[0-9][0-9(). -]*$/.test(url) ? url : defaultUrlTransform(url);
+}
+
 export function Legal({ page }: { page: 'imprint' | 'privacy' }) {
   const { lang, t } = useLang();
   const h1 = usePageFocus<HTMLHeadingElement>();
@@ -24,7 +30,7 @@ export function Legal({ page }: { page: 'imprint' | 'privacy' }) {
         {title}
       </h1>
       <div className="prose prose--legal">
-        <Markdown skipHtml>{TEXTS[page][lang]}</Markdown>
+        <Markdown skipHtml urlTransform={legalUrlTransform}>{TEXTS[page][lang]}</Markdown>
       </div>
     </article>
   );
