@@ -76,3 +76,78 @@ func TestRemoveAutomationAndSkillsTopics(t *testing.T) {
 		}
 	}
 }
+
+func TestRemovedTopicsRollbackCompatibility(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		version int64
+	}{
+		{"before_removal", 9},
+		{"after_removal", 10},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			db, err := store.Open(filepath.Join(t.TempDir(), "rollback.db"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer db.Close()
+			p, err := goose.NewProvider(goose.DialectSQLite3, db, migrations.Schema, goose.WithDisableGlobalRegistry(true))
+			if err != nil {
+				t.Fatal(err)
+			}
+			ctx := context.Background()
+			if _, err := p.UpTo(ctx, tc.version); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := p.DownTo(ctx, 4); err != nil {
+				t.Fatal(err)
+			}
+			var count int
+			if err := db.QueryRow(`SELECT COUNT(*) FROM topics WHERE slug = 'prozessautomatisierung'`).Scan(&count); err != nil {
+				t.Fatal(err)
+			}
+			if count != 0 {
+				t.Fatalf("Prozessautomatisierung nach DownTo(4): %d", count)
+			}
+			if _, err := p.Up(ctx); err != nil {
+				t.Fatalf("erneutes Up nach Rollback auf Version 4: %v", err)
+			}
+		})
+	}
+}
+
+func TestRemovedTopicsRollbackKeepsOccupiedID(t *testing.T) {
+	db, err := store.Open(filepath.Join(t.TempDir(), "occupied.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	p, err := goose.NewProvider(goose.DialectSQLite3, db, migrations.Schema, goose.WithDisableGlobalRegistry(true))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	if _, err := p.Up(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`INSERT INTO topics (id, slug, sort_order) VALUES (4, 'anderes-thema', 4)`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := p.Down(ctx); err == nil {
+		t.Fatal("Rollback muss bei belegter ID 4 fehlschlagen")
+	}
+	var slug string
+	if err := db.QueryRow(`SELECT slug FROM topics WHERE id = 4`).Scan(&slug); err != nil {
+		t.Fatal(err)
+	}
+	if slug != "anderes-thema" {
+		t.Fatalf("fremdes Thema überschrieben: %s", slug)
+	}
+	version, err := p.GetDBVersion(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if version != 10 {
+		t.Fatalf("fehlgeschlagenes Rollback hat Version verändert: %d", version)
+	}
+}

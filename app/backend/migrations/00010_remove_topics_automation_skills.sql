@@ -9,8 +9,10 @@ DELETE FROM topics WHERE slug IN ('prozessautomatisierung', 'ki-tipps-und-tricks
 
 -- +goose Down
 -- Stellt die Metadaten aus 00005 und 00008 wieder her. Frühere Beitragszuordnungen lassen sich nicht
--- wiederherstellen. Die IDs vergibt die Datenbank, weil ID 4 inzwischen belegt sein kann.
-INSERT INTO topics (slug, sort_order) VALUES ('prozessautomatisierung', 4), ('ki-tipps-und-tricks', 5);
+-- wiederherstellen. Migration 00005 löscht beim Rollback die feste ID 4; deshalb muss sie erhalten bleiben.
+-- Ist sie inzwischen anderweitig belegt, schlägt das Rollback fehl, statt fremde Daten zu überschreiben.
+INSERT INTO topics (id, slug, sort_order) VALUES (4, 'prozessautomatisierung', 4);
+INSERT INTO topics (slug, sort_order) VALUES ('ki-tipps-und-tricks', 5);
 
 INSERT INTO topic_translations (topic_id, lang, title, label, summary, intro)
 SELECT id, 'de', 'Prozessautomatisierung', 'Prozessautomatisierung',
