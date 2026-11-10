@@ -14,6 +14,7 @@ export const en: Messages = {
     lang: 'Language',
     account: 'Sign in for editors',
     theme: 'Dark mode',
+    menu: 'Menu',
   },
   langName: { de: 'German', en: 'English' },
   crumbs: 'Breadcrumb',

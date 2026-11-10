@@ -3,7 +3,7 @@ import { Link, Outlet, ScrollRestoration, useParams } from 'react-router';
 import { useTopics } from '../api/client';
 import { i18n } from '../i18n';
 import { DEFAULT_LANG, LangContext, href, isLang, useLang, type Lang } from '../lib/lang';
-import { Header } from './Header';
+import { BrandMark, Header } from './Header';
 import { CookieSettings } from './CookieSettings';
 import { NotFound } from '../pages/NotFound';
 
@@ -31,19 +31,11 @@ export function Shell({ lang, children }: { lang: Lang; children: React.ReactNod
     document.documentElement.lang = lang;
   }, [lang]);
 
-  useScrollEffects();
-
   return (
     <LangContext.Provider value={value}>
       <a className="skip-link" href="#main">
         {value.t('skip')}
       </a>
-      <div className="ambient" aria-hidden="true">
-        <span className="blob b1" />
-        <span className="blob b2" />
-        <span className="blob b3" />
-      </div>
-      <div className="scroll-edge" aria-hidden="true" />
       <Header />
       <main id="main" tabIndex={-1}>
         {children}
@@ -63,7 +55,7 @@ function Footer() {
         <div className="footer-grid">
           <div>
             <div className="footer-brand">
-              <span className="brand-mark" aria-hidden="true" />
+              <BrandMark />
               {t('siteName')}
             </div>
             <p className="footer-note">{t('footer.tagline')}</p>
@@ -103,41 +95,4 @@ function Footer() {
       </div>
     </footer>
   );
-}
-
-/** Kopfzeile schrumpft beim Scrollen, Lichtreflex folgt dem Mauszeiger (Design.md, Abschnitte 2 und 5). */
-function useScrollEffects() {
-  useEffect(() => {
-    let ticking = false;
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        document.documentElement.classList.toggle('is-scrolled', window.scrollY > 24);
-        ticking = false;
-      });
-    };
-    let lit: HTMLElement | null = null;
-    const onPointer = (e: PointerEvent) => {
-      if (e.pointerType !== 'mouse') return;
-      let el = (e.target as Element | null)?.closest?.<HTMLElement>('.glass, .bar') ?? null;
-      if (el?.classList.contains('bar')) el = el.querySelector<HTMLElement>('.bar-glass');
-      if (lit && lit !== el) {
-        lit.style.removeProperty('--mx');
-        lit.style.removeProperty('--my');
-      }
-      lit = el;
-      if (!el) return;
-      const r = el.getBoundingClientRect();
-      el.style.setProperty('--mx', `${e.clientX - r.left}px`);
-      el.style.setProperty('--my', `${e.clientY - r.top}px`);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    document.addEventListener('pointermove', onPointer, { passive: true });
-    onScroll();
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      document.removeEventListener('pointermove', onPointer);
-    };
-  }, []);
 }

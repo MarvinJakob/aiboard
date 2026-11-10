@@ -230,6 +230,66 @@ describe('Anforderung 2: Navigation', () => {
   });
 });
 
+describe('Ticket #93: cimt × Apple-Design', () => {
+  it.each([
+    ['de', 'KI verstehen.Sinnvoll einsetzen.', 'Themen entdecken', 'KI-Reifegrad einschätzen'],
+    ['en', 'Understand AI.Use it wisely.', 'Explore topics', 'Assess your AI maturity'],
+  ])('zeigt auf /%s den Hero ohne dekorative Grafik und behält beide Aktionen', async (lang, title, topics, audit) => {
+    renderApp(`/${lang}`);
+    const heading = await screen.findByRole('heading', { level: 1, name: title });
+    const hero = heading.closest('section')!;
+    expect(hero.querySelector('img, svg defs, .hero-visual')).toBeNull();
+    expect(within(hero).getByRole('link', { name: topics })).toHaveAttribute('href', '#fokus-title');
+    expect(within(hero).getByRole('link', { name: audit })).toHaveAttribute('href', `/${lang}/themen/ai-audit`);
+  });
+
+  it.each([
+    ['/de', 'Menü'],
+    ['/en/blog', 'Menu'],
+  ])('klappt auf %s das mobile Menü auf und schließt es mit Esc, Linkwahl und Klick daneben', async (path, label) => {
+    const user = userEvent.setup();
+    const { router } = renderApp(path);
+    const toggle = await screen.findByRole('button', { name: label });
+    const menu = document.getElementById(toggle.getAttribute('aria-controls')!)!;
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(menu).not.toHaveClass('is-open');
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(menu).toHaveClass('is-open');
+    expect(within(menu).getByRole('button', { name: /^(Deutsch|English)$/, pressed: true })).toBeInTheDocument();
+
+    // Ein offenes Themenmenü schließt zuerst, das mobile Menü erst mit dem zweiten Esc.
+    const topics = within(menu).getByRole('button', { name: path.startsWith('/en') ? 'Topics' : 'Themen' });
+    await user.click(topics);
+    await user.keyboard('{Escape}');
+    expect(topics).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await user.keyboard('{Escape}');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveFocus();
+
+    await user.click(toggle);
+    await user.click(document.body);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(toggle);
+    await user.click(within(menu).getByRole('link', { name: path.startsWith('/en') ? 'Profile' : 'Profil' }));
+    expect(router.state.location.pathname).toBe(path.startsWith('/en') ? '/en/profil' : '/de/profil');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('zeigt weder die frühere obere Textleiste noch einen Liquid-Glass-Schalter, aber den Darstellungsschalter', async () => {
+    renderApp('/de');
+    await screen.findByRole('heading', { level: 1 });
+    expect(screen.queryByText(/Perspektiven für die digitale Zukunft/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+    expect(screen.queryByRole('slider')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /glass|glas/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Dunkle Darstellung' })).toBeInTheDocument();
+  });
+});
+
 describe('Anforderung 3: Themenseiten', () => {
   it('zeigt Titel, Einführung und zugeordnete Beiträge; ein Klick öffnet den Beitrag', async () => {
     const user = userEvent.setup();
