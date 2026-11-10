@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"ki-web/backend/internal/api"
 	httpserver "ki-web/backend/internal/http"
 	"ki-web/backend/internal/service"
 )
@@ -156,18 +157,57 @@ func TestGateClosesRobots(t *testing.T) {
 	}
 }
 
-// Ticket #49, Kriterium 5: Ohne Zugangsschutz bleibt die Webseite wie bisher offen.
+// Tickets #49 (Kriterium 5) und #108: Ohne Zugangsschutz – der Standard – sind alle öffentlichen Seiten
+// und die öffentliche API ohne Sitzung erreichbar. Entwürfe bleiben verborgen, die Redaktion geschützt.
 func TestNoGateByDefault(t *testing.T) {
 	srv, _ := newServer(t, true)
-	for _, path := range []string{"/", "/de/blog", "/api/topics?lang=de"} {
-		resp, body := get(t, srv, path)
-		wantStatus(t, resp, body, http.StatusOK)
-		if got := resp.Header.Get("X-Robots-Tag"); got != "" && path != "/" {
-			t.Errorf("%s: unerwartetes X-Robots-Tag %q", path, got)
+	b := newBrowser(t, srv)
+
+	paths := []string{"/"}
+	for _, lang := range []string{"de", "en"} {
+		for _, page := range []string{"", "/blog", "/blog/ki-veraendert-softwareteams", "/profil", "/ki-einsatzfelder",
+			"/impressum", "/datenschutz", "/themen/ai-audit", "/themen/ai-audit/strategie-und-wirtschaftlichkeit"} {
+			paths = append(paths, "/"+lang+page)
+		}
+		for _, tp := range getJSON[api.TopicList](t, srv, "/api/topics?lang="+lang, http.StatusOK).Items {
+			paths = append(paths, "/"+lang+"/themen/"+tp.Slug)
 		}
 	}
-	_, body := get(t, srv, "/robots.txt")
-	if !strings.Contains(body, "Sitemap:") {
+	for _, path := range paths {
+		// Der Browser folgt keinen Umleitungen: 200 heißt, die Seite kommt direkt und ohne Umweg zur Anmeldung.
+		resp, body := b.do(http.MethodGet, path, nil)
+		wantStatus(t, resp, body, http.StatusOK)
+		if !strings.Contains(body, `id="root"`) {
+			t.Errorf("%s: öffentliches Frontend fehlt", path)
+		}
+		if got := resp.Header.Get("X-Robots-Tag"); strings.Contains(got, "nofollow") {
+			t.Errorf("%s: X-Robots-Tag %q des Zugangsschutzes", path, got)
+		}
+	}
+
+	for _, lang := range []string{"de", "en"} {
+		for _, path := range []string{"/api/topics", "/api/topics/ai-audit", "/api/posts", "/api/posts?featured=true",
+			"/api/posts/ki-veraendert-softwareteams", "/api/audit", "/api/audit/dimensions/strategie-und-wirtschaftlichkeit"} {
+			sep := "?"
+			if strings.Contains(path, "?") {
+				sep = "&"
+			}
+			resp, body := b.do(http.MethodGet, path+sep+"lang="+lang, nil)
+			wantStatus(t, resp, body, http.StatusOK)
+		}
+	}
+
+	// Entwürfe bleiben unveröffentlicht (geplante Beiträge: TestScheduledPostAppearsWhenDue).
+	resp, body := b.do(http.MethodGet, "/api/posts/entwurf-ki-in-der-datenanalyse", nil)
+	wantStatus(t, resp, body, http.StatusNotFound)
+	// Redaktion und Redaktions-API behalten ihre eigene Prüfung.
+	resp, _ = b.do(http.MethodGet, "/redaktion", nil)
+	wantRedirect(t, resp, "/redaktion/anmelden")
+	resp, body = b.do(http.MethodGet, "/api/admin/posts", nil)
+	wantStatus(t, resp, body, http.StatusUnauthorized)
+
+	_, body = get(t, srv, "/robots.txt")
+	if !strings.Contains(body, "Sitemap:") || strings.Contains(body, "Disallow: /\n") {
 		t.Errorf("robots.txt ohne Zugangsschutz: %q", body)
 	}
 }

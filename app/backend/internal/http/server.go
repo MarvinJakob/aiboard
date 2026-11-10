@@ -30,7 +30,9 @@ type Config struct {
 	SecureCookies bool
 	// TrustProxy liest die IP-Adresse aus X-Forwarded-For (hinter Caddy).
 	TrustProxy bool
-	// RequireLogin zeigt die öffentliche Webseite nur angemeldeten Konten (Zugangsschutz vor dem Livegang, Ticket #49).
+	// RequireLogin zeigt die öffentliche Webseite nur angemeldeten Konten (optionaler Zugangsschutz, Ticket #49).
+	// Standardmäßig aus: Die Webseite ist öffentlich (Ticket #108). Redaktions-API (guard) und Redaktionsseiten
+	// (web.Editorial) prüfen Sitzung und Rolle unabhängig davon.
 	RequireLogin bool
 	Log          *slog.Logger
 }
