@@ -8,14 +8,14 @@
 - Design: [DESIGN_CIMT.md](../../DESIGN_CIMT.md) und [cimt-Designentwurf](../design_cimt/index.html). Orange `#dc6e14`, Dunkelblau, warme helle Flächen, Systemschrift und dauerhaft aktive Glasnavigation mit den bestehenden Barrierefreiheits-Fallbacks.
 - Bild und persönliche Angaben: vorhandener [Profilentwurf](../profil/index.html) und `ressources/profil/MarvinJakob2.jpg`.
 
-Hero und drei Themen übernehmen den vollständigen Vorlagentext. Je Thema stehen die Leitfrage und die ersten beiden Textabsätze direkt auf der Seite. Die Artikel-Aktion klappt den restlichen Landingpage-Text auf; separate Artikelseiten gehören nicht zu diesem Mock. Zusätzliche Überschriften und Illustrationen strukturieren den Entwurf.
+Hero und drei Themen übernehmen den vollständigen Vorlagentext. In den drei Textspalten stehen Leitfrage, sämtliche Absätze und Artikel-Verweis wortgetreu und direkt sichtbar auf der Seite; auch Zeichensetzung und Hervorhebungen bleiben erhalten. Zusätzliche Kurzzeilen in diesen Textspalten entfallen. Die Artikel-Verweise öffnen die vorhandenen Markdown-Artikel unter `content/`. Illustrationen, Spaltenaufbau, Farben, Typografie und Styles bleiben unverändert.
 
 „News“ verlinkt entsprechend der Nutzervorgabe auf den bestehenden [Blog-Mock](../design/index.html#/blog). Der KI-Check führt zur bestehenden interaktiven Demo im cimt-Designentwurf. „Über mich“ führt zum Profil. Die laufende Anwendung wird nicht verändert.
 
 ## Bedienung
 
 - Themenindex und Buttons springen zu den entsprechenden Abschnitten.
-- Artikelvorschauen sind native, unabhängig bedienbare `details`-Elemente; Enter oder Leertaste klappt sie auf und zu.
+- Die vollständigen Thementexte sind ohne Aufklappen lesbar. Artikel-Verweise öffnen die zugehörigen lokalen Markdown-Dateien.
 - Hell/Dunkel bleibt nur im Arbeitsspeicher erhalten.
 - Das mobile Menü schließt bei Linkwahl, Klick außerhalb, Fokuswechsel aus dem Header und Escape. Escape gibt den Fokus an den Menübutton zurück.
 - Keine externen Schriftarten, Bilder, Netzwerkaufrufe oder Speicherung von Nutzereingaben im neuen Mock.

@@ -14,7 +14,7 @@ Dieses Repository enthält die Webseite „KI Perspektiven“, einen klickbaren 
 | [mock/design/index.html](mock/design/index.html) | Klickbarer HTML-Entwurf zur Vorschau des Designs. |
 | [mock/design_cimt/index.html](mock/design_cimt/index.html) | cimt × Apple-HIG-Designvariante mit `#dc6e14`, Systemtypografie, opaken Inhaltsflächen und dauerhaft aktiver Liquid-Glass-Navigation mit Vorrang für Barrierefreiheit. Themenauswahl, Beitragsfilter und Demo-KI-Check; Quellen im Footer. Direkt ohne Build im Browser nutzbar. |
 | [mock/landing/index.html](mock/landing/index.html) | Landing-Page-Entwurf mit Einordnung „Was ist KI?“, Themen, interaktivem KI-Audit-Teaser und Blog. |
-| [mock/landing_v03/index.html](mock/landing_v03/index.html) | Separater Landingpage-Mock mit den Inhalten aus `content/Landingpage_v03.md` im cimt-Design. Drei illustrierte Themen mit aufklappbaren Texten, News-Link zum Blog, KI-Reifegrad- und Profil-Einstieg; ohne Build direkt im Browser nutzbar. |
+| [mock/landing_v03/index.html](mock/landing_v03/index.html) | Separater Landingpage-Mock mit den Inhalten aus `content/Landingpage_v03.md` im cimt-Design. Drei illustrierte Themen mit vollständig sichtbaren Originaltexten, News-Link zum Blog, KI-Reifegrad- und Profil-Einstieg; ohne Build direkt im Browser nutzbar. |
 | [mock/profil/index.html](mock/profil/index.html) | Profilentwurf für Marvin Jakob mit AI-Schwerpunkten und Projekterfahrung. |
 | [ressources/profil/](ressources/profil/) | Porträtbilder für den Profilentwurf. |
 | [app/README.md](app/README.md) | Einstieg in die lokale Entwicklung: Anwendung starten, Tests ausführen, Code erzeugen und Konfiguration nachschlagen. |
