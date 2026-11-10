@@ -11,7 +11,8 @@ import (
 	"ki-web/backend/internal/web"
 )
 
-// gate ist der Zugangsschutz vor dem Livegang (Ticket #49). Ist er aktiv, sieht nur, wer mit einem
+// gate ist der optionale Zugangsschutz aus Ticket #49 (REQUIRE_LOGIN, seit Ticket #108 standardmäßig aus,
+// etwa für eine geschlossene Vorschau). Ist er aktiv, sieht nur, wer mit einem
 // Konto angemeldet ist, die öffentliche Webseite. Ohne Sitzung führen Seitenaufrufe zur Anmeldung der
 // Redaktion, die öffentliche API antwortet mit 401. Suchmaschinen sollen nichts indexieren.
 type gate struct {

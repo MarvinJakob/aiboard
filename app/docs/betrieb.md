@@ -29,25 +29,29 @@ Die Datei `/opt/ki-web/.env` (Rechte `600`) enthält die Werte für den Betrieb.
 | `REGISTRY` | `ghcr.io/marvinjakob` | Präfix des Image-Namens |
 | `VERSION` | z. B. `a1b2c3d` | Laufende Version, setzt `deploy.sh` |
 | `PREVIOUS_VERSION` | z. B. `9d034c1` | Vorherige Version für den Rollback, setzt `deploy.sh` |
-| `REQUIRE_LOGIN` | `true` | Zugangsschutz der Entwicklungswebseite; bleibt bis zur ausdrücklich beschlossenen öffentlichen Freigabe aktiv |
+| `REQUIRE_LOGIN` | `false` | Optionaler Zugangsschutz für die ganze Webseite (Ticket #49). Seit Ticket #108 ist die Webseite öffentlich; `true` nur für eine geschlossene Vorschau setzen. |
 
 `DEV_SEED` wird im Betrieb nie gesetzt. `compose.yaml` setzt die Variable nicht, deshalb landen keine Testbeiträge und keine Testkonten in der Produktivdatenbank.
 
-## Zugangsschutz bis zur öffentlichen Freigabe
+## Öffentlicher Zugriff
 
-In `/opt/ki-web/.env` bleibt ausdrücklich `REQUIRE_LOGIN=true` gesetzt. Compose verwendet auch ohne Eintrag den Wert `true`. Die Datei liegt außerhalb der versionierten Builds und wird beim Deployment nicht ersetzt; `deploy.sh` ändert nur die Versionsfelder. Ein Containerneustart übernimmt die bestehende Containerkonfiguration. Nach einer Änderung an `.env` ist dagegen `docker compose up -d --wait` nötig; `docker compose restart` liest die Umgebungsvariablen nicht neu ein.
+Die Webseite ist öffentlich (Ticket #108). In `/opt/ki-web/.env` steht `REQUIRE_LOGIN=false`; Compose verwendet auch ohne Eintrag `false`. Die Redaktion unter `/redaktion` und `/api/admin/*` prüft Sitzung, Rolle und CSRF-Token unabhängig von diesem Schalter (siehe [README](../README.md#öffentlicher-zugriff-und-redaktion)).
 
-Nach jedem Deployment und Neustart ohne Sitzung prüfen:
+Die Datei `.env` liegt außerhalb der versionierten Builds und wird beim Deployment nicht ersetzt; `deploy.sh` ändert nur die Versionsfelder. Eine Änderung am Standard in `compose.yaml` ändert einen ausdrücklich gesetzten Wert in `.env` daher nicht. Nach einer Änderung an `.env` ist `docker compose up -d --wait` nötig; `docker compose restart` liest die Umgebungsvariablen nicht neu ein. Den wirksamen Wert zeigt `docker compose exec backend printenv REQUIRE_LOGIN`.
+
+Nach jedem Deployment und Neustart ohne Cookies prüfen:
 
 ```bash
-curl -sS -D - -o /dev/null https://marvinjakob.de/en/profil
-curl -sS -D - https://marvinjakob.de/api/posts?lang=de
+curl -sS -o /dev/null -w '%{http_code}\n' https://marvinjakob.de/en/profil
+curl -sS -o /dev/null -w '%{http_code}\n' 'https://marvinjakob.de/api/posts?lang=de'
 curl -fsS https://marvinjakob.de/robots.txt
+curl -sS -o /dev/null -w '%{http_code} %{redirect_url}\n' https://marvinjakob.de/redaktion
+curl -sS -o /dev/null -w '%{http_code}\n' https://marvinjakob.de/api/admin/posts
 ```
 
-Erwartet werden `303` zur Anmeldung mit internem Rücksprungziel, `401` ohne Inhaltsdaten und `Disallow: /`. Die Antworten des Backends tragen `X-Robots-Tag: noindex, nofollow`. Anmeldung samt Ressourcen und `/api/health` bleiben erreichbar. Mit einem gültigen Konto muss nach dem Login das ursprüngliche interne Ziel erscheinen; nach Abmeldung oder Sitzungsablauf ist es wieder gesperrt. Die Prüfung umfasst Startseite, Themen, Blog, Profil und AI Audit in beiden Sprachen. Medien liefert Caddy wie bisher direkt aus (siehe [README](../README.md#zugangsschutz-vor-dem-livegang)).
+Erwartet werden `200` für Seite und öffentliche API, eine `robots.txt` mit `Sitemap:` und ohne `Disallow: /`, eine Umleitung von `/redaktion` zu `/redaktion/anmelden` und `401` für `/api/admin/posts`. Die Prüfung umfasst Startseite, Themen, KI-Audit, Blog, Profil und Rechtstexte in beiden Sprachen.
 
-Erst nach ausdrücklich beschlossener öffentlicher Freigabe und Fertigstellung der Rechtstexte darf der Betreiber `REQUIRE_LOGIN=false` setzen und die Container mit `docker compose up -d --wait` aktualisieren. Vor einem Rollback muss auch die Zielversion den Zugangsschutz aus #49 enthalten. Der Betriebsnachweis für #54 steht in [zugangsschutz-abnahme.md](zugangsschutz-abnahme.md).
+`REQUIRE_LOGIN=false` bleibt ausdrücklich in `.env` stehen: Ältere Versionen bringen eine `compose.yaml` mit dem früheren Standard `true` mit. Mit dem ausdrücklichen Wert bleibt die Webseite auch nach einem Rollback öffentlich. Den früheren Betriebsnachweis mit aktivem Schutz (#54) enthält [zugangsschutz-abnahme.md](zugangsschutz-abnahme.md).
 
 Aufbau des Projektverzeichnisses:
 

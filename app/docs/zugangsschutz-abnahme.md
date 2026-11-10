@@ -25,4 +25,4 @@ Die HTTP-Prüfungen verfolgten Weiterleitungen bewusst nicht automatisch und wer
 
 Ausgeführt gemäß [README](../README.md#code-erzeugen-und-testen): Backend `go vet ./...` und `go test ./...`; Redaktionsfrontend `npm run typecheck` und `npm test`. Ergebnisse und geprüfter Feature-Commit werden am [Ticket #54](https://github.com/MarvinJakob/aiboard/issues/54) dokumentiert.
 
-Der Zugangsschutz bleibt bis zur ausdrücklichen öffentlichen Freigabe aktiv. Dauerhafte Konfiguration und Kontrollschritte stehen in der [Betriebsanleitung](betrieb.md#zugangsschutz-bis-zur-öffentlichen-freigabe).
+Historischer Nachweis: Mit [Ticket #108](https://github.com/MarvinJakob/aiboard/issues/108) wurde die öffentliche Freigabe am 2026-11-10 beauftragt; der Zugangsschutz ist seitdem standardmäßig aus. Aktuelle Konfiguration und Kontrollschritte stehen in der [Betriebsanleitung](betrieb.md#öffentlicher-zugriff).
