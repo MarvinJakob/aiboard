@@ -245,7 +245,7 @@ svg { display: block; }
 .actions { margin-top: 28px; }
 
 /* Opake Inhaltsflächen: gemeinsame Form aller Karten */
-.post-row, .empty, .level-item, .level-card, .dimension-card, .advantage-item, .quiz-level, .quiz-result,
+.post-row, .empty, .level-item, .level-card, .dimension-card, .quiz-level, .quiz-result,
 .profile-card, .profile-about, .consent, .landing .tasks, .landing .facts {
   border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow);
 }
@@ -543,14 +543,6 @@ svg { display: block; }
 .topic-table th, .topic-table td { overflow-wrap: normal; hyphens: auto; }
 .topic-table [style*="text-align: right"], .topic-table code { white-space: nowrap; }
 
-/* Prozessautomatisierung: Vorteile von n8n (Ticket #77) */
-.advantage-list { list-style: none; padding: 0; margin-top: 28px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-.advantage-item { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 24px; }
-.advantage-item h3 { font-size: 1.1875rem; }
-.advantage-item p { color: var(--text-2); font-size: .9375rem; }
-.advantage-icon { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: var(--note-bg); color: var(--accent); }
-.advantage-icon svg { width: 22px; height: 22px; }
-.advantage-note { max-width: 720px; margin-top: 20px; color: var(--text-2); font-size: .9375rem; }
 .topic-sources { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
 .topic-sources h3 { font-size: 1.0625rem; }
 .topic-sources ol { margin: 12px 0 0; padding-left: 22px; columns: 2; column-gap: 48px; font-size: .875rem; color: var(--text-2); }

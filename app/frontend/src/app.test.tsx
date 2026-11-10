@@ -569,8 +569,6 @@ describe('Ticket #21: AI Audit als eigener Navigationseintrag', () => {
     expect(links.map((l) => l.getAttribute('href'))).toEqual([
       '/de/themen/softwareentwicklung',
       '/de/themen/data-analytics',
-      '/de/themen/prozessautomatisierung',
-      '/de/themen/ki-tipps-und-tricks',
       '/de/themen/modelle-und-kosten',
     ]);
     expect(within(menu).queryByRole('link', { name: /AI Audit/ })).not.toBeInTheDocument();
@@ -718,5 +716,30 @@ describe('Ticket #20: Helle und dunkle Darstellung', () => {
       run();
       expect(theme()).toBe('light');
     });
+  });
+});
+
+describe('Ticket #102: Prozessautomatisierung und KI-Tipps und Tricks entfernt', () => {
+  const REMOVED = ['prozessautomatisierung', 'ki-tipps-und-tricks'];
+  const REMOVED_NAMES = /Prozessautomatisierung|Process Automation|KI-Tipps und Tricks|AI Tips and Tricks/;
+
+  it.each(['de', 'en'])('verlinkt die Themen in %s weder in Themenmenü, Startseite noch Footer', async (lang) => {
+    const user = userEvent.setup();
+    renderApp(`/${lang}`);
+    await user.click(await screen.findByRole('button', { name: lang === 'de' ? 'Themen' : 'Topics' }));
+    const menu = document.querySelector('.popover') as HTMLElement;
+    await within(menu).findAllByRole('link');
+    const footer = screen.getByRole('contentinfo');
+    await within(footer).findByRole('link', { name: lang === 'de' ? 'KI in Data Analytics' : 'AI in Data Analytics' });
+    const hrefs = [...document.querySelectorAll('a')].map((a) => a.getAttribute('href') ?? '');
+    for (const slug of REMOVED) expect(hrefs.filter((h) => h.includes(slug))).toEqual([]);
+    expect(document.body).not.toHaveTextContent(REMOVED_NAMES);
+  });
+
+  it.each(REMOVED.flatMap((slug) => ['de', 'en'].map((lang) => `/${lang}/themen/${slug}`)))('zeigt für %s die Nicht-gefunden-Seite', async (path) => {
+    renderApp(path);
+    const name = path.startsWith('/de') ? 'Seite nicht gefunden' : 'Page not found';
+    expect(await screen.findByRole('heading', { level: 1, name })).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/n8n|Skills, die Sie kennen sollten/);
   });
 });

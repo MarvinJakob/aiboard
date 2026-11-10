@@ -124,13 +124,17 @@ describe('Ticket 42: Profil in der Hauptnavigation', () => {
   });
 });
 
-it.each(['de', 'en'])('verlinkt das neue Skill-Thema aus der Profilnavigation in %s', async (lang) => {
+// Ticket #102: Profilseite und ihr Themenmenü verweisen nicht mehr auf die entfernten Themen.
+it.each(['de', 'en'])('verlinkt vom Profil in %s keine entfernten Themen', async (lang) => {
   const user = userEvent.setup();
-  const { router } = renderApp(`/${lang}/profil`);
+  renderApp(`/${lang}/profil`);
+  await screen.findByRole('heading', { level: 1, name: 'Marvin Jakob' });
   await user.click(screen.getByRole('button', { name: lang === 'de' ? 'Themen' : 'Topics' }));
   const menu = document.querySelector('.popover') as HTMLElement;
-  const link = await within(menu).findByRole('link', { name: lang === 'de' ? /KI-Tipps und Tricks/ : /AI Tips and Tricks/ });
-  await user.click(link);
-  expect(router.state.location.pathname).toBe(`/${lang}/themen/ki-tipps-und-tricks`);
-  expect(await screen.findByRole('heading', { level: 1, name: lang === 'de' ? 'KI-Tipps und Tricks' : 'AI Tips and Tricks' })).toBeInTheDocument();
+  const links = await within(menu).findAllByRole('link');
+  expect(links.map((a) => a.getAttribute('href'))).toEqual(
+    ['softwareentwicklung', 'data-analytics', 'modelle-und-kosten'].map((slug) => `/${lang}/themen/${slug}`),
+  );
+  const hrefs = [...document.querySelectorAll('a')].map((a) => a.getAttribute('href') ?? '');
+  expect(hrefs.filter((h) => /prozessautomatisierung|ki-tipps-und-tricks/.test(h))).toEqual([]);
 });
