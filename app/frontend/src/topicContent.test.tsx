@@ -1,8 +1,11 @@
-import { screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import source from '../../../content/KI in der Softwareentwicklung.md?raw';
 import published from './content/topics/softwareentwicklung.de.md?raw';
+import { TopicContent } from './components/TopicContent';
+import type { TFunction } from 'i18next';
+import { LangContext } from './lib/lang';
 import { getTopicContent } from './lib/topicContent';
 import { installFakeApi, renderApp } from './test/fakeApi';
 
@@ -61,6 +64,19 @@ describe('Ticket #80: Themenseite Softwareentwicklung', () => {
 
   it('lässt Themen ohne statischen Inhalt unverändert', () => {
     expect(getTopicContent('ai-audit', 'de')).toBeUndefined();
-    expect(getTopicContent('prozessautomatisierung', 'de')).toBeUndefined();
+    expect(getTopicContent('unbekannt', 'en')).toBeUndefined();
   });
+});
+
+// Bis Ticket #102 nutzte nur die entfernte Seite „KI-Tipps und Tricks“ Quellenbereiche; der gemeinsame Renderer behält sie.
+it('löst Quellenbereiche in einzelne, erreichbare Verweise auf', () => {
+  const body = 'Belegt [1–3] und [2].\n\n## Quellen\n\n1. Erste\n2. Zweite\n3. Dritte';
+  render(
+    <LangContext.Provider value={{ lang: 'de', t: ((key: string) => key) as unknown as TFunction }}>
+      <TopicContent content={{ subtitle: undefined, body, lang: 'de' }} />
+    </LangContext.Provider>,
+  );
+  const article = screen.getByRole('article');
+  expect(within(article).getAllByRole('link').map((a) => a.textContent)).toEqual(['[1]', '[2]', '[3]', '[2]']);
+  expect(within(article).getAllByRole('link', { name: '[3]' })[0]).toHaveAttribute('href', '#topic-source-3');
 });

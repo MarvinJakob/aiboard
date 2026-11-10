@@ -47,7 +47,6 @@ interface HomeContent {
 // - „Jedes vierte Unternehmen“ (26 %): Statistisches Bundesamt, research/2026-11-09 Was ist KI und was man damit machen kann.md, Quelle 6
 // - Definition, Abgrenzung zu Regelsoftware, Sprachmodelle und Grenzen: OECD, EU-Kommission und BSI, ebenda, Quellen 2, 3 und 5
 // - 19 Prozent länger: METR (2025), research/2026-11-05 Kosten von KI aus Nutzersicht.md, Quelle 15
-// - 50,5 statt 33,9 Prozent: SkillsBench, Version 4, research/2026-11-09 Nützliche Skills für KI.md, Quelle 28
 // - 4,50 oder 450 US-Dollar: OpenAI-Preise für gpt-6-luna und gpt-6-astra,
 //   research/2026-11-09 Modelle und Kosten - Preis und Leistung vergleichen.md, Abschnitt 5
 
@@ -64,7 +63,7 @@ export const home: Record<Lang, HomeContent> = {
     ctaAudit: 'KI-Reifegrad einschätzen',
     focusEyebrow: 'Aktuell im Fokus',
     focusTitle: 'Was KI gerade spannend macht.',
-    focusText: 'Sechs Themen, die uns gerade beschäftigen. Jedes beginnt mit einer Frage, die sich lohnt. Die Auswahl wechselt.',
+    focusText: 'Vier Themen, die uns gerade beschäftigen. Jedes beginnt mit einer Frage, die sich lohnt. Die Auswahl wechselt.',
     topics: [
       {
         slug: 'ai-audit',
@@ -74,15 +73,6 @@ export const home: Record<Lang, HomeContent> = {
           'Von Strategie und Wirtschaftlichkeit bis Sicherheit: Beantworten Sie einfache Ja/Nein-Fragen und sehen Sie sofort, wo Ihr Unternehmen steht und wo blinde Flecken liegen. Die Fragen der nächsten Stufe werden zu Ihrer To-do-Liste.',
         ],
         link: 'Selbsteinschätzung starten',
-      },
-      {
-        slug: 'prozessautomatisierung',
-        title: 'Prozessautomatisierung',
-        hook: 'Welche Aufgabe würden Sie nie wieder von Hand erledigen?',
-        text: [
-          'Daten abtippen, Anfragen weiterleiten, Berichte zusammenstellen: n8n verbindet Ihre Anwendungen zu automatischen Abläufen. KI kommt nur dort dazu, wo sie messbar hilft. Und bevor ein KI-Agent eine Nachricht versendet oder Daten ändert, gibt ein Mensch die Aktion frei.',
-        ],
-        link: 'Humans in the Loop mit n8n',
       },
       {
         slug: 'softwareentwicklung',
@@ -103,15 +93,6 @@ export const home: Record<Lang, HomeContent> = {
           'Mit oder ohne Retouren? Welcher Monat, welches Buchungsdatum? KI beantwortet Datenfragen in Alltagssprache, schreibt Analysecode und erstellt Prognosen. Belastbar wird die Antwort aber erst, wenn Ihre Kennzahlen eindeutig definiert sind und Ergebnisse mit den Quelldaten abgeglichen werden.',
         ],
         link: 'Daten verstehen und auswerten',
-      },
-      {
-        slug: 'ki-tipps-und-tricks',
-        title: 'KI-Tipps und Tricks',
-        hook: '50,5 statt 33,9 Prozent.',
-        text: [
-          'So viel mehr Aufgaben lösten KI-Agenten in einer Studie, wenn sie kuratierte Skills nutzen konnten. Skills halten wiederkehrende Arbeitsabläufe fest, etwa für eine Excel-Auswertung oder die systematische Fehlersuche. Aber nicht jeder Skill hilft: Kleine, fokussierte Skills schneiden besser ab als umfangreiche Sammlungen.',
-        ],
-        link: 'Skills, die Sie kennen sollten',
       },
       {
         slug: 'modelle-und-kosten',
@@ -163,7 +144,7 @@ export const home: Record<Lang, HomeContent> = {
     ctaAudit: 'Assess your AI maturity',
     focusEyebrow: 'Currently in focus',
     focusTitle: 'What makes AI exciting right now.',
-    focusText: 'Six topics we are currently working on. Each one starts with a question worth asking. The selection changes.',
+    focusText: 'Four topics we are currently working on. Each one starts with a question worth asking. The selection changes.',
     topics: [
       {
         slug: 'ai-audit',
@@ -173,15 +154,6 @@ export const home: Record<Lang, HomeContent> = {
           'From strategy and cost-effectiveness to security: answer simple yes/no questions and see straight away where your company stands and where its blind spots are. The questions of the next level become your to-do list.',
         ],
         link: 'Start self-assessment',
-      },
-      {
-        slug: 'prozessautomatisierung',
-        title: 'Process Automation',
-        hook: 'Which task would you never want to do by hand again?',
-        text: [
-          'Typing up data, forwarding requests, compiling reports: n8n connects your applications into automated workflows. AI is only added where it measurably helps. And before an AI agent sends a message or changes data, a person approves the action.',
-        ],
-        link: 'Humans in the loop with n8n',
       },
       {
         slug: 'softwareentwicklung',
@@ -202,15 +174,6 @@ export const home: Record<Lang, HomeContent> = {
           'Including or excluding returns? Which month, which booking date? AI answers data questions in everyday language, writes analysis code and produces forecasts. But the answer only becomes reliable once your metrics are clearly defined and results are checked against the source data.',
         ],
         link: 'Understand and analyse data',
-      },
-      {
-        slug: 'ki-tipps-und-tricks',
-        title: 'AI Tips and Tricks',
-        hook: '50.5 instead of 33.9 percent.',
-        text: [
-          'That is how much more often AI agents solved tasks in a study when they could use curated skills. Skills capture recurring workflows, for example for an Excel analysis or systematic debugging. But not every skill helps: small, focused skills perform better than extensive collections.',
-        ],
-        link: 'Skills you should know',
       },
       {
         slug: 'modelle-und-kosten',

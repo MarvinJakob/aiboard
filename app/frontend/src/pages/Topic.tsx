@@ -3,8 +3,6 @@ import { isNotFound, useTopic } from '../api/client';
 import { Art } from '../components/Art';
 import { AuditOverview } from '../components/AuditOverview';
 import { TopicContent } from '../components/TopicContent';
-import { AutomationBenefits } from '../components/AutomationBenefits';
-import { AUTOMATION_TOPIC } from '../i18n/automation';
 import { AUDIT_TOPIC } from '../lib/audit';
 import { PostList } from '../components/PostRow';
 import { EmptyPosts, LoadError, Loading, TranslationNotice } from '../components/Status';
@@ -19,8 +17,7 @@ const breakAfterSlash = (text: string) =>
 
 /**
  * Themenseite mit Titel, Einführung und zugeordneten veröffentlichten Beiträgen (Anforderung 3).
- * Das Thema „AI Audit für Unternehmen“ zeigt zusätzlich die Audit-Übersicht (Anforderung 8),
- * das Thema „Prozessautomatisierung“ die Vorteile von n8n (Ticket #77).
+ * Das Thema „AI Audit für Unternehmen“ zeigt zusätzlich die Audit-Übersicht (Anforderung 8).
  */
 export function TopicPage() {
   const { slug = '' } = useParams();
@@ -61,7 +58,6 @@ export function TopicPage() {
       </section>
       {tp.slug === AUDIT_TOPIC && <AuditOverview />}
       {content && <TopicContent content={content} />}
-      {tp.slug === AUTOMATION_TOPIC && <AutomationBenefits />}
       <section className="section" aria-labelledby="topicPosts">
         <div className="section-head">
           <h2 className="section-title" id="topicPosts">
