@@ -195,7 +195,7 @@ func contains(ls []service.Lang, l service.Lang) bool {
 
 func (s *Site) homeMeta(lang service.Lang) Meta {
 	return Meta{
-		Lang: lang, Title: SiteName, Description: text(lang, "home.desc"), OGType: "website",
+		Lang: lang, Title: pageTitle(text(lang, "home.title")), Description: text(lang, "home.desc"), OGType: "website",
 		Canonical: s.url(lang, ""), Alternates: s.alternates(service.Langs, ""),
 	}
 }
