@@ -109,7 +109,7 @@ export function AuditQuiz({ dimension, contentLang }: Props) {
               <ul lang={contentLang}>
                 {result.nextSteps.map((q) => (
                   <li key={q.id}>
-                    <span className="quiz-q-no">{q.id}</span> {q.text}
+                    <span className="quiz-q-no">{q.id}</span> <span className="quiz-q-label">{q.text}</span>
                   </li>
                 ))}
               </ul>
@@ -152,7 +152,9 @@ function Question({ anchor, name, question, value, contentLang, onChange }: Ques
       <fieldset aria-describedby={question.conditional ? hintId : undefined}>
         <legend className="quiz-q-text">
           <span className="quiz-q-no">{question.id}</span>{' '}
-          <span lang={contentLang}>{question.text}</span>
+          <span className="quiz-q-label" lang={contentLang}>
+            {question.text}
+          </span>
         </legend>
         {question.conditional && (
           <p className="quiz-hint" id={hintId}>
