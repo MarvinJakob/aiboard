@@ -1,15 +1,22 @@
-> **Platzhalter.** Der Rechtstext ist noch nicht erstellt (Design.md, Abschnitt 12). Änderungen laufen über einen Pull Request.
+## Diensteanbieter
 
-## Angaben gemäß § 5 DDG
+Marvin Jakob betreibt die Website „KI Perspektiven“ als natürliche Person.
 
-[Name des Unternehmens]
-[Straße und Hausnummer]
-[PLZ und Ort]
+Marvin Jakob\
+Danzigerstr. 2\
+65527 Niedernhausen\
+Deutschland
 
 ## Kontakt
 
-E-Mail: [Adresse]
+Telefon: [+49 175 1964719](tel:+491751964719)\
+E-Mail: [mail@marvinjakob.de](mailto:mail@marvinjakob.de)
 
-## Verantwortlich für den Inhalt
+## Verantwortlich für journalistisch-redaktionelle Inhalte
 
-[Name, Anschrift]
+Verantwortlich gemäß § 18 Abs. 2 MStV:
+
+Marvin Jakob\
+Danzigerstr. 2\
+65527 Niedernhausen\
+Deutschland
