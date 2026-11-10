@@ -3,138 +3,169 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { switchLangPath } from './lib/lang';
 import themeScript from '../public/theme.js?raw';
+import landingSource from '../../../content/Landingpage_v03.md?raw';
 import { installFakeApi, renderApp } from './test/fakeApi';
 
 beforeEach(() => {
   installFakeApi();
 });
 
-// Wortlaut aus content/Landingpage.md, Stand 9. November 2026: Titel, Aufhänger, Linktext und Ziel je Themenkarte.
-const FOCUS_CARDS = [
-  ['AI Audit', 'Acht Dimensionen. Drei Reifegrade. Wo steht Ihr Unternehmen?', 'Selbsteinschätzung starten', '/de/themen/ai-audit'],
-  ['Prozessautomatisierung', 'Welche Aufgabe würden Sie nie wieder von Hand erledigen?', 'Humans in the Loop mit n8n', '/de/themen/prozessautomatisierung'],
-  ['Softwareentwicklung', 'Ein Verbot im Prompt verhindert noch keinen Zugriff.', 'KI-Assistenten mit Guardrails anleiten', '/de/themen/softwareentwicklung'],
-  ['Data Analytics', 'Was genau ist eigentlich „der Umsatz im letzten Monat“?', 'Daten verstehen und auswerten', '/de/themen/data-analytics'],
-  ['KI-Tipps und Tricks', '50,5 statt 33,9 Prozent.', 'Skills, die Sie kennen sollten', '/de/themen/ki-tipps-und-tricks'],
-  ['Modelle und Kosten', '4,50 oder 450 US-Dollar?', 'Das beste Preis-Leistungs-Verhältnis finden', '/de/themen/modelle-und-kosten'],
-] as const;
+// Ticket #101: Verbindliche Textvorlage der Startseite, Stand 10. November 2026.
+// Jede nicht leere Zeile eines Themas ist ein Absatz; „**…**“ ist die Leitfrage, „*…*“ eine Hervorhebung, „-> “ ein Link.
+const TEMPLATE = landingSource.replace(/\r\n/g, '\n');
+const templateSection = (title: string) => TEMPLATE.split(/^## /m).find((part) => part.startsWith(`${title}\n`))!.split('\n').slice(1).map((line) => line.trim()).filter(Boolean);
+const TEMPLATE_TOPICS = [
+  ['Data Analytics', 'data-analytics'],
+  ['Softwareentwicklung', 'softwareentwicklung'],
+  ['Modelle und Kosten', 'modelle-und-kosten'],
+].map(([title, slug]) => {
+  const lines = templateSection(title);
+  return {
+    title,
+    slug,
+    question: lines.find((l) => l.startsWith('**'))!.replace(/\*\*/g, ''),
+    paragraphs: lines.filter((l) => !l.startsWith('**') && !l.startsWith('->')),
+    link: lines.find((l) => l.startsWith('->'))!.replace(/^->\s*/, ''),
+  };
+});
+const plain = (line: string) => line.replace(/\*/g, '');
+const emphasis = (line: string) => [...line.matchAll(/\*([^*]+)\*/g)].map((m) => m[1]);
 
-describe('Ticket #78: Startseite nach content/Landingpage.md', () => {
-  it('zeigt Hook, Aktuell im Fokus und Grundlagen in dieser Reihenfolge', async () => {
-    renderApp('/de');
-    const main = screen.getByRole('main');
-    await within(main).findByRole('heading', { level: 1 });
-    const headings = within(main)
-      .getAllByRole('heading')
-      .map((h) => `${h.tagName} ${h.textContent}`);
-    expect(headings).toEqual([
-      'H1 KI verstehen.Sinnvoll einsetzen.',
-      'H2 Was KI gerade spannend macht.',
-      ...FOCUS_CARDS.map(([title]) => `H3 ${title}`),
-      'H2 Was ist KI – und was kann man damit machen?',
-      'H3 KI hilft dort, wo sich Ergebnisse prüfen lassen.',
-      'H3 Wer versteht, wie KI funktioniert, erkennt ihre Grenzen.',
-    ]);
-    expect(screen.getByText(/^Jedes vierte Unternehmen in Deutschland nutzt bereits KI\./)).toHaveTextContent(
-      'Jedes vierte Unternehmen in Deutschland nutzt bereits KI. Die spannende Frage ist: wofür – und wie gut?',
-    );
-    expect(
-      screen.getByText('Einordnungen und Erfahrungen für Unternehmen, die künstliche Intelligenz verantwortungsvoll nutzen wollen. Ohne Hype, mit Substanz.'),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Sechs Themen, die uns gerade beschäftigen. Jedes beginnt mit einer Frage, die sich lohnt. Die Auswahl wechselt.')).toBeInTheDocument();
-    for (const name of ['KI in Deutschland in Zahlen', 'Neu im Blog.', 'Wie bereit ist Ihr Unternehmen für KI?', 'Hinter KI Perspektiven']) {
-      expect(screen.queryByRole('heading', { name })).not.toBeInTheDocument();
-    }
-    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
-  });
-
-  it('zeigt genau sechs Themenkarten mit Titel, fettem Aufhänger, Kurztext und Link', async () => {
-    renderApp('/de');
-    const focus = await screen.findByRole('region', { name: 'Was KI gerade spannend macht.' });
-    const cards = within(focus).getAllByRole('listitem');
-    expect(cards).toHaveLength(6);
-    cards.forEach((card, i) => {
-      const [title, hook, link, path] = FOCUS_CARDS[i];
-      expect(within(card).getByRole('heading', { level: 3 })).toHaveTextContent(title);
-      expect(card.querySelector('strong')!.textContent).toBe(hook);
-      expect(card.querySelectorAll('p')).toHaveLength(2);
-      expect(card.querySelectorAll('p')[1].textContent!.length).toBeGreaterThan(100);
-      expect(within(card).getByRole('link', { name: link })).toHaveAttribute('href', path);
-    });
-    expect(within(cards[2]).getByText('AGENTS.md', { selector: 'code' })).toBeInTheDocument();
-  });
-
-  it('führt über eine Themenkarte zur Themenseite in der aktuellen Sprache', async () => {
-    const user = userEvent.setup();
+describe('Ticket #101: Startseite nach content/Landingpage_v03.md und mock/landing_v03', () => {
+  it('zeigt den vollständigen Hero der Vorlage und alle vier Einstiege', async () => {
     const { router } = renderApp('/de');
-    await user.click(await screen.findByRole('link', { name: 'Daten verstehen und auswerten' }));
-    expect(router.state.location.pathname).toBe('/de/themen/data-analytics');
-    expect(await screen.findByRole('heading', { level: 1, name: 'KI in Data Analytics' })).toBeInTheDocument();
-  });
-
-  it.each(FOCUS_CARDS.map(([title, , link, path]) => [title, link, path]))('Karte „%s“ führt auf eine existierende Seite', async (_, link, path) => {
-    const user = userEvent.setup();
-    const { router } = renderApp('/de');
-    await user.click(await screen.findByRole('link', { name: link }));
-    expect(router.state.location.pathname).toBe(path);
-    expect(await screen.findByRole('heading', { level: 1 })).not.toHaveTextContent('Seite nicht gefunden');
-  });
-
-  it('springt mit „Themen entdecken“ zum Fokus und führt zu KI-Audit und Einordnung', async () => {
-    const user = userEvent.setup();
-    const { router } = renderApp('/de');
-    await screen.findByRole('heading', { level: 1 });
-    await user.click(screen.getByRole('link', { name: 'Themen entdecken' }));
-    expect(screen.getByRole('heading', { level: 2, name: 'Was KI gerade spannend macht.' })).toHaveFocus();
+    const [hook, display1, display2, lead] = templateSection('Titel').filter((l) => !l.startsWith('->'));
+    const h1 = await screen.findByRole('heading', { level: 1, name: `${display1}${display2}` });
+    const hero = h1.closest('section')!;
+    expect(within(hero).getByText(hook)).toHaveClass('home-hook');
+    expect(hero.querySelector('.home-lead')!.textContent!.replace(/\s+/g, ' ')).toBe(lead);
+    expect(within(hero).getByRole('link', { name: 'Themen entdecken' })).toHaveAttribute('href', '#themen');
+    expect(within(hero).getByRole('link', { name: 'News' })).toHaveAttribute('href', '/de/blog');
+    expect(within(hero).getByRole('link', { name: 'KI-Reifegrad einschätzen' })).toHaveAttribute('href', '/de/themen/ai-audit');
+    expect(within(hero).getByRole('link', { name: 'Über mich' })).toHaveAttribute('href', '/de/profil');
+    expect(document.title).toBe('KI verstehen. Sinnvoll einsetzen. · KI Perspektiven');
+    expect(document.querySelector('meta[name="description"]')).toHaveAttribute('content', lead);
     expect(router.state.location.pathname).toBe('/de');
-    expect(router.state.location.hash).toBe('');
-
-    expect(screen.getByRole('link', { name: 'KI-Reifegrad einschätzen' })).toHaveAttribute('href', '/de/themen/ai-audit');
-
-    expect(screen.getByText('Sie möchten wissen, wofür KI heute schon eingesetzt wird?', { exact: false })).toBeInTheDocument();
-    await user.click(screen.getByRole('link', { name: 'Zur ausführlichen Einordnung' }));
-    expect(router.state.location.pathname).toBe('/de/ki-einsatzfelder');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Wofür KI heute eingesetzt wird' })).toHaveFocus();
   });
 
-  it('zeigt die Grundlagen mit Prüfbarkeit und drei Grenzen', async () => {
+  it('übernimmt Leitfragen, alle Absätze, Hervorhebungen und Artikel-Links der Vorlage unverändert und vollständig sichtbar', async () => {
     renderApp('/de');
-    const basics = await screen.findByRole('region', { name: 'Was ist KI – und was kann man damit machen?' });
-    expect(basics).toHaveTextContent(
-      'In einer randomisierten Studie brauchten erfahrene Entwicklerinnen und Entwickler mit KI-Werkzeugen aus dem Frühjahr 2025 sogar 19 Prozent länger.',
-    );
-    const limits = within(basics).getAllByRole('listitem');
-    expect(limits.map((l) => l.querySelector('strong')!.textContent)).toEqual([
-      'Glaubwürdig heißt nicht richtig.',
-      'Wissen hat ein Ablaufdatum.',
-      'Nicht jede Aufgabe braucht ein Sprachmodell.',
+    await screen.findByRole('heading', { level: 1 });
+    const main = screen.getByRole('main');
+    expect(within(main).getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual([
+      'Gute Fragen.Neue Perspektiven.',
+      ...TEMPLATE_TOPICS.map((tp) => tp.question),
+      'KI-Reifegradeinschätzen.',
+      'Marvin Jakob.',
     ]);
+    TEMPLATE_TOPICS.forEach((tp, i) => {
+      const section = screen.getByRole('region', { name: tp.question });
+      expect(section.querySelector('.topic-eyebrow')).toHaveTextContent(`0${i + 1} ${tp.title}`);
+      const paragraphs = [...section.querySelectorAll('.editorial-text p')];
+      expect(paragraphs.map((p) => p.textContent)).toEqual(tp.paragraphs.map(plain));
+      expect([...section.querySelectorAll('.editorial-text em')].map((em) => em.textContent)).toEqual(tp.paragraphs.flatMap(emphasis));
+      expect(section.querySelector('details, [hidden], [aria-expanded]')).toBeNull();
+      expect(within(section).getByRole('link', { name: tp.link })).toHaveAttribute('href', `/de/themen/${tp.slug}`);
+      expect(within(section).getByRole('img')).toHaveAccessibleName();
+    });
+  });
+
+  it('zeigt Themenindex, KI-Reifegrad-Banner und Profil-Teaser nach dem Mock, ohne die alte Struktur', async () => {
+    renderApp('/de');
+    await screen.findByRole('heading', { level: 1 });
+    const index = screen.getByRole('navigation', { name: 'Direkt zu den Themen' });
+    expect(within(index).getAllByRole('link').map((a) => [a.textContent, a.getAttribute('href')])).toEqual([
+      ['01Data AnalyticsUnternehmenswissen nutzbar machen', '#data-analytics'],
+      ['02SoftwareentwicklungMit Agenten zusammenarbeiten', '#softwareentwicklung'],
+      ['03Modelle und KostenDen Aufwand als Ganzes verstehen', '#modelle-und-kosten'],
+    ]);
+    const sections = [...document.querySelectorAll('.editorial-section')];
+    expect(sections.map((s) => s.querySelector('.editorial-grid')!.classList.contains('reverse'))).toEqual([false, true, false]);
+    const audit = screen.getByRole('region', { name: 'KI-Reifegradeinschätzen.' });
+    expect(within(audit).getByRole('link', { name: 'Zum KI-Audit' })).toHaveAttribute('href', '/de/themen/ai-audit');
+    expect(within(within(audit).getByRole('list', { name: 'Drei Reifegrade' })).getAllByRole('listitem').map((li) => li.querySelector('strong')!.textContent)).toEqual(['Einfach', 'Strukturiert', 'Intelligent']);
+    const profile = screen.getByRole('region', { name: 'Marvin Jakob.' });
+    expect(within(profile).getByRole('img', { name: 'Porträt von Marvin Jakob' })).toBeInTheDocument();
+    expect(within(profile).getByRole('link', { name: 'Über mich' })).toHaveAttribute('href', '/de/profil');
+
+    const main = screen.getByRole('main');
+    expect(within(main).queryByRole('heading', { name: 'Was KI gerade spannend macht.' })).not.toBeInTheDocument();
+    expect(within(main).queryByRole('heading', { name: 'Was ist KI – und was kann man damit machen?' })).not.toBeInTheDocument();
+    expect(main.querySelector('.topics, .basics, .limits')).toBeNull();
+    const hrefs = [...main.querySelectorAll('a')].map((a) => a.getAttribute('href') ?? '');
+    expect(hrefs.filter((h) => /\.md$|mock\/|prozessautomatisierung|ki-tipps-und-tricks|^#$|^$/.test(h))).toEqual([]);
   });
 
   it.each([
-    ['de', 'Quellen'],
-    ['en', 'Sources'],
-  ])('Ticket #91: zeigt auf /%s keine Quellenverweise und keine Quellenliste', async (lang, title) => {
+    ['Themen entdecken', 'Gute Fragen.Neue Perspektiven.'],
+    ['01Data AnalyticsUnternehmenswissen nutzbar machen', TEMPLATE_TOPICS[0].question],
+    ['02SoftwareentwicklungMit Agenten zusammenarbeiten', TEMPLATE_TOPICS[1].question],
+    ['03Modelle und KostenDen Aufwand als Ganzes verstehen', TEMPLATE_TOPICS[2].question],
+  ])('springt mit „%s“ zum Abschnitt und setzt dort den Fokus, ohne die URL zu ändern', async (link, heading) => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de');
+    await screen.findByRole('heading', { level: 1 });
+    await user.click(screen.getByRole('link', { name: link }));
+    expect(screen.getByRole('heading', { level: 2, name: heading })).toHaveFocus();
+    expect(router.state.location.pathname).toBe('/de');
+    expect(router.state.location.hash).toBe('');
+  });
+
+  it.each(TEMPLATE_TOPICS.map((tp) => [tp.link, tp.slug]))('„%s“ öffnet die vorhandene Themenseite', async (link, slug) => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de');
+    await screen.findByRole('heading', { level: 1 });
+    await user.click(screen.getByRole('link', { name: link }));
+    expect(router.state.location.pathname).toBe(`/de/themen/${slug}`);
+    expect(await screen.findByRole('heading', { level: 1 })).not.toHaveTextContent('Seite nicht gefunden');
+  });
+
+  it.each([
+    ['News', '/de/blog', 'Blog'],
+    ['KI-Reifegrad einschätzen', '/de/themen/ai-audit', 'AI Audit für Unternehmen'],
+    ['Über mich', '/de/profil', 'Marvin Jakob'],
+  ])('„%s“ führt zu %s', async (link, path, heading) => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de');
+    const hero = (await screen.findByRole('heading', { level: 1 })).closest('section')!;
+    await user.click(within(hero).getByRole('link', { name: link }));
+    expect(router.state.location.pathname).toBe(path);
+    expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+  });
+
+  it('ist vollständig auf Englisch verfügbar und behält die Sprache beim Wechsel und Navigieren', async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de');
+    await screen.findByRole('heading', { level: 1 });
+    await user.click(screen.getByRole('button', { name: 'English' }));
+    expect(router.state.location.pathname).toBe('/en');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Understand AI.Use it wisely.' })).toBeInTheDocument();
+    expect(screen.getByText('AI can do a lot. What matters is how we use it.')).toBeInTheDocument();
+    expect(document.title).toBe('Understand AI. Use it wisely. · KI Perspektiven');
+    const questions = [
+      'What do you keep having to explain to AI so that it understands your work?',
+      'If AI takes the boring work off our hands, will software development finally become more creative?',
+      'What does a cheap AI model cost us if we have to rework every result?',
+    ];
+    questions.forEach((question, i) => {
+      const section = screen.getByRole('region', { name: question });
+      expect(section.querySelectorAll('.editorial-text p')).toHaveLength(TEMPLATE_TOPICS[i].paragraphs.length);
+      expect(within(section).getByRole('link', { name: /^Read the article:/ })).toHaveAttribute('href', `/en/themen/${TEMPLATE_TOPICS[i].slug}`);
+    });
+    const hero = screen.getByRole('heading', { level: 1 }).closest('section')!;
+    expect(within(hero).getByRole('link', { name: 'News' })).toHaveAttribute('href', '/en/blog');
+    expect(within(hero).getByRole('link', { name: 'Assess your AI maturity' })).toHaveAttribute('href', '/en/themen/ai-audit');
+    expect(within(hero).getByRole('link', { name: 'About me' })).toHaveAttribute('href', '/en/profil');
+    await user.click(within(hero).getByRole('link', { name: 'News' }));
+    expect(router.state.location.pathname).toBe('/en/blog');
+  });
+
+  it.each(['de', 'en'])('zeigt auf /%s keine Quellenverweise und keine Quellenliste (Ticket #91)', async (lang) => {
     renderApp(`/${lang}`);
     await screen.findByRole('heading', { level: 1 });
     const main = screen.getByRole('main');
     expect(main.querySelector('sup, .fn, [id^="quelle-"]')).toBeNull();
-    expect(within(main).queryByRole('link', { name: /^(Quelle|Source) \d+$/ })).not.toBeInTheDocument();
-    expect(within(main).queryByRole('heading', { name: title })).not.toBeInTheDocument();
-  });
-
-  it('ist vollständig auf Englisch verfügbar', async () => {
-    renderApp('/en');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Understand AI.Use it wisely.' })).toBeInTheDocument();
-    expect(screen.getByText(/^One in four companies in Germany already uses AI\./)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Explore topics' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Assess your AI maturity' })).toHaveAttribute('href', '/en/themen/ai-audit');
-    const focus = screen.getByRole('region', { name: 'What makes AI exciting right now.' });
-    expect(within(focus).getAllByRole('listitem')).toHaveLength(6);
-    expect(within(focus).getByRole('link', { name: 'Find the best value for money' })).toHaveAttribute('href', '/en/themen/modelle-und-kosten');
-    expect(screen.getByRole('heading', { level: 2, name: 'What is AI – and what can you do with it?' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Read the detailed overview' })).toHaveAttribute('href', '/en/ki-einsatzfelder');
-    expect(document.title).toBe('KI Perspektiven');
+    expect(within(main).queryByRole('heading', { name: /^(Quellen|Sources)$/ })).not.toBeInTheDocument();
   });
 });
 
@@ -239,7 +270,7 @@ describe('Ticket #93: cimt × Apple-Design', () => {
     const heading = await screen.findByRole('heading', { level: 1, name: title });
     const hero = heading.closest('section')!;
     expect(hero.querySelector('img, svg defs, .hero-visual')).toBeNull();
-    expect(within(hero).getByRole('link', { name: topics })).toHaveAttribute('href', '#fokus-title');
+    expect(within(hero).getByRole('link', { name: topics })).toHaveAttribute('href', '#themen');
     expect(within(hero).getByRole('link', { name: audit })).toHaveAttribute('href', `/${lang}/themen/ai-audit`);
   });
 
