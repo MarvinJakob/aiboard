@@ -66,11 +66,10 @@ describe('Ticket #101: Startseite nach content/Landingpage_v03.md und mock/landi
       expect([...section.querySelectorAll('.editorial-text em')].map((em) => em.textContent)).toEqual(tp.paragraphs.flatMap(emphasis));
       expect(section.querySelector('details, [hidden], [aria-expanded]')).toBeNull();
       expect(within(section).getByRole('link', { name: tp.link })).toHaveAttribute('href', `/de/themen/${tp.slug}`);
-      expect(within(section).getByRole('img')).toHaveAccessibleName();
     });
   });
 
-  it('zeigt Themenindex, KI-Reifegrad-Banner und Profil-Teaser nach dem Mock, ohne die alte Struktur', async () => {
+  it('zeigt Themenindex, KI-Reifegrad-Banner und Profil-Teaser ohne Grafiken (Ticket #118)', async () => {
     renderApp('/de');
     await screen.findByRole('heading', { level: 1 });
     const index = screen.getByRole('navigation', { name: 'Direkt zu den Themen' });
@@ -79,13 +78,10 @@ describe('Ticket #101: Startseite nach content/Landingpage_v03.md und mock/landi
       ['02SoftwareentwicklungMit Agenten zusammenarbeiten', '#softwareentwicklung'],
       ['03Modelle und KostenDen Aufwand als Ganzes verstehen', '#modelle-und-kosten'],
     ]);
-    const sections = [...document.querySelectorAll('.editorial-section')];
-    expect(sections.map((s) => s.querySelector('.editorial-grid')!.classList.contains('reverse'))).toEqual([false, true, false]);
     const audit = screen.getByRole('region', { name: 'KI-Reifegradeinschätzen.' });
     expect(within(audit).getByRole('link', { name: 'Zum KI-Audit' })).toHaveAttribute('href', '/de/themen/ai-audit');
     expect(within(within(audit).getByRole('list', { name: 'Drei Reifegrade' })).getAllByRole('listitem').map((li) => li.querySelector('strong')!.textContent)).toEqual(['Einfach', 'Strukturiert', 'Intelligent']);
     const profile = screen.getByRole('region', { name: 'Marvin Jakob.' });
-    expect(within(profile).getByRole('img', { name: 'Porträt von Marvin Jakob' })).toBeInTheDocument();
     expect(within(profile).getByRole('link', { name: 'Über mich' })).toHaveAttribute('href', '/de/profil');
 
     const main = screen.getByRole('main');
@@ -160,11 +156,12 @@ describe('Ticket #101: Startseite nach content/Landingpage_v03.md und mock/landi
     expect(router.state.location.pathname).toBe('/en/blog');
   });
 
-  it.each(['de', 'en'])('zeigt auf /%s keine Quellenverweise und keine Quellenliste (Ticket #91)', async (lang) => {
+  it.each(['de', 'en'])('zeigt auf /%s keine Quellenverweise (#91) und keine Grafiken (#118)', async (lang) => {
     renderApp(`/${lang}`);
     await screen.findByRole('heading', { level: 1 });
     const main = screen.getByRole('main');
     expect(main.querySelector('sup, .fn, [id^="quelle-"]')).toBeNull();
+    expect(main.querySelector('img, svg, picture, canvas, [role="img"], .editorial-art')).toBeNull();
     expect(within(main).queryByRole('heading', { name: /^(Quellen|Sources)$/ })).not.toBeInTheDocument();
   });
 });

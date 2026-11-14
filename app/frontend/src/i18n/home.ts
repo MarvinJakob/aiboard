@@ -12,39 +12,8 @@ export const AI_USES_PATH = '/ki-einsatzfelder';
 /** Die drei Themen der Startseite; der Slug ist zugleich Sprungziel und Pfad der Themenseite. */
 export type HomeTopicSlug = 'data-analytics' | 'softwareentwicklung' | 'modelle-und-kosten';
 
-/** Texte der Illustration „Wissen in Verbindung bringen“ (Data Analytics). */
-export interface DataArt {
-  label: string;
-  kicker: string;
-  sources: [mails: string, tickets: string, documents: string];
-  contextLabel: string;
-  context: [string, string];
-  analysis: string;
-  foot: string;
-}
-
-/** Texte der Illustration „Zusammenarbeit weiterdenken“ (Softwareentwicklung). */
-export interface CodeArt {
-  label: string;
-  kicker: string;
-  title: [string, string];
-  workflow: [task: string, agent: string, review: string];
-  skills: [title: string, text: string];
-  guardrails: [title: string, text: string];
-  responsibility: string;
-}
-
-/** Texte der Illustration „Die gesamte Aufgabe betrachten“ (Modelle und Kosten). */
-export interface CostsArt {
-  label: string;
-  kicker: string;
-  title: [string, string];
-  items: [model: string, tools: string, review: string];
-  total: [string, string];
-}
-
 /** Ein ausführlicher Themenabschnitt: Leitfrage, alle Absätze der Vorlage und Artikel-Verweis. */
-export interface HomeTopic<A> {
+export interface HomeTopic {
   slug: HomeTopicSlug;
   title: string;
   /** Kurzzeile im Themenindex unter dem Hero. */
@@ -52,7 +21,6 @@ export interface HomeTopic<A> {
   question: string;
   paragraphs: RichText[];
   articleLink: string;
-  art: A;
 }
 
 interface HomeContent {
@@ -71,7 +39,7 @@ interface HomeContent {
   topicsEyebrow: string;
   topicsTitle: [string, string];
   topicsText: [string, string];
-  topics: [HomeTopic<DataArt>, HomeTopic<CodeArt>, HomeTopic<CostsArt>];
+  topics: [HomeTopic, HomeTopic, HomeTopic];
   auditEyebrow: string;
   auditTitle: [string, string];
   auditText: string;
@@ -81,7 +49,6 @@ interface HomeContent {
   auditStepsText: [string, string];
   profileEyebrow: string;
   profileName: string;
-  profileAlt: string;
   profileText: [string, string];
 }
 
@@ -89,7 +56,7 @@ interface HomeContent {
  * Texte der Startseite (Ticket #101). Hero, Leitfragen, Absätze, Hervorhebungen und Artikel-Linktexte stammen
  * wortgleich aus content/Landingpage_v03.md, Stand 10. November 2026; app.test.tsx prüft die Übereinstimmung.
  * Zeichensetzung und Schreibweise der Vorlage bleiben bewusst unverändert. Zwischenüberschriften, Kurzzeilen
- * im Themenindex, Illustrationen, KI-Reifegrad-Banner und Profil-Teaser folgen dem Mock mock/landing_v03/.
+ * im Themenindex, KI-Reifegrad-Banner und Profil-Teaser folgen dem Mock mock/landing_v03/.
  */
 export const home: Record<Lang, HomeContent> = {
   de: {
@@ -123,15 +90,6 @@ export const home: Record<Lang, HomeContent> = {
           ['Was bedeutet das für die Art, wie wir Daten analysieren und fachliche Fragen beantworten?'],
         ],
         articleLink: 'Zum Artikel: Data Analytics mit KI',
-        art: {
-          label: 'Mails, Tickets und Dokumente liefern Kontext für Data Analytics',
-          kicker: 'Wissen in Verbindung bringen',
-          sources: ['Mails', 'Tickets', 'Dokumente'],
-          contextLabel: 'Unternehmenswissen',
-          context: ['Kontext macht', 'den Unterschied.'],
-          analysis: 'Data Analytics',
-          foot: 'Von einzelnen Informationen zu Zusammenhängen.',
-        },
       },
       {
         slug: 'softwareentwicklung',
@@ -153,15 +111,6 @@ export const home: Record<Lang, HomeContent> = {
           ['Wie sieht diese Zusammenarbeit in der Praxis aus? Im Artikel ', { em: '„KI in der Softwareentwicklung“' }, ' gehen wir genauer darauf ein, welche Aufgaben KI-Agenten übernehmen können, wie Skills sie dabei unterstützen und wie wir mit Guardrails die Kontrolle behalten.'],
         ],
         articleLink: 'Zum Artikel: KI in der Softwareentwicklung',
-        art: {
-          label: 'Ein KI-Agent setzt eine Aufgabe mit Skills um. Guardrails begrenzen seinen Handlungsspielraum. Menschen prüfen Tests und Review.',
-          kicker: 'Zusammenarbeit weiterdenken',
-          title: ['Vom Assistenten', 'zum Agenten.'],
-          workflow: ['Aufgabe', 'KI-Agent', 'Tests & Review'],
-          skills: ['Skills', 'Wissen & Vorgehen'],
-          guardrails: ['Guardrails', 'Orientierung & Grenzen'],
-          responsibility: 'Die Verantwortung bleibt bei uns.',
-        },
       },
       {
         slug: 'modelle-und-kosten',
@@ -180,13 +129,6 @@ export const home: Record<Lang, HomeContent> = {
           ['Wie gehen wir dabei vor? Im Artikel ', { em: '„Modelle und Kosten“' }, ' zeigen wir, welche Kosten in den Vergleich gehören und wie wir mit eigenen Testaufgaben das passende Modell finden.'],
         ],
         articleLink: 'Zum Artikel: Modelle und Kosten',
-        art: {
-          label: 'Modellkosten, Werkzeuge und Betrieb sowie Prüfung und Korrektur ergeben die Kosten einer erfolgreich erledigten Aufgabe.',
-          kicker: 'Die gesamte Aufgabe betrachten',
-          title: ['Günstiger Aufruf.', 'Gutes Ergebnis?'],
-          items: ['Modellkosten', 'Werkzeuge & Betrieb', 'Prüfung & Korrektur'],
-          total: ['Kosten pro', 'erfolgreicher Aufgabe'],
-        },
       },
     ],
     auditEyebrow: 'Der nächste Schritt',
@@ -198,7 +140,6 @@ export const home: Record<Lang, HomeContent> = {
     auditStepsText: ['Den eigenen Stand verstehen.', 'Den nächsten Schritt erkennen.'],
     profileEyebrow: 'Die Perspektive dahinter',
     profileName: 'Marvin Jakob.',
-    profileAlt: 'Porträt von Marvin Jakob',
     profileText: ['Softwareentwicklung, Cloud-Architektur und Business Analyse.', 'Ein praxisnaher Blick auf den professionellen Einsatz von KI.'],
   },
   en: {
@@ -232,15 +173,6 @@ export const home: Record<Lang, HomeContent> = {
           ['What does this mean for the way we analyse data and answer business questions?'],
         ],
         articleLink: 'Read the article: Data Analytics with AI',
-        art: {
-          label: 'Emails, tickets and documents provide context for data analytics',
-          kicker: 'Connecting knowledge',
-          sources: ['Emails', 'Tickets', 'Documents'],
-          contextLabel: 'Company knowledge',
-          context: ['Context makes', 'the difference.'],
-          analysis: 'Data Analytics',
-          foot: 'From individual pieces of information to connections.',
-        },
       },
       {
         slug: 'softwareentwicklung',
@@ -262,15 +194,6 @@ export const home: Record<Lang, HomeContent> = {
           ['What does this collaboration look like in practice? In the article ', { em: '“AI in Software Development”' }, ' we look more closely at which tasks AI agents can take on, how skills support them and how guardrails keep us in control.'],
         ],
         articleLink: 'Read the article: AI in Software Development',
-        art: {
-          label: 'An AI agent completes a task using skills. Guardrails limit its room for action. People review tests and code.',
-          kicker: 'Rethinking collaboration',
-          title: ['From assistant', 'to agent.'],
-          workflow: ['Task', 'AI agent', 'Tests & review'],
-          skills: ['Skills', 'Knowledge & approach'],
-          guardrails: ['Guardrails', 'Direction & limits'],
-          responsibility: 'Responsibility stays with us.',
-        },
       },
       {
         slug: 'modelle-und-kosten',
@@ -289,13 +212,6 @@ export const home: Record<Lang, HomeContent> = {
           ['How do we go about it? In the article ', { em: '“Models and Costs”' }, ' we show which costs belong in the comparison and how we find the right model with our own test tasks.'],
         ],
         articleLink: 'Read the article: Models and Costs',
-        art: {
-          label: 'Model costs, tools and operations, plus review and correction add up to the cost of a successfully completed task.',
-          kicker: 'Looking at the whole task',
-          title: ['Cheap call.', 'Good result?'],
-          items: ['Model costs', 'Tools & operations', 'Review & correction'],
-          total: ['Cost per', 'successful task'],
-        },
       },
     ],
     auditEyebrow: 'The next step',
@@ -307,7 +223,6 @@ export const home: Record<Lang, HomeContent> = {
     auditStepsText: ['Understand where you stand.', 'Recognise the next step.'],
     profileEyebrow: 'The perspective behind it',
     profileName: 'Marvin Jakob.',
-    profileAlt: 'Portrait of Marvin Jakob',
     profileText: ['Software development, cloud architecture and business analysis.', 'A practical view of the professional use of AI.'],
   },
 };
