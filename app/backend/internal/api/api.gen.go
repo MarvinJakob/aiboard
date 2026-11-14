@@ -193,7 +193,10 @@ type AuditLevelInfo struct {
 type AuditOverview struct {
 	Dimensions []AuditDimensionSummary `json:"dimensions"`
 
-	// Intro Absätze der Einführung
+	// Guidance Anleitung und fachliche Einordnung als Markdown in der angegebenen Inhaltssprache
+	Guidance string `json:"guidance"`
+
+	// Intro Absätze der Einführung (Markdown)
 	Intro []string `json:"intro"`
 	Lang  Lang     `json:"lang"`
 

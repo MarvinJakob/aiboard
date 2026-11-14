@@ -13,8 +13,8 @@ const topicData: Record<string, Record<L, Omit<Topic, 'lang' | 'postCount' | 'sl
     en: { title: 'AI in Software Development', label: 'Software Development', summary: 'How to guide AI assistants with Markdown rules, access permissions, tests and reviews.', intro: 'Files such as `AGENTS.md` give AI assistants goals, workflows and boundaries. However, the model can misunderstand or disregard these rules. Here you can learn how to write verifiable rules, tie approvals to actions and enforce boundaries through technical controls.' },
   },
   'ai-audit': {
-    de: { title: 'AI Audit für Unternehmen', label: 'AI Audit', summary: 'Kurz Audit', intro: 'Einführung Audit' },
-    en: { title: 'AI Audit for Companies', label: 'AI Audit', summary: 'Short audit', intro: 'Intro audit' },
+    de: { title: 'KI Readiness', label: 'AI Audit', summary: 'Kurz Audit', intro: 'Einführung Audit' },
+    en: { title: 'AI Readiness', label: 'AI Audit', summary: 'Short audit', intro: 'Intro audit' },
   },
   'data-analytics': {
     de: { title: 'KI in Data Analytics', label: 'Data Analytics', summary: 'Wie aus einer schnellen KI-Antwort eine belastbare Analyse wird: Kennzahlen klären, Ergebnisse prüfen.', intro: 'KI beantwortet Datenfragen in Alltagssprache, schreibt Analysecode und unterstützt Prognosen. Belastbar werden die Ergebnisse erst, wenn Kennzahlen eindeutig definiert sind und Antworten mit den Quelldaten abgeglichen werden. Diese Seite zeigt Einsatzfelder, Grenzen und einen Pilot.' },
@@ -132,6 +132,7 @@ function auditOverview(): AuditOverview {
     lang: 'de',
     translations: ['de'],
     intro: ['Das KI-Audit zeigt, welche Fähigkeiten vorhanden sind.'],
+    guidance: '### So ist die Selbsteinschätzung aufgebaut\n\nJe Dimension einen Reifegrad wählen.',
     levels: [1, 2, 3].map((level) => ({ level, name: LEVEL_NAMES[level], motto: `Leitsatz ${level}` })),
     dimensions: AUDIT_DIMENSIONS.map(({ slug, lang, title, summary, category }) => ({ slug, lang, title, summary, category })),
   };

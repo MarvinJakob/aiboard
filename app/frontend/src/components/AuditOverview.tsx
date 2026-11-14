@@ -1,4 +1,6 @@
 import { Link } from 'react-router';
+import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useAudit } from '../api/client';
 import { AUDIT_TOPIC, auditPath } from '../lib/audit';
 import { useLang } from '../lib/lang';
@@ -7,8 +9,8 @@ import { Icon } from './Icon';
 import { TranslationNotice } from './Status';
 
 /**
- * Einstieg in das KI-Audit auf der Themenseite „AI Audit für Unternehmen“ (Anforderung 8):
- * Zweck des Audits, die drei Reifegrade und je Dimension ein Link zu ihrer Seite.
+ * KI-Readiness-Inhalte aus dem Katalog, einschließlich dessen Sprach-Fallback.
+ * Der geführte Ablauf und die Gesamtauswertung folgen in #113/#114.
  */
 export function AuditOverview() {
   const { lang, t } = useLang();
@@ -46,10 +48,8 @@ export function AuditOverview() {
         {t('audit.title')}
       </h2>
       {contentLang && <TranslationNotice text={t('audit.fallback', { language: t(`langName.${o.lang}`) })} />}
-      <div className="audit-intro" lang={contentLang}>
-        {o.intro.map((p) => (
-          <p key={p}>{p}</p>
-        ))}
+      <div className="audit-copy prose" lang={contentLang}>
+        <Markdown skipHtml>{o.intro.join('\n\n')}</Markdown>
       </div>
 
       <h3 className="subhead">{t('audit.levelsTitle')}</h3>
@@ -64,6 +64,12 @@ export function AuditOverview() {
           </li>
         ))}
       </ol>
+
+      <div className="audit-copy prose" lang={contentLang}>
+        <Markdown skipHtml remarkPlugins={[remarkGfm]} components={{
+          table: ({ children }) => <div className="readiness-table"><table>{children}</table></div>,
+        }}>{o.guidance}</Markdown>
+      </div>
 
       <h3 className="subhead">{t('audit.dimensionsTitle')}</h3>
       <p className="section-sub subhead-sub">{t('audit.dimensionsSub')}</p>

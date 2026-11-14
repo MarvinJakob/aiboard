@@ -601,8 +601,10 @@ export interface components {
         AuditOverview: {
             lang: components["schemas"]["Lang"];
             translations: components["schemas"]["Lang"][];
-            /** @description Absätze der Einführung */
+            /** @description Absätze der Einführung (Markdown) */
             intro: string[];
+            /** @description Anleitung und fachliche Einordnung als Markdown in der angegebenen Inhaltssprache */
+            guidance: string;
             /** @description Die Reifegrade 1 bis 3 */
             levels: components["schemas"]["AuditLevelInfo"][];
             dimensions: components["schemas"]["AuditDimensionSummary"][];

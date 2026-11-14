@@ -1031,7 +1031,7 @@ components:
           $ref: '#/components/schemas/AuditCategory'
     AuditOverview:
       type: object
-      required: [lang, translations, intro, levels, dimensions]
+      required: [lang, translations, intro, guidance, levels, dimensions]
       properties:
         lang:
           $ref: '#/components/schemas/Lang'
@@ -1041,9 +1041,12 @@ components:
             $ref: '#/components/schemas/Lang'
         intro:
           type: array
-          description: Absätze der Einführung
+          description: Absätze der Einführung (Markdown)
           items:
             type: string
+        guidance:
+          type: string
+          description: Anleitung und fachliche Einordnung als Markdown in der angegebenen Inhaltssprache
         levels:
           type: array
           description: Die Reifegrade 1 bis 3

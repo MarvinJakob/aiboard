@@ -122,7 +122,7 @@ describe('Ticket #101: Startseite nach content/Landingpage_v03.md und mock/landi
 
   it.each([
     ['News', '/de/blog', 'Blog'],
-    ['KI-Reifegrad einschätzen', '/de/themen/ai-audit', 'AI Audit für Unternehmen'],
+    ['KI-Reifegrad einschätzen', '/de/themen/ai-audit', 'KI Readiness'],
     ['Über mich', '/de/profil', 'Marvin Jakob'],
   ])('„%s“ führt zu %s', async (link, path, heading) => {
     const user = userEvent.setup();
@@ -325,7 +325,7 @@ describe('Anforderung 3: Themenseiten', () => {
   it('zeigt Titel, Einführung und zugeordnete Beiträge; ein Klick öffnet den Beitrag', async () => {
     const user = userEvent.setup();
     const { router } = renderApp('/de/themen/ai-audit');
-    expect(await screen.findByRole('heading', { level: 1, name: 'AI Audit für Unternehmen' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'KI Readiness' })).toBeInTheDocument();
     expect(screen.getByText('Einführung Audit')).toBeInTheDocument();
     await user.click(await screen.findByRole('link', { name: /Älterer Beitrag/ }));
     expect(router.state.location.pathname).toBe('/de/blog/alt');
@@ -399,9 +399,9 @@ describe('Anforderung 7: Sprachwechsel', () => {
   it('behält die gewählte Sprache beim Navigieren und speichert sie lokal', async () => {
     const user = userEvent.setup();
     const { router } = renderApp('/de/themen/ai-audit');
-    await screen.findByRole('heading', { level: 1, name: 'AI Audit für Unternehmen' });
+    await screen.findByRole('heading', { level: 1, name: 'KI Readiness' });
     await user.click(screen.getByRole('button', { name: 'English' }));
-    expect(await screen.findByRole('heading', { level: 1, name: 'AI Audit for Companies' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'AI Readiness' })).toBeInTheDocument();
     expect(localStorage.getItem('ki-perspektiven.lang')).toBe('en');
 
     const nav = screen.getByRole('navigation', { name: 'Main navigation' });
@@ -428,7 +428,7 @@ describe('Anforderung 8: KI-Audit-Übersicht', () => {
   it('zeigt auf der Themenseite AI Audit die Einführung und alle Dimensionen mit Link', async () => {
     const user = userEvent.setup();
     const { router } = renderApp('/de/themen/ai-audit');
-    expect(await screen.findByRole('heading', { level: 2, name: 'Die Dimensionen des KI-Audits' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: 'Warum eine Selbsteinschätzung?' })).toBeInTheDocument();
     expect(screen.getByText('Das KI-Audit zeigt, welche Fähigkeiten vorhanden sind.')).toBeInTheDocument();
     expect(screen.getByText('Leitsatz 2')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Betrieb/ })).toHaveAttribute('href', '/de/themen/ai-audit/betrieb');
@@ -440,7 +440,7 @@ describe('Anforderung 8: KI-Audit-Übersicht', () => {
   it('erscheint nur beim Thema AI Audit', async () => {
     renderApp('/de/themen/softwareentwicklung');
     await screen.findByRole('heading', { level: 1, name: 'KI in der Softwareentwicklung' });
-    expect(screen.queryByRole('heading', { name: 'Die Dimensionen des KI-Audits' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Warum eine Selbsteinschätzung?' })).not.toBeInTheDocument();
   });
 });
 
@@ -465,7 +465,7 @@ describe('Anforderung 9: Seiten für die Audit-Dimensionen', () => {
   it('zeigt auf Englisch die deutsche Fassung mit Hinweis', async () => {
     renderApp('/en/themen/ai-audit/betrieb');
     expect(await screen.findByRole('heading', { level: 1, name: 'Betrieb' })).toBeInTheDocument();
-    expect(screen.getByText('The AI audit is not available in English. You are reading the German version.')).toBeInTheDocument();
+    expect(screen.getByText('The AI Readiness content is not available in English. You are reading the German version.')).toBeInTheDocument();
     expect(screen.getAllByRole('radio', { name: 'Yes' })).toHaveLength(3);
   });
 });
@@ -548,8 +548,8 @@ describe('Ticket #21: AI Audit als eigener Navigationseintrag', () => {
   );
 
   it.each([
-    ['/de/blog', 'Hauptnavigation', '/de/themen/ai-audit', 'AI Audit für Unternehmen'],
-    ['/en/blog', 'Main navigation', '/en/themen/ai-audit', 'AI Audit for Companies'],
+    ['/de/blog', 'Hauptnavigation', '/de/themen/ai-audit', 'KI Readiness'],
+    ['/en/blog', 'Main navigation', '/en/themen/ai-audit', 'AI Readiness'],
   ])('öffnet von %s die Audit-Übersicht in der gewählten Sprache', async (path, navName, target, heading) => {
     const user = userEvent.setup();
     const { router } = renderApp(path);

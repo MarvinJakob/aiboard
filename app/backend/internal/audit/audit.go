@@ -1,5 +1,6 @@
 // Package audit enthält die Inhalte des KI-Audits (Anforderungen 8 bis 10): Einführung, Dimensionen,
-// Reifegrade und Prüffragen. Fachliche Grundlage ist content/KI Audit.docx. Die Inhalte liegen
+// Reifegrade und Prüffragen. Grundlagen: content/KI Readiness.md und content/KI Audit.docx.
+// Die Zuordnung und Anpassungen für Ticket #111 stehen in docs/readiness-inhalte.md. Die Inhalte liegen
 // versioniert in content.json und werden in das Binary eingebettet
 // (docs/adr/0009-audit-inhalte-als-datei-im-repository.md).
 package audit
@@ -11,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"ki-web/backend/internal/service"
 )
@@ -50,6 +52,7 @@ type Overview struct {
 	Lang         service.Lang
 	Translations []service.Lang
 	Intro        []string
+	Guidance     string      // Markdown: Ablauf, Reifegrade und Einordnung; gleiche Sprache wie Intro
 	Levels       []LevelInfo // Reifegrade 1 bis 3
 	Dimensions   []DimensionSummary
 }
@@ -99,8 +102,9 @@ type fileFormat struct {
 }
 
 type overviewText struct {
-	Intro  []string        `json:"intro"`
-	Levels []levelInfoText `json:"levels"` // Reifegrade 0 bis 3
+	Intro    []string        `json:"intro"`
+	Guidance []string        `json:"guidance"`
+	Levels   []levelInfoText `json:"levels"` // Reifegrade 0 bis 3
 }
 
 type levelInfoText struct {
@@ -183,6 +187,9 @@ func validate(f fileFormat) error {
 		}
 		if len(o.Intro) == 0 || hasEmpty(o.Intro) {
 			fail("übersicht (%s): Einführung fehlt oder enthält leere Absätze", l)
+		}
+		if len(o.Guidance) == 0 || hasEmpty(o.Guidance) {
+			fail("übersicht (%s): Anleitung fehlt", l)
 		}
 		if len(o.Levels) != LevelCount+1 {
 			fail("übersicht (%s): %d Reifegrade statt %d (0 bis %d)", l, len(o.Levels), LevelCount+1, LevelCount)
@@ -282,7 +289,7 @@ func sameQuestions(a, b dimensionText) bool {
 // Overview liefert die Audit-Übersicht in der gewünschten Sprache (sonst Deutsch).
 func (c *Catalog) Overview(lang service.Lang) Overview {
 	o, l, _ := pick(c.overview, lang)
-	out := Overview{Lang: l, Translations: langsOf(c.overview), Intro: o.Intro}
+	out := Overview{Lang: l, Translations: langsOf(c.overview), Intro: o.Intro, Guidance: strings.Join(o.Guidance, "\n\n")}
 	for i := 1; i < len(o.Levels); i++ {
 		out.Levels = append(out.Levels, LevelInfo{Level: i, Name: o.Levels[i].Name, Motto: o.Levels[i].Motto})
 	}

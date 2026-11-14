@@ -46,10 +46,11 @@ export function TopicPage() {
       </nav>
       <section className="topic-hero">
         <div lang={contentLang}>
-          <p className="eyebrow">{t('topic.eyebrow')}</p>
+          <p className="eyebrow">{t(tp.slug === AUDIT_TOPIC ? 'audit.eyebrow' : 'topic.eyebrow')}</p>
           <h1 className="page-title" tabIndex={-1} ref={h1}>
             {breakAfterSlash(tp.title)}
           </h1>
+          {tp.slug === AUDIT_TOPIC && <p className="topic-subtitle">{tp.summary}</p>}
           {content?.subtitle && <p className="topic-subtitle">{breakAfterSlash(content.subtitle)}</p>}
           <p className="lead">{tp.intro}</p>
           {fallback && <TranslationNotice text={t('fallbackTopic', { language: t(`langName.${tp.lang}`) })} />}

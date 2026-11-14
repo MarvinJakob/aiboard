@@ -130,7 +130,7 @@ func TestHealth(t *testing.T) {
 func TestTopicsAreSeeded(t *testing.T) {
 	srv, _ := newServer(t, false)
 	list := getJSON[api.TopicList](t, srv, "/api/topics?lang=de", 200)
-	want := []string{"KI in der Softwareentwicklung", "AI Audit für Unternehmen", "KI in Data Analytics", "Modelle und Kosten: Wie finde ich das beste Preis-/Leistungsverhältnis?"}
+	want := []string{"KI in der Softwareentwicklung", "KI Readiness", "KI in Data Analytics", "Modelle und Kosten: Wie finde ich das beste Preis-/Leistungsverhältnis?"}
 	if len(list.Items) != len(want) {
 		t.Fatalf("%d Themen, erwartet %d", len(list.Items), len(want))
 	}
@@ -449,7 +449,7 @@ func TestMetaTags(t *testing.T) {
 	}
 
 	_, body = get(t, srv, "/de/themen/ai-audit")
-	if !strings.Contains(body, "<title>AI Audit für Unternehmen · KI Perspektiven</title>") {
+	if !strings.Contains(body, "<title>KI Readiness · KI Perspektiven</title>") {
 		t.Errorf("Themen-Titel fehlt:\n%s", body)
 	}
 }
@@ -517,6 +517,9 @@ func TestAuditOverview(t *testing.T) {
 	if o.Lang != "de" || len(o.Intro) == 0 || len(o.Dimensions) != 8 {
 		t.Fatalf("übersicht: lang=%s intro=%d dimensionen=%d", o.Lang, len(o.Intro), len(o.Dimensions))
 	}
+	if !strings.Contains(o.Guidance, "Gesamtauswertung") || !strings.Contains(o.Guidance, "Entscheidungshilfe") {
+		t.Fatalf("Readiness-Anleitung fehlt: %s", o.Guidance)
+	}
 	if d := o.Dimensions[0]; d.Slug != "strategie-und-wirtschaftlichkeit" || d.Title != "Strategie und Wirtschaftlichkeit" || d.Category != "organizational" {
 		t.Fatalf("erste dimension: %+v", d)
 	}
@@ -528,7 +531,7 @@ func TestAuditOverview(t *testing.T) {
 		t.Fatalf("reifegrade: %v", names)
 	}
 	// Ohne englische Fassung liefert das Backend Deutsch und nennt die Sprache.
-	if en := getJSON[api.AuditOverview](t, srv, "/api/audit?lang=en", 200); en.Lang != "de" || len(en.Translations) != 1 {
+	if en := getJSON[api.AuditOverview](t, srv, "/api/audit?lang=en", 200); en.Lang != "de" || len(en.Translations) != 1 || en.Guidance != o.Guidance {
 		t.Fatalf("rückfall: lang=%s translations=%v", en.Lang, en.Translations)
 	}
 	getJSON[api.Error](t, srv, "/api/audit?lang=fr", 400)

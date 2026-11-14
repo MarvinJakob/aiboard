@@ -90,7 +90,7 @@ func TestUnknownDimension(t *testing.T) {
 }
 
 const minimal = `{
-  "overview": {"de": {"intro": ["Intro"], "levels": [
+  "overview": {"de": {"intro": ["Intro"], "guidance": ["Anleitung"], "levels": [
     {"name": "N", "motto": "m"}, {"name": "E", "motto": "m"}, {"name": "S", "motto": "m"}, {"name": "I", "motto": "m"}]}},
   "dimensions": [
     {"slug": "frei", "category": "technical", "released": true, "texts": {"de": %s}},

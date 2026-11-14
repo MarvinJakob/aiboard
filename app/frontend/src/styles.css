@@ -552,7 +552,12 @@ svg { display: block; }
 /* ==========================================================================
    KI-Audit: Übersicht (Anforderung 8), Dimensionsseite (9) und Selbsteinschätzung (10)
    ========================================================================== */
-.audit-intro { display: grid; gap: 1em; max-width: 720px; margin-top: 18px; font-size: 1.0625rem; color: var(--text-2); }
+.audit-copy { max-width: 760px; margin-top: 24px; color: var(--text-2); overflow-wrap: anywhere; }
+.audit-copy > p:first-child { font-size: inherit; }
+.readiness-table { margin: 1.4em 0; }
+.readiness-table table { width: 100%; border-collapse: collapse; font-size: 1rem; line-height: 1.55; }
+.readiness-table th, .readiness-table td { padding: 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); hyphens: auto; }
+.readiness-table th { background: var(--fill); }
 .subhead { margin: 48px 0 16px; font-size: 1.3125rem; }
 .subhead-sub { margin: -8px 0 20px; }
 .level-list { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }

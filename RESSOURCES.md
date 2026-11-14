@@ -20,6 +20,7 @@ Dieses Repository enthält die Webseite „KI Perspektiven“, einen klickbaren 
 | [app/README.md](app/README.md) | Einstieg in die lokale Entwicklung: Anwendung starten, Tests ausführen, Code erzeugen und Konfiguration nachschlagen. |
 | [app/docs/adr/](app/docs/adr/) | Dokumentierte Architekturentscheidungen und ihre Begründungen. |
 | [app/docs/audit-abnahme.md](app/docs/audit-abnahme.md) | Abnahmedokumentation zum KI-Audit. |
+| [app/docs/readiness-inhalte.md](app/docs/readiness-inhalte.md) | Inhaltsstand für KI Readiness (#111), Herkunft der Texte, Anpassungen und Integration mit #112–#114. |
 | [LICENSE](LICENSE) | Lizenz des Repositorys. |
 
 ## Anwendung unter `app/`

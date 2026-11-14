@@ -67,8 +67,8 @@ func TestRemoveAutomationAndSkillsTopics(t *testing.T) {
 		if n := count(`SELECT COUNT(*) FROM topics`); n != 4 {
 			t.Fatalf("verbleibende Themen: %d", n)
 		}
-		// Rücknahme stellt die Metadaten wieder her, danach entfernt das erneute Up sie wieder.
-		if _, err = p.Down(ctx); err != nil {
+		// Bis vor die Themenentfernung zurücknehmen, auch wenn neuere Migrationen existieren.
+		if _, err = p.DownTo(ctx, 9); err != nil {
 			t.Fatal(err)
 		}
 		if n := count(`SELECT COUNT(*) FROM topic_translations tt JOIN topics t ON t.id = tt.topic_id WHERE t.slug IN ('prozessautomatisierung', 'ki-tipps-und-tricks')`); n != 4 {
@@ -127,7 +127,7 @@ func TestRemovedTopicsRollbackKeepsOccupiedID(t *testing.T) {
 		t.Fatal(err)
 	}
 	ctx := context.Background()
-	if _, err := p.Up(ctx); err != nil {
+	if _, err := p.UpTo(ctx, 10); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := db.Exec(`INSERT INTO topics (id, slug, sort_order) VALUES (4, 'anderes-thema', 4)`); err != nil {
