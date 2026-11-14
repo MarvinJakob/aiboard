@@ -20,8 +20,14 @@ import (
 // TopicSlug ist das Thema, unter dem die Audit-Übersicht und die Dimensionsseiten erscheinen.
 const TopicSlug = "ai-audit"
 
+// ResultSlug ist der Pfad der Gesamtauswertung unter dem Thema (Tickets #113, #114). Er teilt sich die
+// Ebene mit den Dimensionsseiten und ist deshalb als Dimensions-Slug verboten.
+const ResultSlug = "auswertung"
+
 // LevelCount ist die Zahl der Reifegrade je Dimension (Einfach, Strukturiert, Intelligent).
-// Dazu kommt Reifegrad 0 „Nicht angewendet“ ohne eigene Prüffragen.
+// content.json enthält aus der Fachquelle zusätzlich Reifegrad 0 „Nicht angewendet“ und die Kennzeichnung
+// bedingter Fragen. Beides wird seit Ticket #113 nicht mehr ausgeliefert: Nutzer wählen je Dimension bewusst
+// eine der drei Stufen, die Prüffragen dienen nur als Entscheidungshilfe und werden nicht beantwortet.
 const LevelCount = 3
 
 //go:embed content.json
@@ -68,15 +74,13 @@ type DimensionSummary struct {
 	Intro    []string
 }
 
-// Question ist eine Prüffrage. Bedingte Fragen gelten nur, wenn ihre Voraussetzung vorliegt
-// (z. B. „Bei Agenten: …“), und dürfen mit „Trifft nicht zu“ beantwortet werden.
+// Question ist eine Prüffrage, die bei der Wahl des Reifegrads als Entscheidungshilfe dient.
 type Question struct {
-	ID          string
-	Text        string
-	Conditional bool
+	ID   string
+	Text string
 }
 
-// Level ist ein Reifegrad einer Dimension. Reifegrad 0 hat keine Prüffragen.
+// Level ist ein Reifegrad (1 bis 3) einer Dimension mit seinen Prüffragen.
 type Level struct {
 	Level       int
 	Name        string
@@ -89,7 +93,6 @@ type Dimension struct {
 	DimensionSummary
 	Translations []service.Lang
 	Benefits     []string
-	NotApplied   Level
 	Levels       []Level // Reifegrade 1 bis 3
 }
 
@@ -205,8 +208,8 @@ func validate(f fileFormat) error {
 	seen := map[string]bool{}
 	for i, d := range f.Dimensions {
 		where := fmt.Sprintf("dimension %d (%s)", i+1, d.Slug)
-		if !slugPattern.MatchString(d.Slug) {
-			fail("%s: ungültiger Slug", where)
+		if !slugPattern.MatchString(d.Slug) || d.Slug == ResultSlug {
+			fail("%s: ungültiger oder reservierter Slug", where)
 		}
 		if seen[d.Slug] {
 			fail("%s: Slug doppelt", where)
@@ -322,14 +325,11 @@ func (c *Catalog) Dimension(slug string, lang service.Lang) (Dimension, error) {
 			DimensionSummary: summary(d, lang),
 			Translations:     langsOf(d.Texts),
 			Benefits:         t.Benefits,
-			NotApplied:       Level{Level: 0, Name: names.Levels[0].Name, Description: t.NotApplied},
 		}
 		for i, lt := range t.Levels {
 			lv := Level{Level: i + 1, Name: names.Levels[i+1].Name, Description: lt.Description}
 			for j, q := range lt.Questions {
-				lv.Questions = append(lv.Questions, Question{
-					ID: fmt.Sprintf("%d.%d", i+1, j+1), Text: q.Text, Conditional: q.Conditional,
-				})
+				lv.Questions = append(lv.Questions, Question{ID: fmt.Sprintf("%d.%d", i+1, j+1), Text: q.Text})
 			}
 			out.Levels = append(out.Levels, lv)
 		}

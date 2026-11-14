@@ -24,11 +24,11 @@ Deshalb erklärt die Anleitung die bewusste Wahl von „Einfach“, „Strukturi
 
 - #110 benennt die Hauptnavigation um; dessen separater PR bleibt zuständig.
 - #112 (umgesetzt) zeigt die Dimensionsbeschreibungen aufklappbar in der Übersicht und ergänzt „Selbsteinschätzung starten“.
-- #113 ersetzt den bisherigen Fragebogen auf den Dimensionsseiten durch die direkte Reifegradwahl und den geführten Ablauf. Die alten Quiztexte und die technische Stufe 0 sind bis dahin Teil des bisherigen Ablaufs, nicht der neuen Anleitung.
+- #113 (umgesetzt) ersetzt den bisherigen Fragebogen auf den Dimensionsseiten durch die direkte Reifegradwahl und den geführten Ablauf. Die alten Quiztexte und die Stufe 0 sind entfernt.
 - #114 ergänzt die Gesamtauswertung. Deren Einordnung soll den hier übernommenen Text „Nicht überall auf der höchsten Stufe“ verwenden.
 
 **Gemeinsame Veröffentlichung:** Diese Inhaltsänderung beschreibt den Zielablauf aus #112–#114. Sie darf erst zusammen mit diesem Ablauf veröffentlicht werden, damit Anleitung und Bedienung übereinstimmen. Der PR zu #111 ist separat inhaltlich prüfbar; der Review-Agent muss diese Integrationsvoraussetzung vor einem Merge mit automatischem Deployment beachten.
 
 ## Prüfungen
 
-`readinessContent.test.tsx` vergleicht Einleitung, sämtliche Dimensionsbeschreibungen und Leitsätze mit der versionierten Vorlage. Die Darstellungstests verwenden die echten Katalogtexte in beiden Sprachen und prüfen Reihenfolge, Anleitung, Tabellen, Fallback-Hinweis und Sprachmarkierung. Die API-Tests prüfen die Auslieferung der Anleitung und den identischen deutschen Fallback. Bestehende Quiztests sichern die unveränderten Prüffragen und den bisherigen Ablauf bis #113 ab.
+`readinessContent.test.tsx` vergleicht Einleitung, sämtliche Dimensionsbeschreibungen und Leitsätze mit der versionierten Vorlage. Die Darstellungstests verwenden die echten Katalogtexte in beiden Sprachen und prüfen Reihenfolge, Anleitung, Tabellen, Fallback-Hinweis und Sprachmarkierung. Die API-Tests prüfen die Auslieferung der Anleitung und den identischen deutschen Fallback. Seit #113 prüfen die Tests den geführten Ablauf (siehe [audit-abnahme.md](audit-abnahme.md)).

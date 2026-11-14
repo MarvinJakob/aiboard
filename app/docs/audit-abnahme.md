@@ -1,37 +1,38 @@
-# Abnahme des Quiz zur Selbsteinschätzung
+# Abnahme der KI-Readiness-Selbsteinschätzung
 
-Stand: 2026-11-06 · Anforderung 10 · Inhalte: `backend/internal/audit/content.json` (Grundlage `content/KI Audit.docx`, Version 1.0)
+Stand: 2026-11-14 · Ticket [#113](https://github.com/MarvinJakob/aiboard/issues/113) · Inhalte: `backend/internal/audit/content.json`
 
-## Regeln für die Zuordnung
+Seit #113 wählen Nutzer je Dimension bewusst genau einen Reifegrad. Diese Wahl ersetzt den Ja/Nein-Fragebogen aus Anforderung 10 mit automatischer Ableitung, „Trifft nicht zu“ und Reifegrad 0 „Nicht angewendet“. Die Abschnitte ab „Abgleich für den Review-Rücklauf von Ticket 10“ belegen weiter die Herkunft und den Wortlaut der Prüffragen. Für die Bewertung gelten sie nicht mehr.
 
-Die Regeln stammen aus dem Fachdokument, Kapitel „Regeln für die Bewertung“.
+## Regeln des Ablaufs
 
-1. **Pflichtfragen.** Alle Fragen einer Dimension sind Pflichtfragen. Fehlt eine Antwort, zeigt das Quiz nur, wie viele Fragen noch offen sind.
-2. **Binär.** Jede Frage wird mit Ja oder Nein beantwortet. Bedingte Fragen haben zusätzlich „Trifft nicht zu“, zum Beispiel „Bei Agenten: …“. Diese Auswahl setzt eine begründet dokumentierte Nichtanwendbarkeit voraus; darauf weist das Quiz hin. Die Begründung wird außerhalb des Quiz dokumentiert.
-3. **Erfüllt.** Eine Frage gilt als erfüllt bei „Ja“. Bei einer bedingten Frage gilt auch „Trifft nicht zu“ als erfüllt.
-4. **Kumulativ.** Ein Reifegrad gilt nur, wenn alle seine Fragen und alle Fragen der darunterliegenden Reifegrade erfüllt sind. Sprünge sind nicht möglich.
-5. **Reifegrad 0.** Ist Stufe 1 nicht vollständig erfüllt, zeigt das Quiz „Nicht angewendet“.
-6. **Nächster Schritt.** Unter dem Ergebnis stehen die nicht erfüllten Fragen des nächsthöheren Reifegrads.
+1. **Einstieg und Reihenfolge.** „Selbsteinschätzung starten“ auf der Übersicht öffnet die erste freigegebene Dimension. Der Ablauf folgt der Reihenfolge der Übersicht, also der Reihenfolge in `content.json`. Jeder Schritt behält seine bisherige Dimensions-URL `/{lang}/themen/ai-audit/{dimension}`.
+2. **Genau ein Reifegrad.** Je Dimension stehen „Einfach“ (1), „Strukturiert“ (2) und „Intelligent“ (3) als Radiogruppe zur Wahl. Anfangs ist nichts ausgewählt. Einen Reifegrad 0 gibt es nicht.
+3. **Prüffragen als Entscheidungshilfe.** Jede Reifegradkarte zeigt die Beschreibung der Stufe und alle ihre Prüffragen als Liste, ohne Antwortfelder. Die Fragen beeinflussen die Auswahl nicht. Die Bewertung entspricht immer der bewussten Wahl.
+4. **Weiter.** Ohne Auswahl ist „Weiter“ gesperrt (`aria-disabled`, bleibt fokussierbar). Der Hinweis „Wählen Sie einen Reifegrad, um fortzufahren.“ ist mit dem Button verknüpft und erscheint hervorgehoben, wenn man es trotzdem versucht; der Fokus springt dann zur ersten Stufe. Eine Auswahl allein wechselt den Schritt nicht.
+5. **Korrekturen.** „Zurück“ führt zur vorherigen Dimension, auf der ersten zur Übersicht. Die Schrittliste verlinkt alle bewerteten Dimensionen und die nächste offene. Alle Bewertungen bleiben dabei erhalten.
+6. **Fortschritt.** Die nummerierte Schrittliste unterscheidet aktuelle (gefüllter Kreis, Rahmen, „Aktuell“, `aria-current="step"`), bewertete (Häkchen, „Bewertet: …“) und offene Dimensionen (gestrichelter Kreis, „Offen“), also auch ohne Farberkennung. Dazu nennt jeder Schritt „Dimension X von N“ und die Liste „X von N bewertet“.
+7. **Auswertung.** Auf der letzten Dimension heißt der Button „Auswertung anzeigen“. Er führt nur zur Auswertung, wenn alle Dimensionen bewertet sind; sonst nennt der Hinweis die fehlenden Dimensionen und verlinkt die nächste offene. `/{lang}/themen/ai-audit/auswertung` zeigt ohne vollständige Bewertung kein Ergebnis, sondern die offenen Dimensionen. Sind alle bewertet, führt auch die Schrittliste zur Auswertung.
+8. **Datenschutz.** Die Auswahl liegt nur im Arbeitsspeicher der Seite (`lib/assessment.tsx`). Sie wird weder übertragen noch im Browser gespeichert und beginnt nach dem Neuladen neu.
 
-## Antwortsätze
+## Vollständiger Durchlauf (2026-11-14)
 
-Die Antwortsätze gelten für jede Dimension. Die Fragen sind je Reifegrad nummeriert, zum Beispiel 2.3.
+Geprüft im gebauten Stand mit `DEV_SEED=true` (headless Edge, 1280 px; Screenshots unter [screenshots/113](screenshots/113/)):
 
-| Erwartetes Ergebnis | Stufe 1 | Stufe 2 | Stufe 3 |
-|---|---|---|---|
-| Nicht angewendet | alle Nein | alle Nein | alle Nein |
-| Einfach | alle Ja | alle Nein | alle Nein |
-| Strukturiert | alle Ja | alle Ja | alle Nein |
-| Intelligent | alle Ja | alle Ja | alle Ja |
+| Schritt | Aktion | Ergebnis |
+|---|---|---|
+| 1 | Übersicht → „Selbsteinschätzung starten“ | Strategie und Wirtschaftlichkeit, „Dimension 1 von 8“, keine Vorauswahl |
+| 2 | „Weiter“ ohne Auswahl | Seite bleibt, Hinweis „Wählen Sie einen Reifegrad, um fortzufahren.“ |
+| 3 | Je Dimension wählen und „Weiter“: 2, 1, 3, 2, 1, 2, 3, 1 | Jeder Schritt zeigt „Gewählt: …“, dann die nächste Dimension |
+| 4 | Auf Dimension 8 „Zurück“ | Dimension 7, Auswahl „Intelligent“ erhalten |
+| 5 | Schrittliste → Dimension 8 → „Auswertung anzeigen“ | Auswertung mit allen acht Werten in Ablaufreihenfolge |
+| 6 | In der Auswertung „Ändern“ bei Betrieb, „Einfach“ statt „Intelligent“, über die Schrittliste zurück zur Auswertung | Betrieb zeigt „1 – Einfach“; alle übrigen Werte unverändert |
 
-Zusätzlich gilt für jede Dimension mit bedingten Fragen: Werden im Antwortsatz „Intelligent“ alle bedingten Fragen mit „Trifft nicht zu“ beantwortet, bleibt das Ergebnis „Intelligent“.
-
-Zwei Gegenproben zeigen die kumulative Regel:
-
-- Alle Fragen Ja, nur Frage 1.1 Nein: Ergebnis „Nicht angewendet“.
-- Alle Fragen Ja, nur Frage 2.1 Nein: Ergebnis „Einfach“. Als nächster Schritt erscheint Frage 2.1.
+Bei 320 und 1280 px gibt es in heller und dunkler Darstellung keinen horizontalen Seitenscroll.
 
 ## Fragen je Dimension
+
+Die Spalte „Bedingte Fragen“ nennt Fragen mit Voraussetzung (zum Beispiel „Bei Agenten: …“). Sie stammt aus dem früheren Fragebogen und hat im neuen Ablauf keine Auswirkung.
 
 | Dimension | Seite | Stufe 1 | Stufe 2 | Stufe 3 | Bedingte Fragen |
 |---|---|---|---|---|---|
@@ -46,7 +47,7 @@ Zwei Gegenproben zeigen die kumulative Regel:
 
 ## Automatische Prüfung
 
-`frontend/src/lib/audit.content.test.ts` wendet alle Antwortsätze auf jede freigegebene Dimension in `content.json` an. Ändern sich Fragen oder Dimensionen, schlägt der Test fehl, sobald ein Antwortsatz nicht mehr das erwartete Ergebnis liefert. Ausführen mit `cd frontend && npm test`.
+`frontend/src/app.test.tsx` (Abschnitt „Ticket #113“) prüft Einstieg, Schrittliste, fehlende Vorauswahl, Prüffragen ohne Antwortfelder, gesperrtes „Weiter“ samt Hinweis, Zurück und Rücksprung mit erhaltenen Bewertungen, die gesperrte und die vollständige Auswertung sowie die Tastaturbedienung. `lib/audit.test.ts` prüft die Fortschrittsberechnung. Die API-Tests stellen sicher, dass Reifegrad 0 und „conditional“ nicht mehr ausgeliefert werden. Ausführen mit `cd frontend && npm test` und `cd backend && go test ./...`.
 
 ## Abgleich für den Review-Rücklauf von Ticket 10
 

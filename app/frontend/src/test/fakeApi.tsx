@@ -88,9 +88,10 @@ function summary(p: FakePost, lang: L): PostSummary {
 }
 
 // Audit-Inhalte liegen nur auf Deutsch vor (wie im Backend).
-const LEVEL_NAMES = ['Nicht angewendet', 'Einfach', 'Strukturiert', 'Intelligent'];
+// Index = Reifegrad; einen Reifegrad 0 gibt es seit Ticket #113 nicht mehr.
+const LEVEL_NAMES = ['', 'Einfach', 'Strukturiert', 'Intelligent'];
 
-const question = (id: string, conditional = false): AuditQuestion => ({ id, text: `Frage ${id}?`, conditional });
+const question = (id: string): AuditQuestion => ({ id, text: `Frage ${id}?` });
 
 export const AUDIT_DIMENSIONS: AuditDimension[] = [
   {
@@ -102,10 +103,9 @@ export const AUDIT_DIMENSIONS: AuditDimension[] = [
     translations: ['de'],
     intro: ['Einführung Strategie'],
     benefits: ['Vorteil Budget', 'Vorteil Priorisierung'],
-    notApplied: { level: 0, name: LEVEL_NAMES[0], description: 'Beschreibung Strategie 0', questions: [] },
     levels: [
       { level: 1, name: LEVEL_NAMES[1], description: 'Beschreibung Strategie 1', questions: [question('1.1'), question('1.2')] },
-      { level: 2, name: LEVEL_NAMES[2], description: 'Beschreibung Strategie 2', questions: [question('2.1'), question('2.2', true)] },
+      { level: 2, name: LEVEL_NAMES[2], description: 'Beschreibung Strategie 2', questions: [question('2.1'), question('2.2')] },
       { level: 3, name: LEVEL_NAMES[3], description: 'Beschreibung Strategie 3', questions: [question('3.1')] },
     ],
   },
@@ -118,7 +118,6 @@ export const AUDIT_DIMENSIONS: AuditDimension[] = [
     translations: ['de'],
     intro: ['Einführung Betrieb'],
     benefits: ['Vorteil Verfügbarkeit', 'Vorteil Kosten'],
-    notApplied: { level: 0, name: LEVEL_NAMES[0], description: 'Beschreibung Betrieb 0', questions: [] },
     levels: [
       { level: 1, name: LEVEL_NAMES[1], description: 'Beschreibung Betrieb 1', questions: [question('1.1')] },
       { level: 2, name: LEVEL_NAMES[2], description: 'Beschreibung Betrieb 2', questions: [question('2.1')] },

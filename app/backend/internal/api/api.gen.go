@@ -145,10 +145,9 @@ type AuditDimension struct {
 	Intro []string `json:"intro"`
 	Lang  Lang     `json:"lang"`
 
-	// Levels Reifegrade 1 bis 3. Ein Reifegrad ist erreicht, wenn alle seine Prüffragen und die aller
-	// darunterliegenden Reifegrade erfüllt sind. Ist Reifegrad 1 nicht erfüllt, gilt Reifegrad 0.
+	// Levels Reifegrade 1 bis 3, aus denen Nutzer genau einen wählen. Es gibt keine automatische Ableitung
+	// aus den Prüffragen und keinen Reifegrad 0 (Ticket #113).
 	Levels       []AuditLevel `json:"levels"`
-	NotApplied   AuditLevel   `json:"notApplied"`
 	Slug         string       `json:"slug"`
 	Summary      string       `json:"summary"`
 	Title        string       `json:"title"`
@@ -177,7 +176,7 @@ type AuditLevel struct {
 	Level       int    `json:"level"`
 	Name        string `json:"name"`
 
-	// Questions Prüffragen (Ja/Nein). Reifegrad 0 hat keine.
+	// Questions Prüffragen dieses Reifegrads als Entscheidungshilfe
 	Questions []AuditQuestion `json:"questions"`
 }
 
@@ -208,12 +207,8 @@ type AuditOverview struct {
 	Translations []Lang           `json:"translations"`
 }
 
-// AuditQuestion defines model for AuditQuestion.
+// AuditQuestion Prüffrage als Entscheidungshilfe; sie wird nicht einzeln beantwortet (Ticket
 type AuditQuestion struct {
-	// Conditional Gilt nur unter einer Voraussetzung (z. B. „Bei Agenten: …“). Darf mit „Trifft nicht zu“
-	// beantwortet werden und zählt dann als erfüllt.
-	Conditional bool `json:"conditional"`
-
 	// Id Reifegrad und laufende Nummer, z. B. `2.3`
 	Id   string `json:"id"`
 	Text string `json:"text"`

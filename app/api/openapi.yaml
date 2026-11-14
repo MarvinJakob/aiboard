@@ -116,9 +116,9 @@ paths:
       operationId: getAuditDimension
       summary: Eine Audit-Dimension mit Vorteilen, Reifegraden und Prüffragen
       description: |
-        Inhalte der Dimensionsseite und des Quiz (Anforderungen 9 und 10). Für unbekannte und
-        fachlich nicht freigegebene Dimensionen antwortet das Backend mit `404`. Das Quiz wertet
-        die Antworten im Browser aus; sie werden nicht an das Backend gesendet.
+        Inhalte eines Schritts der Selbsteinschätzung (Anforderung 9, Ticket #113). Für unbekannte und
+        fachlich nicht freigegebene Dimensionen antwortet das Backend mit `404`. Die gewählten
+        Reifegrade bleiben im Browser; sie werden nicht an das Backend gesendet.
       parameters:
         - $ref: '#/components/parameters/Slug'
         - $ref: '#/components/parameters/Lang'
@@ -1063,25 +1063,21 @@ components:
             $ref: '#/components/schemas/AuditDimensionSummary'
     AuditQuestion:
       type: object
-      required: [id, text, conditional]
+      description: Prüffrage als Entscheidungshilfe; sie wird nicht einzeln beantwortet (Ticket #113).
+      required: [id, text]
       properties:
         id:
           type: string
           description: Reifegrad und laufende Nummer, z. B. `2.3`
         text:
           type: string
-        conditional:
-          type: boolean
-          description: |
-            Gilt nur unter einer Voraussetzung (z. B. „Bei Agenten: …“). Darf mit „Trifft nicht zu“
-            beantwortet werden und zählt dann als erfüllt.
     AuditLevel:
       type: object
       required: [level, name, description, questions]
       properties:
         level:
           type: integer
-          minimum: 0
+          minimum: 1
           maximum: 3
         name:
           type: string
@@ -1090,12 +1086,12 @@ components:
           description: Bedeutung des Reifegrads in dieser Dimension
         questions:
           type: array
-          description: Prüffragen (Ja/Nein). Reifegrad 0 hat keine.
+          description: Prüffragen dieses Reifegrads als Entscheidungshilfe
           items:
             $ref: '#/components/schemas/AuditQuestion'
     AuditDimension:
       type: object
-      required: [slug, lang, title, summary, category, translations, intro, benefits, notApplied, levels]
+      required: [slug, lang, title, summary, category, translations, intro, benefits, levels]
       properties:
         slug:
           type: string
@@ -1121,12 +1117,10 @@ components:
           description: Mindestens zwei konkrete Vorteile
           items:
             type: string
-        notApplied:
-          $ref: '#/components/schemas/AuditLevel'
         levels:
           type: array
           description: |
-            Reifegrade 1 bis 3. Ein Reifegrad ist erreicht, wenn alle seine Prüffragen und die aller
-            darunterliegenden Reifegrade erfüllt sind. Ist Reifegrad 1 nicht erfüllt, gilt Reifegrad 0.
+            Reifegrade 1 bis 3, aus denen Nutzer genau einen wählen. Es gibt keine automatische Ableitung
+            aus den Prüffragen und keinen Reifegrad 0 (Ticket #113).
           items:
             $ref: '#/components/schemas/AuditLevel'

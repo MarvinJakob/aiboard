@@ -15,6 +15,7 @@ export type AuditDimension = components['schemas']['AuditDimension'];
 export type AuditLevel = components['schemas']['AuditLevel'];
 export type AuditQuestion = components['schemas']['AuditQuestion'];
 export type AuditCategory = components['schemas']['AuditCategory'];
+export type AuditLevelInfo = components['schemas']['AuditLevelInfo'];
 
 /** Fehler mit HTTP-Status, z. B. 404 für unbekannte oder nicht öffentliche Inhalte. */
 export class ApiError extends Error {

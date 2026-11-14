@@ -143,6 +143,11 @@ func (s *Site) resolve(r *http.Request, parts []string) (int, Meta, error) {
 			return 0, Meta{}, err
 		}
 		return http.StatusOK, s.topicMeta(lang, topic), nil
+	case len(rest) == 3 && rest[0] == "themen" && rest[1] == audit.TopicSlug && rest[2] == audit.ResultSlug:
+		// Gesamtauswertung der Selbsteinschätzung: zeigt nur die Auswahl im Browser, daher nicht indexieren.
+		m := s.staticMeta(lang, "readinessResult", dimensionPath(audit.ResultSlug))
+		m.NoIndex = true
+		return http.StatusOK, m, nil
 	case len(rest) == 3 && rest[0] == "themen" && rest[1] == audit.TopicSlug:
 		// Dimensionsseite des KI-Audits (Anforderung 9)
 		d, err := s.audit.Dimension(rest[2], lang)

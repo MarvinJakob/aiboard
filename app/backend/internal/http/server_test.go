@@ -551,15 +551,15 @@ func TestAuditDimension(t *testing.T) {
 	if d.Title != "Strategie und Wirtschaftlichkeit" || len(d.Benefits) < 2 || len(d.Intro) == 0 {
 		t.Fatalf("dimension: %+v", d)
 	}
-	if len(d.Levels) != 3 || d.Levels[0].Name != "Einfach" || d.Levels[2].Name != "Intelligent" || d.NotApplied.Level != 0 {
+	if len(d.Levels) != 3 || d.Levels[0].Name != "Einfach" || d.Levels[2].Name != "Intelligent" || d.Levels[0].Level != 1 {
 		t.Fatalf("reifegrade: %+v", d.Levels)
 	}
-	if q := d.Levels[0].Questions[0]; q.Id != "1.1" || q.Text == "" || q.Conditional {
+	if q := d.Levels[0].Questions[0]; q.Id != "1.1" || q.Text == "" {
 		t.Fatalf("erste frage: %+v", q)
 	}
-	b := getJSON[api.AuditDimension](t, srv, "/api/audit/dimensions/betrieb", 200)
-	if !b.Levels[0].Questions[2].Conditional {
-		t.Fatal("bedingte frage nicht gekennzeichnet")
+	// Ticket #113: Reifegrad 0 und „Trifft nicht zu“ gehören zum abgelösten Ja/Nein-Fragebogen.
+	if _, body := get(t, srv, "/api/audit/dimensions/betrieb"); strings.Contains(body, "notApplied") || strings.Contains(body, "conditional") || strings.Contains(body, "Nicht angewendet") {
+		t.Fatalf("veraltete felder ausgeliefert: %s", body)
 	}
 	getJSON[api.Error](t, srv, "/api/audit/dimensions/gibt-es-nicht", 404)
 	getJSON[api.Error](t, srv, "/api/audit/dimensions/betrieb?lang=xx", 400)
@@ -573,6 +573,8 @@ func TestAuditPages(t *testing.T) {
 		"/de/themen/ai-audit/gibt-es-nicht":                    404,
 		"/de/themen/softwareentwicklung/betrieb":               404,
 		"/de/themen/ai-audit/betrieb/mehr":                     404,
+		"/de/themen/ai-audit/auswertung":                       200,
+		"/en/themen/ai-audit/auswertung":                       200,
 	} {
 		if resp, _ := get(t, srv, path); resp.StatusCode != want {
 			t.Errorf("%s: %d, erwartet %d", path, resp.StatusCode, want)
@@ -598,5 +600,16 @@ func TestAuditPages(t *testing.T) {
 	}
 	if strings.Contains(sitemap, "<loc>https://example.test/en/themen/ai-audit/betrieb</loc>") {
 		t.Error("nicht übersetzte dimensionsseite mit englischer URL in der sitemap")
+	}
+
+	// Ticket #113: Die Auswertung zeigt nur die eigene Auswahl und wird nicht indexiert.
+	_, result := get(t, srv, "/de/themen/ai-audit/auswertung")
+	for _, want := range []string{"<title>KI Readiness: Auswertung · KI Perspektiven</title>", `<meta name="robots" content="noindex">`} {
+		if !strings.Contains(result, want) {
+			t.Errorf("auswertung: fehlt %s", want)
+		}
+	}
+	if strings.Contains(sitemap, "/auswertung") {
+		t.Error("auswertung in der sitemap")
 	}
 }

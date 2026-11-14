@@ -43,9 +43,6 @@ func TestEmbeddedContentIsValid(t *testing.T) {
 		if got := strings.Join(names, ","); got != "Einfach,Strukturiert,Intelligent" {
 			t.Errorf("%s: reifegrade = %s", slug, got)
 		}
-		if d.NotApplied.Name != "Nicht angewendet" || d.NotApplied.Level != 0 {
-			t.Errorf("%s: reifegrad 0 = %+v", slug, d.NotApplied)
-		}
 	}
 }
 
@@ -131,5 +128,10 @@ func TestInvalidContentIsRejected(t *testing.T) {
 	}
 	if _, err := Parse([]byte(`{"overview": {}, "dimensions": [], "extra": 1}`)); err == nil {
 		t.Error("unbekanntes Feld: kein Fehler")
+	}
+	// Ticket #113: Die Auswertung liegt neben den Dimensionsseiten und darf keinen Slug verdecken.
+	reserved := strings.Replace(strings.ReplaceAll(minimal, "%s", validText), `"slug": "frei"`, `"slug": "`+ResultSlug+`"`, 1)
+	if _, err := Parse([]byte(reserved)); err == nil {
+		t.Error("reservierter Slug: kein Fehler")
 	}
 }
