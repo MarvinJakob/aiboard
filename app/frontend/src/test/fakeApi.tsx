@@ -134,7 +134,7 @@ function auditOverview(): AuditOverview {
     intro: ['Das KI-Audit zeigt, welche Fähigkeiten vorhanden sind.'],
     guidance: '### So ist die Selbsteinschätzung aufgebaut\n\nJe Dimension einen Reifegrad wählen.',
     levels: [1, 2, 3].map((level) => ({ level, name: LEVEL_NAMES[level], motto: `Leitsatz ${level}` })),
-    dimensions: AUDIT_DIMENSIONS.map(({ slug, lang, title, summary, category }) => ({ slug, lang, title, summary, category })),
+    dimensions: AUDIT_DIMENSIONS.map(({ slug, lang, title, summary, category, intro }) => ({ slug, lang, title, summary, category, intro })),
   };
 }
 

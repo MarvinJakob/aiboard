@@ -57,13 +57,15 @@ type Overview struct {
 	Dimensions   []DimensionSummary
 }
 
-// DimensionSummary ist die Kurzform einer Dimension für die Übersicht.
+// DimensionSummary ist die Kurzform einer Dimension für die Übersicht. Die Erklärung (Intro) gehört
+// dazu, weil die Übersicht sie aufklappbar direkt zeigt (Ticket #112).
 type DimensionSummary struct {
 	Slug     string
 	Lang     service.Lang
 	Title    string
 	Summary  string
 	Category Category
+	Intro    []string
 }
 
 // Question ist eine Prüffrage. Bedingte Fragen gelten nur, wenn ihre Voraussetzung vorliegt
@@ -86,7 +88,6 @@ type Level struct {
 type Dimension struct {
 	DimensionSummary
 	Translations []service.Lang
-	Intro        []string
 	Benefits     []string
 	NotApplied   Level
 	Levels       []Level // Reifegrade 1 bis 3
@@ -320,7 +321,6 @@ func (c *Catalog) Dimension(slug string, lang service.Lang) (Dimension, error) {
 		out := Dimension{
 			DimensionSummary: summary(d, lang),
 			Translations:     langsOf(d.Texts),
-			Intro:            t.Intro,
 			Benefits:         t.Benefits,
 			NotApplied:       Level{Level: 0, Name: names.Levels[0].Name, Description: t.NotApplied},
 		}
@@ -340,7 +340,7 @@ func (c *Catalog) Dimension(slug string, lang service.Lang) (Dimension, error) {
 
 func summary(d dimensionEntry, lang service.Lang) DimensionSummary {
 	t, l, _ := pick(d.Texts, lang)
-	return DimensionSummary{Slug: d.Slug, Lang: l, Title: t.Title, Summary: t.Summary, Category: d.Category}
+	return DimensionSummary{Slug: d.Slug, Lang: l, Title: t.Title, Summary: t.Summary, Category: d.Category, Intro: t.Intro}
 }
 
 // pick wählt die gewünschte Sprache, sonst Deutsch, sonst jede weitere (wie bei Themen und Beiträgen).

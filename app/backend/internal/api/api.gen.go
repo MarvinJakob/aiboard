@@ -159,8 +159,11 @@ type AuditDimension struct {
 type AuditDimensionSummary struct {
 	// Category Einordnung der Dimension (organisatorisch, fachlich, technisch)
 	Category AuditCategory `json:"category"`
-	Lang     Lang          `json:"lang"`
-	Slug     string        `json:"slug"`
+
+	// Intro Absätze der Erklärung; die Übersicht zeigt sie aufklappbar (Ticket
+	Intro []string `json:"intro"`
+	Lang  Lang     `json:"lang"`
+	Slug  string   `json:"slug"`
 
 	// Summary Eine Zeile Beschreibung für die Übersicht
 	Summary string `json:"summary"`

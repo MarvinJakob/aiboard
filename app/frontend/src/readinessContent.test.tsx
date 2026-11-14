@@ -1,4 +1,5 @@
 import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import source from '../../../content/KI Readiness.md?raw';
 import raw from '../../backend/internal/audit/content.json?raw';
@@ -16,7 +17,7 @@ const section = (heading: string) => template.split(`## ${heading}\n\n`)[1].spli
 const overview: AuditOverview = {
   lang: 'de', translations: ['de'], intro: copy.intro, guidance: copy.guidance.join('\n\n'),
   levels: copy.levels.slice(1).map((level, i) => ({ ...level, level: i + 1 })),
-  dimensions: content.dimensions.filter(d => d.released).map(d => ({ slug: d.slug, category: d.category, lang: 'de', title: d.texts.de.title, summary: d.texts.de.summary })),
+  dimensions: content.dimensions.filter(d => d.released).map(d => ({ slug: d.slug, category: d.category, lang: 'de', title: d.texts.de.title, summary: d.texts.de.summary, intro: d.texts.de.intro })),
 };
 
 beforeEach(() => {
@@ -58,15 +59,33 @@ describe('Ticket #111: verbindliche Readiness-Inhalte', () => {
       expect(table.parentElement).toHaveAttribute('tabindex', '0');
       expect(table.parentElement).toHaveAttribute('aria-label', lang === 'de' ? 'Tabelle im Themeninhalt, horizontal scrollbar' : 'Topic content table, scroll horizontally');
     }
-    expect(within(region).getAllByRole('link')).toHaveLength(8);
+    const toggles = within(region).getAllByRole('button', { expanded: false });
+    expect(toggles).toHaveLength(8);
     const intro = within(region).getByText(copy.intro[0]);
-    const firstDimension = within(region).getByRole('link', { name: /Strategie und Wirtschaftlichkeit/ });
-    expect(intro.compareDocumentPosition(firstDimension) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const [start] = within(region).getAllByRole('link', { name: lang === 'de' ? 'Selbsteinschätzung starten' : 'Start self-assessment' });
+    expect(intro.compareDocumentPosition(start) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(intro.compareDocumentPosition(toggles[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(start).toHaveAttribute('href', `/${lang}/themen/ai-audit/strategie-und-wirtschaftlichkeit`);
     if (lang === 'en') {
       expect(within(region).getByText('The AI Readiness content is not available in English. You are reading the German version.')).toBeInTheDocument();
       expect(intro.closest('[lang]')).toHaveAttribute('lang', 'de');
       expect(within(region).getByRole('heading', { name: 'So ist die Selbsteinschätzung aufgebaut' }).closest('[lang]')).toHaveAttribute('lang', 'de');
-      expect(firstDimension).toHaveAttribute('href', '/en/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+      expect(toggles[0].querySelector('[lang]')).toHaveAttribute('lang', 'de');
+    }
+  });
+
+  // Ticket #112: Die aufklappbaren Erklärungen zeigen die Dimensionstexte der Vorlage in deren Reihenfolge.
+  it('zeigt in der Übersicht je Dimension die Erklärung aus der Vorlage', async () => {
+    const user = userEvent.setup();
+    renderApp('/de/themen/ai-audit');
+    const region = await screen.findByRole('region', { name: 'Warum eine Selbsteinschätzung?' });
+    const released = content.dimensions.filter(d => d.released);
+    const toggles = within(region).getAllByRole('button', { expanded: false });
+    expect(toggles.map(b => b.querySelector('.dim-acc-title')!.textContent)).toEqual(released.map(d => d.texts.de.title));
+    for (const [i, button] of toggles.entries()) {
+      await user.click(button);
+      const panel = document.getElementById(button.getAttribute('aria-controls')!)!;
+      for (const p of released[i].texts.de.intro) expect(within(panel).getByText(p)).toBeVisible();
     }
   });
 });

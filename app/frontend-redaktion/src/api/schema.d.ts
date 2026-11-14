@@ -597,6 +597,8 @@ export interface components {
             /** @description Eine Zeile Beschreibung für die Übersicht */
             summary: string;
             category: components["schemas"]["AuditCategory"];
+            /** @description Absätze der Erklärung; die Übersicht zeigt sie aufklappbar (Ticket */
+            intro: string[];
         };
         AuditOverview: {
             lang: components["schemas"]["Lang"];

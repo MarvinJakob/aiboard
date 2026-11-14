@@ -523,6 +523,13 @@ func TestAuditOverview(t *testing.T) {
 	if d := o.Dimensions[0]; d.Slug != "strategie-und-wirtschaftlichkeit" || d.Title != "Strategie und Wirtschaftlichkeit" || d.Category != "organizational" {
 		t.Fatalf("erste dimension: %+v", d)
 	}
+	// Ticket #112: Die Übersicht liefert die Erklärung jeder Dimension mit, identisch zur Dimensionsseite.
+	for _, d := range o.Dimensions {
+		full := getJSON[api.AuditDimension](t, srv, "/api/audit/dimensions/"+d.Slug, 200)
+		if len(d.Intro) == 0 || strings.Join(d.Intro, "\n") != strings.Join(full.Intro, "\n") {
+			t.Fatalf("erklärung %s: %v", d.Slug, d.Intro)
+		}
+	}
 	names := []string{}
 	for _, l := range o.Levels {
 		names = append(names, l.Name)

@@ -1016,7 +1016,7 @@ components:
           description: Leitsatz des Reifegrads
     AuditDimensionSummary:
       type: object
-      required: [slug, lang, title, summary, category]
+      required: [slug, lang, title, summary, category, intro]
       properties:
         slug:
           type: string
@@ -1029,6 +1029,11 @@ components:
           description: Eine Zeile Beschreibung für die Übersicht
         category:
           $ref: '#/components/schemas/AuditCategory'
+        intro:
+          type: array
+          description: Absätze der Erklärung; die Übersicht zeigt sie aufklappbar (Ticket #112)
+          items:
+            type: string
     AuditOverview:
       type: object
       required: [lang, translations, intro, guidance, levels, dimensions]

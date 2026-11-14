@@ -424,15 +424,68 @@ describe('Anforderung 7: Sprachwechsel', () => {
   });
 });
 
-describe('Anforderung 8: KI-Audit-Übersicht', () => {
-  it('zeigt auf der Themenseite AI Audit die Einführung und alle Dimensionen mit Link', async () => {
-    const user = userEvent.setup();
-    const { router } = renderApp('/de/themen/ai-audit');
+describe('Anforderung 8 und Ticket #112: KI-Readiness-Übersicht mit aufklappbaren Dimensionen', () => {
+  const toggles = () => screen.getAllByRole('button', { expanded: false }).filter((b) => b.classList.contains('dim-acc-toggle'));
+  const toggle = (name: RegExp) => screen.getByRole('button', { name });
+  const panelOf = (button: HTMLElement) => document.getElementById(button.getAttribute('aria-controls')!)!;
+
+  it('zeigt die Einführung und alle Dimensionen in fester Reihenfolge, anfangs geschlossen', async () => {
+    renderApp('/de/themen/ai-audit');
     expect(await screen.findByRole('heading', { level: 2, name: 'Warum eine Selbsteinschätzung?' })).toBeInTheDocument();
     expect(screen.getByText('Das KI-Audit zeigt, welche Fähigkeiten vorhanden sind.')).toBeInTheDocument();
     expect(screen.getByText('Leitsatz 2')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Betrieb/ })).toHaveAttribute('href', '/de/themen/ai-audit/betrieb');
-    await user.click(screen.getByRole('link', { name: /Strategie und Wirtschaftlichkeit/ }));
+    const list = screen.getByRole('list', { name: 'Die Dimensionen im Überblick' });
+    const items = within(list).getAllByRole('listitem');
+    // Die Nummer ist dekorativ (aria-hidden); die Reihenfolge trägt die nummerierte Liste.
+    expect(items.map((li) => within(li).getByRole('heading', { level: 4 }).querySelector('button')!.textContent)).toEqual([
+      '1Strategie und Wirtschaftlichkeit Kurz Strategie',
+      '2Betrieb Kurz Betrieb',
+    ]);
+    expect(within(items[1]).getByRole('button', { name: 'Betrieb Kurz Betrieb' })).toBeInTheDocument();
+    expect(toggles()).toHaveLength(2);
+    for (const b of toggles()) expect(panelOf(b)).not.toBeVisible();
+    expect(screen.queryByText('Einführung Strategie')).not.toBeVisible();
+  });
+
+  it('öffnet und schließt die Erklärung auf derselben Seite, ohne den Ablauf zu starten', async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de/themen/ai-audit');
+    const strategy = await screen.findByRole('button', { name: /Strategie und Wirtschaftlichkeit/ });
+    await user.click(strategy);
+    expect(strategy).toHaveAttribute('aria-expanded', 'true');
+    expect(within(panelOf(strategy)).getByText('Einführung Strategie')).toBeVisible();
+    expect(within(panelOf(strategy)).getByText('Organisatorisch')).toBeVisible();
+    expect(toggle(/Betrieb/)).toHaveAttribute('aria-expanded', 'false');
+    expect(router.state.location.pathname).toBe('/de/themen/ai-audit');
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+
+    await user.click(strategy);
+    expect(strategy).toHaveAttribute('aria-expanded', 'false');
+    expect(panelOf(strategy)).not.toBeVisible();
+  });
+
+  it('lässt sich per Tastatur öffnen und schließen', async () => {
+    const user = userEvent.setup();
+    renderApp('/de/themen/ai-audit');
+    const operation = await screen.findByRole('button', { name: /Betrieb/ });
+    operation.focus();
+    await user.keyboard('{Enter}');
+    expect(operation).toHaveAttribute('aria-expanded', 'true');
+    expect(panelOf(operation)).toHaveAttribute('id', 'dimension-betrieb-erklaerung');
+    expect(within(panelOf(operation)).getByText('Einführung Betrieb')).toBeVisible();
+    await user.keyboard(' ');
+    expect(operation).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('startet die Selbsteinschätzung bei der ersten Dimension und erhält die Dimensions-URLs', async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de/themen/ai-audit');
+    await user.click(await screen.findByRole('button', { name: /Betrieb/ }));
+    expect(screen.getByRole('link', { name: 'Reifegrade und Prüffragen: Betrieb' })).toHaveAttribute('href', '/de/themen/ai-audit/betrieb');
+    const starts = screen.getAllByRole('link', { name: 'Selbsteinschätzung starten' });
+    expect(starts).toHaveLength(2);
+    for (const s of starts) expect(s).toHaveAttribute('href', '/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    await user.click(starts[0]);
     expect(router.state.location.pathname).toBe('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
     expect(await screen.findByRole('heading', { level: 1, name: 'Strategie und Wirtschaftlichkeit' })).toBeInTheDocument();
   });
@@ -558,8 +611,8 @@ describe('Tickets #21 und #110: KI Readiness als eigener Navigationseintrag', ()
     await user.click(within(await mainNav(navName)).getByRole('link', { name: readinessLabel(path) }));
     expect(router.state.location.pathname).toBe(target);
     expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
-    const dimension = await screen.findByRole('link', { name: /Strategie und Wirtschaftlichkeit/ });
-    expect(dimension).toHaveAttribute('href', `${target}/strategie-und-wirtschaftlichkeit`);
+    const [start] = await screen.findAllByRole('link', { name: path.startsWith('/en') ? 'Start self-assessment' : 'Selbsteinschätzung starten' });
+    expect(start).toHaveAttribute('href', `${target}/strategie-und-wirtschaftlichkeit`);
   });
 
   it('führt im Themenmenü keinen Audit-Eintrag mehr, die übrigen Themen bleiben erreichbar', async () => {
@@ -603,7 +656,7 @@ describe('Tickets #21 und #110: KI Readiness als eigener Navigationseintrag', ()
     const user = userEvent.setup();
     const { router } = renderApp('/de');
     await user.click(within(await mainNav()).getByRole('link', { name: 'KI Readiness' }));
-    await user.click(await screen.findByRole('link', { name: /Strategie und Wirtschaftlichkeit/ }));
+    await user.click((await screen.findAllByRole('link', { name: 'Selbsteinschätzung starten' }))[0]);
     expect(router.state.location.pathname).toBe('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
     expect(await screen.findByRole('heading', { name: /Selbsteinschätzung|Quiz/ })).toBeInTheDocument();
   });

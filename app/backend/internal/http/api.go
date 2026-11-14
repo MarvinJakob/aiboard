@@ -137,6 +137,7 @@ func (s *apiServer) GetAudit(_ context.Context, req api.GetAuditRequestObject) (
 	for _, d := range o.Dimensions {
 		dims = append(dims, api.AuditDimensionSummary{
 			Slug: d.Slug, Lang: api.Lang(d.Lang), Title: d.Title, Summary: d.Summary, Category: api.AuditCategory(d.Category),
+			Intro: d.Intro,
 		})
 	}
 	return api.GetAudit200JSONResponse{

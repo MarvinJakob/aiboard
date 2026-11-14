@@ -8,7 +8,7 @@ Quelle: [`content/KI Readiness.md`](../../content/KI%20Readiness.md), Stand **14
 | --- | --- |
 | Titel und Kurzbeschreibung | Seitentitel „KI Readiness“, Leitfrage der Vorlage als Untertitel, Einstiegstext aus dem Titelabschnitt. Migration `00011` aktualisiert beide Sprachfassungen und damit auch Metadaten und Themenverweise. Der Slug `ai-audit` bleibt erhalten. |
 | „Warum eine Selbsteinschätzung?“ | Vollständig und wörtlich in `overview.de.intro` des Audit-Katalogs, vor den Dimensionslinks. Listen und Hervorhebungen bleiben sichtbar. |
-| Acht Dimensionen | Titel, Leitfrage als Kurzbeschreibung und Erklärung wörtlich aus „Die Dimensionen“, Reihenfolge unverändert. Die Einzelbeschreibungen erscheinen auf den bestehenden Dimensionsseiten; die aufklappbare Übersicht folgt in #112. |
+| Acht Dimensionen | Titel, Leitfrage als Kurzbeschreibung und Erklärung wörtlich aus „Die Dimensionen“, Reihenfolge unverändert. Die Einzelbeschreibungen erscheinen auf den Dimensionsseiten und seit #112 aufklappbar in der Übersicht. |
 | Reifegrade | Namen und Leitsätze 1–3 sowie Unterschiede und Beispiel „Daten und Wissen“ aus der Vorlage. |
 | Einordnung | „Nicht überall auf der höchsten Stufe“ vollständig übernommen. |
 | Prüffragen, dimensionsspezifische Stufen und Vorteile | Nicht in der Vorlage ausgeschrieben. Unverändert aus `app/backend/internal/audit/content.json`, Basiscommit `3ef126e` (fachliche Herkunft: `content/KI Audit.docx`, Freigabe aus #29). Die Vorlage verweist ausdrücklich auf diesen Katalog. Es wurden keine neuen Fragen erfunden. |
@@ -23,7 +23,7 @@ Deshalb erklärt die Anleitung die bewusste Wahl von „Einfach“, „Strukturi
 ## Integration mit den weiteren Tickets
 
 - #110 benennt die Hauptnavigation um; dessen separater PR bleibt zuständig.
-- #112 baut die Erklärungen in die Übersicht ein und ergänzt den Startknopf.
+- #112 (umgesetzt) zeigt die Dimensionsbeschreibungen aufklappbar in der Übersicht und ergänzt „Selbsteinschätzung starten“.
 - #113 ersetzt den bisherigen Fragebogen auf den Dimensionsseiten durch die direkte Reifegradwahl und den geführten Ablauf. Die alten Quiztexte und die technische Stufe 0 sind bis dahin Teil des bisherigen Ablaufs, nicht der neuen Anleitung.
 - #114 ergänzt die Gesamtauswertung. Deren Einordnung soll den hier übernommenen Text „Nicht überall auf der höchsten Stufe“ verwenden.
 
