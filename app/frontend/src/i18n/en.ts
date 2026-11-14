@@ -9,7 +9,7 @@ export const en: Messages = {
     home: 'Home',
     topics: 'Topics',
     blog: 'Blog',
-    audit: 'AI Audit',
+    audit: 'AI Readiness',
     profile: 'Profile',
     lang: 'Language',
     account: 'Sign in for editors',

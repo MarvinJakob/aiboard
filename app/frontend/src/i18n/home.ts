@@ -101,7 +101,7 @@ export const home: Record<Lang, HomeContent> = {
     lead: ['Praxiswissen für den professionellen Einsatz von KI.', 'Mit klarem Blick auf Nutzen, Grenzen und Verantwortung.'],
     ctaTopics: 'Themen entdecken',
     ctaNews: 'News',
-    ctaAudit: 'KI-Reifegrad einschätzen',
+    ctaAudit: 'KI Reifegrad einschätzen',
     ctaAbout: 'Über mich',
     indexLabel: 'Direkt zu den Themen',
     topicsEyebrow: 'Aktuell im Fokus',

@@ -41,7 +41,7 @@ describe('Ticket #101: Startseite nach content/Landingpage_v03.md und mock/landi
     expect(hero.querySelector('.home-lead')!.textContent!.replace(/\s+/g, ' ')).toBe(lead);
     expect(within(hero).getByRole('link', { name: 'Themen entdecken' })).toHaveAttribute('href', '#themen');
     expect(within(hero).getByRole('link', { name: 'News' })).toHaveAttribute('href', '/de/blog');
-    expect(within(hero).getByRole('link', { name: 'KI-Reifegrad einschätzen' })).toHaveAttribute('href', '/de/themen/ai-audit');
+    expect(within(hero).getByRole('link', { name: 'KI Reifegrad einschätzen' })).toHaveAttribute('href', '/de/themen/ai-audit');
     expect(within(hero).getByRole('link', { name: 'Über mich' })).toHaveAttribute('href', '/de/profil');
     expect(document.title).toBe('KI verstehen. Sinnvoll einsetzen. · KI Perspektiven');
     expect(document.querySelector('meta[name="description"]')).toHaveAttribute('content', lead);
@@ -122,7 +122,7 @@ describe('Ticket #101: Startseite nach content/Landingpage_v03.md und mock/landi
 
   it.each([
     ['News', '/de/blog', 'Blog'],
-    ['KI-Reifegrad einschätzen', '/de/themen/ai-audit', 'AI Audit für Unternehmen'],
+    ['KI Reifegrad einschätzen', '/de/themen/ai-audit', 'AI Audit für Unternehmen'],
     ['Über mich', '/de/profil', 'Marvin Jakob'],
   ])('„%s“ führt zu %s', async (link, path, heading) => {
     const user = userEvent.setup();
@@ -263,7 +263,7 @@ describe('Anforderung 2: Navigation', () => {
 
 describe('Ticket #93: cimt × Apple-Design', () => {
   it.each([
-    ['de', 'KI verstehen.Sinnvoll einsetzen.', 'Themen entdecken', 'KI-Reifegrad einschätzen'],
+    ['de', 'KI verstehen.Sinnvoll einsetzen.', 'Themen entdecken', 'KI Reifegrad einschätzen'],
     ['en', 'Understand AI.Use it wisely.', 'Explore topics', 'Assess your AI maturity'],
   ])('zeigt auf /%s den Hero ohne dekorative Grafik und behält beide Aktionen', async (lang, title, topics, audit) => {
     renderApp(`/${lang}`);
@@ -532,15 +532,17 @@ describe('Anforderung 10: Quiz zur Selbsteinschätzung', () => {
   });
 });
 
-describe('Ticket #21: AI Audit als eigener Navigationseintrag', () => {
+describe('Tickets #21 und #110: KI Readiness als eigener Navigationseintrag', () => {
   const mainNav = async (name = 'Hauptnavigation') => screen.findByRole('navigation', { name });
+  // Ticket #110: Der frühere Eintrag „AI Audit“ heißt jetzt „KI Readiness“ (englisch „AI Readiness“).
+  const readinessLabel = (path: string) => (path.startsWith('/en') ? 'AI Readiness' : 'KI Readiness');
 
   it.each(['/de', '/de/blog', '/de/blog/neu', '/de/themen/softwareentwicklung', '/de/impressum', '/de/gibt-es-nicht'])(
-    'zeigt auf %s den Eintrag „AI Audit“ neben Themen und Blog',
+    'zeigt auf %s den Eintrag „KI Readiness“ neben Themen und Blog',
     async (path) => {
       renderApp(path);
       const nav = await mainNav();
-      const audit = within(nav).getByRole('link', { name: 'AI Audit' });
+      const audit = within(nav).getByRole('link', { name: 'KI Readiness' });
       expect(audit).toHaveAttribute('href', '/de/themen/ai-audit');
       expect(within(nav).getByRole('button', { name: 'Themen' })).toBeInTheDocument();
       expect(within(nav).getByRole('link', { name: 'Blog' })).toBeInTheDocument();
@@ -553,7 +555,7 @@ describe('Ticket #21: AI Audit als eigener Navigationseintrag', () => {
   ])('öffnet von %s die Audit-Übersicht in der gewählten Sprache', async (path, navName, target, heading) => {
     const user = userEvent.setup();
     const { router } = renderApp(path);
-    await user.click(within(await mainNav(navName)).getByRole('link', { name: 'AI Audit' }));
+    await user.click(within(await mainNav(navName)).getByRole('link', { name: readinessLabel(path) }));
     expect(router.state.location.pathname).toBe(target);
     expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
     const dimension = await screen.findByRole('link', { name: /Strategie und Wirtschaftlichkeit/ });
@@ -571,35 +573,36 @@ describe('Ticket #21: AI Audit als eigener Navigationseintrag', () => {
       '/de/themen/data-analytics',
       '/de/themen/modelle-und-kosten',
     ]);
-    expect(within(menu).queryByRole('link', { name: /AI Audit/ })).not.toBeInTheDocument();
+    expect(within(menu).queryByRole('link', { name: /AI Audit|Readiness/ })).not.toBeInTheDocument();
     await user.click(within(menu).getByRole('link', { name: /KI in Data Analytics/ }));
     expect(router.state.location.pathname).toBe('/de/themen/data-analytics');
   });
 
+  // Übersicht: Wurzelpfad. Selbsteinschätzung und Auswertung liegen auf den Dimensionsseiten darunter.
   it.each([
     ['/de/themen/ai-audit', 'page'],
     ['/de/themen/ai-audit/strategie-und-wirtschaftlichkeit', 'true'],
     ['/en/themen/ai-audit/betrieb', 'true'],
-  ])('markiert auf %s „AI Audit“ als aktiv und „Themen“ nicht', async (path, current) => {
+  ])('markiert auf %s „KI Readiness“ als aktiv und „Themen“ nicht', async (path, current) => {
     renderApp(path);
     const nav = await mainNav(path.startsWith('/en') ? 'Main navigation' : 'Hauptnavigation');
-    const audit = within(nav).getByRole('link', { name: 'AI Audit' });
+    const audit = within(nav).getByRole('link', { name: readinessLabel(path) });
     expect(audit).toHaveAttribute('aria-current', current);
     expect(audit).toHaveClass('is-active');
     expect(within(nav).getByRole('button', { name: path.startsWith('/en') ? 'Topics' : 'Themen' })).not.toHaveClass('is-active');
   });
 
-  it('markiert auf anderen Themenseiten weiterhin „Themen“ und nicht „AI Audit“', async () => {
+  it('markiert auf anderen Themenseiten weiterhin „Themen“ und nicht „KI Readiness“', async () => {
     renderApp('/de/themen/softwareentwicklung');
     const nav = await mainNav();
     expect(within(nav).getByRole('button', { name: 'Themen' })).toHaveClass('is-active');
-    expect(within(nav).getByRole('link', { name: 'AI Audit' })).not.toHaveAttribute('aria-current');
+    expect(within(nav).getByRole('link', { name: 'KI Readiness' })).not.toHaveAttribute('aria-current');
   });
 
   it('erhält direkte Links und den Weg zu Dimensionen und Quiz', async () => {
     const user = userEvent.setup();
     const { router } = renderApp('/de');
-    await user.click(within(await mainNav()).getByRole('link', { name: 'AI Audit' }));
+    await user.click(within(await mainNav()).getByRole('link', { name: 'KI Readiness' }));
     await user.click(await screen.findByRole('link', { name: /Strategie und Wirtschaftlichkeit/ }));
     expect(router.state.location.pathname).toBe('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
     expect(await screen.findByRole('heading', { name: /Selbsteinschätzung|Quiz/ })).toBeInTheDocument();
@@ -611,9 +614,38 @@ describe('Ticket #21: AI Audit als eigener Navigationseintrag', () => {
     const nav = await mainNav();
     within(nav).getByRole('link', { name: 'Blog' }).focus();
     await user.tab();
-    expect(within(nav).getByRole('link', { name: 'AI Audit' })).toHaveFocus();
+    expect(within(nav).getByRole('link', { name: 'KI Readiness' })).toHaveFocus();
     await user.keyboard('{Enter}');
     expect(router.state.location.pathname).toBe('/de/themen/ai-audit');
+  });
+
+  it.each([
+    ['/de/blog', 'Menü', '/de/themen/ai-audit', 'AI Audit für Unternehmen'],
+    ['/en/blog', 'Menu', '/en/themen/ai-audit', 'AI Audit for Companies'],
+  ])('öffnet im mobilen Menü auf %s die Übersicht und schließt das Menü danach', async (path, menuLabel, target, heading) => {
+    const user = userEvent.setup();
+    const { router } = renderApp(path);
+    const toggle = await screen.findByRole('button', { name: menuLabel });
+    const menu = document.getElementById(toggle.getAttribute('aria-controls')!)!;
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await user.click(within(menu).getByRole('link', { name: readinessLabel(path) }));
+    expect(router.state.location.pathname).toBe(target);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(menu).not.toHaveClass('is-open');
+    expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+  });
+
+  it('führt den Startseitenlink exakt wie in der Vorlage und öffnet ihn per Tastatur', async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de');
+    const label = templateSection('Titel').find((l) => l.includes('Reifegrad'))!.replace(/^->\s*/, '');
+    expect(label).toBe('KI Reifegrad einschätzen');
+    const hero = (await screen.findByRole('heading', { level: 1 })).closest('section')!;
+    within(hero).getByRole('link', { name: label }).focus();
+    await user.keyboard('{Enter}');
+    expect(router.state.location.pathname).toBe('/de/themen/ai-audit');
+    expect(within(await mainNav()).getByRole('link', { name: 'KI Readiness' })).toHaveAttribute('aria-current', 'page');
   });
 });
 
