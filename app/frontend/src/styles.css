@@ -666,6 +666,30 @@ svg { display: block; }
 .btn[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
 .btn-primary[aria-disabled="true"]:hover { background: var(--accent-fill); transform: none; }
 
+/* Gesamtauswertung (Ticket #114): eine Datenreihe in der Markenfarbe, Raster haarfein und zurückhaltend,
+   Text immer in Texttönen. Die Fläche ist nur ein Hauch (12 %), Punkte tragen einen Ring in Flächenfarbe. */
+.result-chart .section-title, .result-summary .section-title { font-size: clamp(1.5rem, 2.4vw, 2rem); }
+.radar-figure { margin: 20px 0 0; padding: 20px 12px; border: 1px solid var(--border); border-radius: var(--radius-small); background: var(--surface); }
+.radar { width: 100%; }
+.radar-canvas { position: relative; max-width: 100%; margin-inline: auto; }
+.radar-svg { display: block; overflow: visible; }
+.radar-grid polygon, .radar-grid line { fill: none; stroke: var(--border); stroke-width: 1; }
+.radar-scale text { fill: var(--text-2); font-size: 11px; font-weight: 600; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
+.radar-area { fill: var(--accent-fill); fill-opacity: .12; stroke: var(--accent-fill); stroke-width: 2; stroke-linejoin: round; }
+.radar-labels text { fill: var(--text); font-size: 13px; font-weight: 550; }
+.radar-label-no { font-weight: 750; fill: var(--accent); }
+.radar-hit { fill: transparent; }
+.radar-dot { fill: var(--accent-fill); stroke: var(--surface); stroke-width: 2; }
+.radar-points g:hover .radar-dot { r: 7; }
+.radar-tip {
+  position: absolute; z-index: 2; display: grid; gap: 2px; min-width: 160px; max-width: 220px; padding: 8px 12px; pointer-events: none;
+  transform: translate(-50%, calc(-100% - 14px)); border: 1px solid var(--border); border-radius: 12px;
+  background: var(--surface); box-shadow: var(--shadow-raised); color: var(--text); font-size: .8125rem;
+}
+.radar-tip span { color: var(--text-2); }
+.radar-caption { max-width: 720px; margin: 16px auto 0; color: var(--text-2); font-size: .875rem; line-height: 1.6; }
+.result-classification { margin-top: clamp(40px, 5vw, 64px); }
+.result-classification h2 { margin-top: 0; color: var(--text); }
 .result-incomplete { display: grid; justify-items: start; gap: 14px; margin-top: 28px; padding: 28px; text-align: left; }
 .result-incomplete ul { padding-left: 1.2em; }
 .result-table { width: 100%; margin-top: 20px; border-collapse: collapse; font-size: .9375rem; }
@@ -1004,6 +1028,9 @@ svg { display: block; }
   :root, :root[data-theme="dark"] { --line: var(--muted); }
 }
 @media (forced-colors: active) {
+  .radar-area { fill: none; stroke: CanvasText; }
+  .radar-dot { fill: CanvasText; }
+  .radar-grid polygon, .radar-grid line { stroke: GrayText; }
   .btn, .icon-btn, .chip-btn, .choice-mark { border: 1px solid ButtonText; }
   .chip-btn[aria-selected="true"], .chip-btn[aria-pressed="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; }
   .choice-card[data-selected] { outline: 3px solid Highlight; }

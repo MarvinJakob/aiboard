@@ -98,6 +98,10 @@ export const en: Messages = {
     colLevel: 'Chosen maturity level',
     levelValue: '{{n}} – {{name}}',
     change: 'Change',
+    radarTitle: 'Your maturity profile',
+    radarSvgTitle: 'Radar chart of your self-assessed maturity levels',
+    radarDescItem: '{{n}}. {{title}}: {{value}}',
+    radarCaption: 'Self-assessment as a radar chart: each axis is one dimension, numbered as in the table below. The rings show maturity levels 1 {{one}} (inner), 2 {{two}} and 3 {{three}} (outer). The further out a point lies, the higher the chosen maturity level.',
   },
   footer: {
     tagline: 'Perspectives and experiences around artificial intelligence.',

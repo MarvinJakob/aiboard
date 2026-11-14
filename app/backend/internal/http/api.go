@@ -141,7 +141,7 @@ func (s *apiServer) GetAudit(_ context.Context, req api.GetAuditRequestObject) (
 		})
 	}
 	return api.GetAudit200JSONResponse{
-		Lang: api.Lang(o.Lang), Translations: toLangs(o.Translations), Intro: o.Intro, Guidance: o.Guidance, Levels: levels, Dimensions: dims,
+		Lang: api.Lang(o.Lang), Translations: toLangs(o.Translations), Intro: o.Intro, Guidance: o.Guidance, Classification: o.Classification, Levels: levels, Dimensions: dims,
 	}, nil
 }
 

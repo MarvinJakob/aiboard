@@ -520,6 +520,10 @@ func TestAuditOverview(t *testing.T) {
 	if !strings.Contains(o.Guidance, "Gesamtauswertung") || !strings.Contains(o.Guidance, "Entscheidungshilfe") {
 		t.Fatalf("Readiness-Anleitung fehlt: %s", o.Guidance)
 	}
+	// Ticket #114: Die Einordnung kommt für die Auswertung einzeln und steht weiter am Ende der Anleitung.
+	if !strings.HasPrefix(o.Classification, "### Nicht überall auf der höchsten Stufe") || !strings.HasSuffix(o.Guidance, o.Classification) {
+		t.Fatalf("Einordnung: %q", o.Classification)
+	}
 	if d := o.Dimensions[0]; d.Slug != "strategie-und-wirtschaftlichkeit" || d.Title != "Strategie und Wirtschaftlichkeit" || d.Category != "organizational" {
 		t.Fatalf("erste dimension: %+v", d)
 	}

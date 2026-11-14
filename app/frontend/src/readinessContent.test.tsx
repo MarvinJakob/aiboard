@@ -8,14 +8,16 @@ import { installFakeApi, renderApp } from './test/fakeApi';
 
 // Use the shipped catalog so these checks cover the source-to-page boundary, not placeholder copy.
 const content = JSON.parse(raw) as {
-  overview: { de: { intro: string[]; guidance: string[]; levels: { name: string; motto: string }[] } };
+  overview: { de: { intro: string[]; guidance: string[]; classification: string[]; levels: { name: string; motto: string }[] } };
   dimensions: { slug: string; category: AuditCategory; released: boolean; texts: { de: { title: string; summary: string; intro: string[] } } }[];
 };
 const copy = content.overview.de;
 const template = source.replace(/\r\n/g, '\n');
 const section = (heading: string) => template.split(`## ${heading}\n\n`)[1].split(/^## /m)[0].trim();
 const overview: AuditOverview = {
-  lang: 'de', translations: ['de'], intro: copy.intro, guidance: copy.guidance.join('\n\n'),
+  lang: 'de', translations: ['de'], intro: copy.intro,
+  // Wie das Backend: Die Einordnung (#114) steht am Ende der Anleitung und zusätzlich für sich.
+  guidance: [...copy.guidance, ...copy.classification].join('\n\n'), classification: copy.classification.join('\n\n'),
   levels: copy.levels.slice(1).map((level, i) => ({ ...level, level: i + 1 })),
   dimensions: content.dimensions.filter(d => d.released).map(d => ({ slug: d.slug, category: d.category, lang: 'de', title: d.texts.de.title, summary: d.texts.de.summary, intro: d.texts.de.intro })),
 };

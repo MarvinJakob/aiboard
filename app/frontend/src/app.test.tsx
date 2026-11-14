@@ -647,6 +647,63 @@ describe('Ticket #113: geführte Selbsteinschätzung mit einem Reifegrad je Dime
   });
 });
 
+describe('Ticket #114: Gesamtauswertung als Netzdiagramm', () => {
+  const rateAll = async (user: ReturnType<typeof userEvent.setup>, levels: [string, string]) => {
+    const { router } = renderApp('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    await user.click(await screen.findByRole('radio', { name: levels[0] }));
+    await user.click(screen.getByRole('button', { name: 'Weiter' }));
+    await user.click(await screen.findByRole('radio', { name: levels[1] }));
+    await user.click(screen.getByRole('button', { name: 'Auswertung anzeigen' }));
+    await screen.findByRole('heading', { level: 1, name: 'Auswertung der Selbsteinschätzung' });
+    return router;
+  };
+  const chart = () => screen.getByRole('img', { name: 'Netzdiagramm Ihrer selbst eingeschätzten Reifegrade' });
+  const dots = () => [...chart().querySelectorAll('.radar-dot')].map((d) => d.getAttribute('data-level'));
+  const axisLabels = () => [...chart().querySelectorAll('.radar-labels text')].map((t) => t.textContent);
+
+  it('zeigt je Dimension eine beschriftete Achse in Ablaufreihenfolge und beschreibt alle Werte', async () => {
+    await rateAll(userEvent.setup(), ['Stufe 2 Strukturiert', 'Stufe 3 Intelligent']);
+    expect(axisLabels()).toEqual(['1Strategie undWirtschaftlichkeit', '2Betrieb']);
+    expect(dots()).toEqual(['2', '3']);
+    expect(chart()).toHaveAccessibleDescription('1. Strategie und Wirtschaftlichkeit: 2 – Strukturiert; 2. Betrieb: 3 – Intelligent');
+    // Gemeinsame, beschriftete Skala 1 bis 3; kein Reifegrad 0
+    expect([...chart().querySelectorAll('.radar-scale text')].map((t) => t.textContent)).toEqual(['1 Einfach', '2 Strukturiert', '3 Intelligent']);
+    expect(chart().querySelectorAll('.radar-grid polygon')).toHaveLength(3);
+    // Textfassung, Kennzeichnung als Selbsteinschätzung und fachliche Einordnung aus #111
+    expect(screen.getByRole('table')).toHaveTextContent('2 – Strukturiert');
+    expect(screen.getByText(/Das ist Ihre Selbsteinschätzung/)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Nicht überall auf der höchsten Stufe' })).toBeInTheDocument();
+    expect(screen.getByText('Unterschiedliche Reifegrade sind normal.')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['alle Einfach', 'Stufe 1 Einfach', ['1', '1']],
+    ['alle Intelligent', 'Stufe 3 Intelligent', ['3', '3']],
+  ] as const)('stellt „%s“ exakt dar', async (_, level, expected) => {
+    await rateAll(userEvent.setup(), [level, level]);
+    expect(dots()).toEqual(expected);
+  });
+
+  it('zeigt nach einer Änderung die aktualisierten Werte', async () => {
+    const user = userEvent.setup();
+    const router = await rateAll(user, ['Stufe 1 Einfach', 'Stufe 2 Strukturiert']);
+    expect(dots()).toEqual(['1', '2']);
+    await user.click(screen.getByRole('link', { name: 'Ändern: Betrieb' }));
+    expect(router.state.location.pathname).toBe('/de/themen/ai-audit/betrieb');
+    await user.click(await screen.findByRole('radio', { name: 'Stufe 3 Intelligent' }));
+    await user.click(screen.getByRole('button', { name: 'Auswertung anzeigen' }));
+    await screen.findByRole('heading', { level: 1, name: 'Auswertung der Selbsteinschätzung' });
+    expect(dots()).toEqual(['1', '3']);
+    expect(chart()).toHaveAccessibleDescription(/2\. Betrieb: 3 – Intelligent/);
+  });
+
+  it('zeigt ohne vollständige Bewertung kein Diagramm', async () => {
+    renderApp('/de/themen/ai-audit/auswertung');
+    await screen.findByText(/Bisher bewertet: 0 von 2/);
+    expect(screen.queryByRole('img', { name: /Netzdiagramm/ })).not.toBeInTheDocument();
+  });
+});
+
 describe('Tickets #21 und #110: KI Readiness als eigener Navigationseintrag', () => {
   const mainNav = async (name = 'Hauptnavigation') => screen.findByRole('navigation', { name });
   // Ticket #110: Der frühere Eintrag „AI Audit“ heißt jetzt „KI Readiness“ (englisch „AI Readiness“).

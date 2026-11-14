@@ -1036,7 +1036,7 @@ components:
             type: string
     AuditOverview:
       type: object
-      required: [lang, translations, intro, guidance, levels, dimensions]
+      required: [lang, translations, intro, guidance, classification, levels, dimensions]
       properties:
         lang:
           $ref: '#/components/schemas/Lang'
@@ -1052,6 +1052,11 @@ components:
         guidance:
           type: string
           description: Anleitung und fachliche Einordnung als Markdown in der angegebenen Inhaltssprache
+        classification:
+          type: string
+          description: |
+            Fachliche Einordnung der Ergebnisse als Markdown (Ende von `guidance`). Die Gesamtauswertung zeigt
+            sie neben dem Netzdiagramm (Ticket #114).
         levels:
           type: array
           description: Die Reifegrade 1 bis 3

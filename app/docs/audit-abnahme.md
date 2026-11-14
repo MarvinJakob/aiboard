@@ -1,6 +1,6 @@
 # Abnahme der KI-Readiness-Selbsteinschätzung
 
-Stand: 2026-11-14 · Ticket [#113](https://github.com/MarvinJakob/aiboard/issues/113) · Inhalte: `backend/internal/audit/content.json`
+Stand: 2026-11-14 · Tickets [#113](https://github.com/MarvinJakob/aiboard/issues/113) und [#114](https://github.com/MarvinJakob/aiboard/issues/114) · Inhalte: `backend/internal/audit/content.json`
 
 Seit #113 wählen Nutzer je Dimension bewusst genau einen Reifegrad. Diese Wahl ersetzt den Ja/Nein-Fragebogen aus Anforderung 10 mit automatischer Ableitung, „Trifft nicht zu“ und Reifegrad 0 „Nicht angewendet“. Die Abschnitte ab „Abgleich für den Review-Rücklauf von Ticket 10“ belegen weiter die Herkunft und den Wortlaut der Prüffragen. Für die Bewertung gelten sie nicht mehr.
 
@@ -45,9 +45,26 @@ Die Spalte „Bedingte Fragen“ nennt Fragen mit Voraussetzung (zum Beispiel �
 | Daten und Wissen | `/de/themen/ai-audit/daten-und-wissen` | 2 | 7 | 5 | 2.3 |
 | Sicherheit und Zuverlässigkeit | `/de/themen/ai-audit/sicherheit-und-zuverlaessigkeit` | 2 | 8 | 5 | keine |
 
+## Gesamtauswertung als Netzdiagramm (Ticket #114)
+
+Die Auswertung unter `/{lang}/themen/ai-audit/auswertung` erscheint nur, wenn alle Dimensionen bewertet sind. Sie bezeichnet die Werte als Selbsteinschätzung und zeigt drei Teile:
+
+1. **Netzdiagramm** (`components/ReadinessRadar.tsx`, Geometrie in `lib/radar.ts`): genau eine Achse je Dimension in Ablaufreihenfolge, von oben im Uhrzeigersinn, beschriftet mit Nummer und Titel. Unter 520 px Diagrammbreite tragen die Achsen nur die Nummer; die Namen stehen in der nummerierten Tabelle. Die Ringe sind als gemeinsame Skala beschriftet („1 Einfach“, „2 Strukturiert“, „3 Intelligent“). Reifegrad 1, 2 und 3 liegen bei einem Drittel, zwei Dritteln und dem vollen Radius. Ein Wert außerhalb 1 bis 3 ist ein Programmierfehler; eine fehlende Auswahl wird nie als 0 gezeichnet. Eine Datenreihe in der Markenfarbe ohne Legende (der Titel benennt sie). Die Farbe besteht die Prüfung des Dataviz-Validators für helle (`#ffffff`) und dunkle Fläche (`#0d1d2b`). Beim Überfahren eines Punkts erscheint ein Tooltip. Für Screenreader ist das SVG ein Bild mit Titel und einer Beschreibung aller Werte; die Bildunterschrift erklärt das Lesen.
+2. **Textübersicht:** Tabelle mit Dimension und gewähltem Reifegrad („2 – Strukturiert“) sowie „Ändern“ je Dimension. Damit sind alle Werte ohne Farbe und ohne Diagramm zugänglich.
+3. **Einordnung:** „Nicht überall auf der höchsten Stufe“ aus `content/KI Readiness.md` (#111). Es gibt keine Gesamtnote und keine Neubewertung.
+
+| Fall | Erwartung | Ergebnis (gebaute Anwendung, Radius 180 px) |
+|---|---|---|
+| Alle Einfach | alle Punkte auf dem inneren Ring | Punkte 1,1,1,1,1,1,1,1, Abstand je 60 px |
+| Alle Intelligent | alle Punkte auf dem äußeren Ring | Punkte 3,3,3,3,3,3,3,3, Abstand je 180 px |
+| Gemischt 2, 1, 3, 2, 1, 2, 3, 1 | Punkte je Achse auf dem gewählten Ring | Abstände 120, 60, 180, 120, 60, 120, 180, 60 px |
+| Korrektur: Betrieb von 3 auf 1, Auswertung erneut aufrufen | Diagramm, Beschreibung und Tabelle zeigen den neuen Wert | erfüllt (Durchlauf #113 Schritt 6; automatischer Test) |
+
+Screenshots: [screenshots/114](screenshots/114/), jeweils 320 und 1280 px, hell und dunkel, ohne horizontalen Seitenscroll.
+
 ## Automatische Prüfung
 
-`frontend/src/app.test.tsx` (Abschnitt „Ticket #113“) prüft Einstieg, Schrittliste, fehlende Vorauswahl, Prüffragen ohne Antwortfelder, gesperrtes „Weiter“ samt Hinweis, Zurück und Rücksprung mit erhaltenen Bewertungen, die gesperrte und die vollständige Auswertung sowie die Tastaturbedienung. `lib/audit.test.ts` prüft die Fortschrittsberechnung. Die API-Tests stellen sicher, dass Reifegrad 0 und „conditional“ nicht mehr ausgeliefert werden. Ausführen mit `cd frontend && npm test` und `cd backend && go test ./...`.
+`frontend/src/app.test.tsx` (Abschnitt „Ticket #113“) prüft Einstieg, Schrittliste, fehlende Vorauswahl, Prüffragen ohne Antwortfelder, gesperrtes „Weiter“ samt Hinweis, Zurück und Rücksprung mit erhaltenen Bewertungen, die gesperrte und die vollständige Auswertung sowie die Tastaturbedienung. `lib/audit.test.ts` prüft die Fortschrittsberechnung. Für #114 prüfen `lib/radar.test.ts` die Diagrammwerte („alle Einfach“, „alle Intelligent“, gemischt, Achsenreihenfolge, kein Reifegrad 0) und der Abschnitt „Ticket #114“ in `app.test.tsx` Achsen, Skala, Beschreibung, Tabelle, Einordnung, Korrektur und das fehlende Diagramm bei unvollständiger Bewertung. Die API-Tests stellen sicher, dass Reifegrad 0 und „conditional“ nicht mehr ausgeliefert werden. Ausführen mit `cd frontend && npm test` und `cd backend && go test ./...`.
 
 ## Abgleich für den Review-Rücklauf von Ticket 10
 

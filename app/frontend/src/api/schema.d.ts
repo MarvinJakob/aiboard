@@ -607,6 +607,11 @@ export interface components {
             intro: string[];
             /** @description Anleitung und fachliche Einordnung als Markdown in der angegebenen Inhaltssprache */
             guidance: string;
+            /**
+             * @description Fachliche Einordnung der Ergebnisse als Markdown (Ende von `guidance`). Die Gesamtauswertung zeigt
+             *     sie neben dem Netzdiagramm (Ticket #114).
+             */
+            classification: string;
             /** @description Die Reifegrade 1 bis 3 */
             levels: components["schemas"]["AuditLevelInfo"][];
             dimensions: components["schemas"]["AuditDimensionSummary"][];

@@ -193,7 +193,10 @@ type AuditLevelInfo struct {
 
 // AuditOverview defines model for AuditOverview.
 type AuditOverview struct {
-	Dimensions []AuditDimensionSummary `json:"dimensions"`
+	// Classification Fachliche Einordnung der Ergebnisse als Markdown (Ende von `guidance`). Die Gesamtauswertung zeigt
+	// sie neben dem Netzdiagramm (Ticket #114).
+	Classification string                  `json:"classification"`
+	Dimensions     []AuditDimensionSummary `json:"dimensions"`
 
 	// Guidance Anleitung und fachliche Einordnung als Markdown in der angegebenen Inhaltssprache
 	Guidance string `json:"guidance"`

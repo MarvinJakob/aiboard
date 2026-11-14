@@ -96,6 +96,10 @@ export const de = {
     colLevel: 'Gewählter Reifegrad',
     levelValue: '{{n}} – {{name}}',
     change: 'Ändern',
+    radarTitle: 'Ihr Reifegradprofil',
+    radarSvgTitle: 'Netzdiagramm Ihrer selbst eingeschätzten Reifegrade',
+    radarDescItem: '{{n}}. {{title}}: {{value}}',
+    radarCaption: 'Selbsteinschätzung als Netzdiagramm: Jede Achse ist eine Dimension, nummeriert wie in der Tabelle darunter. Die Ringe zeigen die Reifegrade 1 {{one}} (innen), 2 {{two}} und 3 {{three}} (außen). Je weiter außen ein Punkt liegt, desto höher ist der gewählte Reifegrad.',
   },
   footer: {
     tagline: 'Einordnungen und Erfahrungen rund um künstliche Intelligenz.',

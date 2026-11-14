@@ -58,9 +58,12 @@ type Overview struct {
 	Lang         service.Lang
 	Translations []service.Lang
 	Intro        []string
-	Guidance     string      // Markdown: Ablauf, Reifegrade und Einordnung; gleiche Sprache wie Intro
-	Levels       []LevelInfo // Reifegrade 1 bis 3
-	Dimensions   []DimensionSummary
+	Guidance     string // Markdown: Ablauf, Reifegrade und Einordnung; gleiche Sprache wie Intro
+	// Classification ist die fachliche Einordnung (Markdown) aus dem Ende der Anleitung. Die Gesamtauswertung
+	// zeigt sie für sich (Ticket #114); in Guidance bleibt sie enthalten, damit die Übersicht unverändert ist.
+	Classification string
+	Levels         []LevelInfo // Reifegrade 1 bis 3
+	Dimensions     []DimensionSummary
 }
 
 // DimensionSummary ist die Kurzform einer Dimension für die Übersicht. Die Erklärung (Intro) gehört
@@ -106,9 +109,11 @@ type fileFormat struct {
 }
 
 type overviewText struct {
-	Intro    []string        `json:"intro"`
-	Guidance []string        `json:"guidance"`
-	Levels   []levelInfoText `json:"levels"` // Reifegrade 0 bis 3
+	Intro    []string `json:"intro"`
+	Guidance []string `json:"guidance"`
+	// Classification steht in der Übersicht am Ende der Anleitung und in der Auswertung allein.
+	Classification []string        `json:"classification"`
+	Levels         []levelInfoText `json:"levels"` // Reifegrade 0 bis 3
 }
 
 type levelInfoText struct {
@@ -194,6 +199,9 @@ func validate(f fileFormat) error {
 		}
 		if len(o.Guidance) == 0 || hasEmpty(o.Guidance) {
 			fail("übersicht (%s): Anleitung fehlt", l)
+		}
+		if len(o.Classification) == 0 || hasEmpty(o.Classification) {
+			fail("übersicht (%s): Einordnung fehlt", l)
 		}
 		if len(o.Levels) != LevelCount+1 {
 			fail("übersicht (%s): %d Reifegrade statt %d (0 bis %d)", l, len(o.Levels), LevelCount+1, LevelCount)
@@ -293,7 +301,11 @@ func sameQuestions(a, b dimensionText) bool {
 // Overview liefert die Audit-Übersicht in der gewünschten Sprache (sonst Deutsch).
 func (c *Catalog) Overview(lang service.Lang) Overview {
 	o, l, _ := pick(c.overview, lang)
-	out := Overview{Lang: l, Translations: langsOf(c.overview), Intro: o.Intro, Guidance: strings.Join(o.Guidance, "\n\n")}
+	out := Overview{
+		Lang: l, Translations: langsOf(c.overview), Intro: o.Intro,
+		Guidance:       strings.Join(append(append([]string{}, o.Guidance...), o.Classification...), "\n\n"),
+		Classification: strings.Join(o.Classification, "\n\n"),
+	}
 	for i := 1; i < len(o.Levels); i++ {
 		out.Levels = append(out.Levels, LevelInfo{Level: i, Name: o.Levels[i].Name, Motto: o.Levels[i].Motto})
 	}

@@ -126,12 +126,15 @@ export const AUDIT_DIMENSIONS: AuditDimension[] = [
   },
 ];
 
+const CLASSIFICATION = '### Nicht überall auf der höchsten Stufe\n\nUnterschiedliche Reifegrade sind normal.';
+
 function auditOverview(): AuditOverview {
   return {
     lang: 'de',
     translations: ['de'],
     intro: ['Das KI-Audit zeigt, welche Fähigkeiten vorhanden sind.'],
-    guidance: '### So ist die Selbsteinschätzung aufgebaut\n\nJe Dimension einen Reifegrad wählen.',
+    guidance: `### So ist die Selbsteinschätzung aufgebaut\n\nJe Dimension einen Reifegrad wählen.\n\n${CLASSIFICATION}`,
+    classification: CLASSIFICATION,
     levels: [1, 2, 3].map((level) => ({ level, name: LEVEL_NAMES[level], motto: `Leitsatz ${level}` })),
     dimensions: AUDIT_DIMENSIONS.map(({ slug, lang, title, summary, category, intro }) => ({ slug, lang, title, summary, category, intro })),
   };
