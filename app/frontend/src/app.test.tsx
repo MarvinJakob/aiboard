@@ -118,7 +118,7 @@ describe('Ticket #101: Startseite nach content/Landingpage_v03.md und mock/landi
 
   it.each([
     ['News', '/de/blog', 'Blog'],
-    ['KI Reifegrad einschätzen', '/de/themen/ai-audit', 'AI Audit für Unternehmen'],
+    ['KI Reifegrad einschätzen', '/de/themen/ai-audit', 'KI Readiness'],
     ['Über mich', '/de/profil', 'Marvin Jakob'],
   ])('„%s“ führt zu %s', async (link, path, heading) => {
     const user = userEvent.setup();
@@ -322,7 +322,7 @@ describe('Anforderung 3: Themenseiten', () => {
   it('zeigt Titel, Einführung und zugeordnete Beiträge; ein Klick öffnet den Beitrag', async () => {
     const user = userEvent.setup();
     const { router } = renderApp('/de/themen/ai-audit');
-    expect(await screen.findByRole('heading', { level: 1, name: 'AI Audit für Unternehmen' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'KI Readiness' })).toBeInTheDocument();
     expect(screen.getByText('Einführung Audit')).toBeInTheDocument();
     await user.click(await screen.findByRole('link', { name: /Älterer Beitrag/ }));
     expect(router.state.location.pathname).toBe('/de/blog/alt');
@@ -396,9 +396,9 @@ describe('Anforderung 7: Sprachwechsel', () => {
   it('behält die gewählte Sprache beim Navigieren und speichert sie lokal', async () => {
     const user = userEvent.setup();
     const { router } = renderApp('/de/themen/ai-audit');
-    await screen.findByRole('heading', { level: 1, name: 'AI Audit für Unternehmen' });
+    await screen.findByRole('heading', { level: 1, name: 'KI Readiness' });
     await user.click(screen.getByRole('button', { name: 'English' }));
-    expect(await screen.findByRole('heading', { level: 1, name: 'AI Audit for Companies' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'AI Readiness' })).toBeInTheDocument();
     expect(localStorage.getItem('ki-perspektiven.lang')).toBe('en');
 
     const nav = screen.getByRole('navigation', { name: 'Main navigation' });
@@ -421,15 +421,68 @@ describe('Anforderung 7: Sprachwechsel', () => {
   });
 });
 
-describe('Anforderung 8: KI-Audit-Übersicht', () => {
-  it('zeigt auf der Themenseite AI Audit die Einführung und alle Dimensionen mit Link', async () => {
-    const user = userEvent.setup();
-    const { router } = renderApp('/de/themen/ai-audit');
-    expect(await screen.findByRole('heading', { level: 2, name: 'Die Dimensionen des KI-Audits' })).toBeInTheDocument();
+describe('Anforderung 8 und Ticket #112: KI-Readiness-Übersicht mit aufklappbaren Dimensionen', () => {
+  const toggles = () => screen.getAllByRole('button', { expanded: false }).filter((b) => b.classList.contains('dim-acc-toggle'));
+  const toggle = (name: RegExp) => screen.getByRole('button', { name });
+  const panelOf = (button: HTMLElement) => document.getElementById(button.getAttribute('aria-controls')!)!;
+
+  it('zeigt die Einführung und alle Dimensionen in fester Reihenfolge, anfangs geschlossen', async () => {
+    renderApp('/de/themen/ai-audit');
+    expect(await screen.findByRole('heading', { level: 2, name: 'Warum eine Selbsteinschätzung?' })).toBeInTheDocument();
     expect(screen.getByText('Das KI-Audit zeigt, welche Fähigkeiten vorhanden sind.')).toBeInTheDocument();
     expect(screen.getByText('Leitsatz 2')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Betrieb/ })).toHaveAttribute('href', '/de/themen/ai-audit/betrieb');
-    await user.click(screen.getByRole('link', { name: /Strategie und Wirtschaftlichkeit/ }));
+    const list = screen.getByRole('list', { name: 'Die Dimensionen im Überblick' });
+    const items = within(list).getAllByRole('listitem');
+    // Die Nummer ist dekorativ (aria-hidden); die Reihenfolge trägt die nummerierte Liste.
+    expect(items.map((li) => within(li).getByRole('heading', { level: 4 }).querySelector('button')!.textContent)).toEqual([
+      '1Strategie und Wirtschaftlichkeit Kurz Strategie',
+      '2Betrieb Kurz Betrieb',
+    ]);
+    expect(within(items[1]).getByRole('button', { name: 'Betrieb Kurz Betrieb' })).toBeInTheDocument();
+    expect(toggles()).toHaveLength(2);
+    for (const b of toggles()) expect(panelOf(b)).not.toBeVisible();
+    expect(screen.queryByText('Einführung Strategie')).not.toBeVisible();
+  });
+
+  it('öffnet und schließt die Erklärung auf derselben Seite, ohne den Ablauf zu starten', async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de/themen/ai-audit');
+    const strategy = await screen.findByRole('button', { name: /Strategie und Wirtschaftlichkeit/ });
+    await user.click(strategy);
+    expect(strategy).toHaveAttribute('aria-expanded', 'true');
+    expect(within(panelOf(strategy)).getByText('Einführung Strategie')).toBeVisible();
+    expect(within(panelOf(strategy)).getByText('Organisatorisch')).toBeVisible();
+    expect(toggle(/Betrieb/)).toHaveAttribute('aria-expanded', 'false');
+    expect(router.state.location.pathname).toBe('/de/themen/ai-audit');
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+
+    await user.click(strategy);
+    expect(strategy).toHaveAttribute('aria-expanded', 'false');
+    expect(panelOf(strategy)).not.toBeVisible();
+  });
+
+  it('lässt sich per Tastatur öffnen und schließen', async () => {
+    const user = userEvent.setup();
+    renderApp('/de/themen/ai-audit');
+    const operation = await screen.findByRole('button', { name: /Betrieb/ });
+    operation.focus();
+    await user.keyboard('{Enter}');
+    expect(operation).toHaveAttribute('aria-expanded', 'true');
+    expect(panelOf(operation)).toHaveAttribute('id', 'dimension-betrieb-erklaerung');
+    expect(within(panelOf(operation)).getByText('Einführung Betrieb')).toBeVisible();
+    await user.keyboard(' ');
+    expect(operation).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('startet die Selbsteinschätzung bei der ersten Dimension und erhält die Dimensions-URLs', async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de/themen/ai-audit');
+    await user.click(await screen.findByRole('button', { name: /Betrieb/ }));
+    expect(screen.getByRole('link', { name: 'Reifegrade und Prüffragen: Betrieb' })).toHaveAttribute('href', '/de/themen/ai-audit/betrieb');
+    const starts = screen.getAllByRole('link', { name: 'Selbsteinschätzung starten' });
+    expect(starts).toHaveLength(2);
+    for (const s of starts) expect(s).toHaveAttribute('href', '/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    await user.click(starts[0]);
     expect(router.state.location.pathname).toBe('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
     expect(await screen.findByRole('heading', { level: 1, name: 'Strategie und Wirtschaftlichkeit' })).toBeInTheDocument();
   });
@@ -437,7 +490,7 @@ describe('Anforderung 8: KI-Audit-Übersicht', () => {
   it('erscheint nur beim Thema AI Audit', async () => {
     renderApp('/de/themen/softwareentwicklung');
     await screen.findByRole('heading', { level: 1, name: 'KI in der Softwareentwicklung' });
-    expect(screen.queryByRole('heading', { name: 'Die Dimensionen des KI-Audits' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Warum eine Selbsteinschätzung?' })).not.toBeInTheDocument();
   });
 });
 
@@ -448,9 +501,7 @@ describe('Anforderung 9: Seiten für die Audit-Dimensionen', () => {
     expect(screen.getByText('Einführung Strategie')).toBeInTheDocument();
     const benefits = screen.getByRole('region', { name: 'Ihr Nutzen' });
     expect(within(benefits).getAllByRole('listitem')).toHaveLength(2);
-    for (const name of ['Einfach', 'Strukturiert', 'Intelligent']) {
-      expect(screen.getByRole('heading', { level: 3, name })).toBeInTheDocument();
-    }
+    expect(screen.getAllByRole('radio').map((r) => r.closest('label')!.querySelector('strong')!.textContent)).toEqual(['Einfach', 'Strukturiert', 'Intelligent']);
     expect(screen.getByText('Beschreibung Strategie 2')).toBeInTheDocument();
   });
 
@@ -462,70 +513,191 @@ describe('Anforderung 9: Seiten für die Audit-Dimensionen', () => {
   it('zeigt auf Englisch die deutsche Fassung mit Hinweis', async () => {
     renderApp('/en/themen/ai-audit/betrieb');
     expect(await screen.findByRole('heading', { level: 1, name: 'Betrieb' })).toBeInTheDocument();
-    expect(screen.getByText('The AI audit is not available in English. You are reading the German version.')).toBeInTheDocument();
-    expect(screen.getAllByRole('radio', { name: 'Yes' })).toHaveLength(3);
+    expect(screen.getByText('The AI Readiness content is not available in English. You are reading the German version.')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Level 2 Strukturiert' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show results' })).toHaveAttribute('aria-disabled', 'true');
   });
 });
 
-describe('Anforderung 10: Quiz zur Selbsteinschätzung', () => {
-  const answer = async (user: ReturnType<typeof userEvent.setup>, id: string, option: string) =>
-    user.click(within(screen.getByRole('group', { name: `${id} Frage ${id}?` })).getByRole('radio', { name: option }));
+describe('Ticket #113: geführte Selbsteinschätzung mit einem Reifegrad je Dimension', () => {
+  const steps = () => within(screen.getByRole('navigation', { name: 'Ablauf der Selbsteinschätzung' })).getAllByRole('listitem');
+  const radio = (name: string) => screen.getByRole('radio', { name: new RegExp(`^Stufe \\d ${name}$`) });
 
-  it('zeigt erst nach allen Pflichtfragen den Reifegrad und aktualisiert ihn bei Änderungen', async () => {
+  it('startet bei der ersten Dimension, zeigt Fortschritt und keine Vorauswahl', async () => {
     const user = userEvent.setup();
-    renderApp('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
-    await screen.findByRole('heading', { level: 2, name: 'Selbsteinschätzung' });
-    const status = screen.getByRole('status');
-    expect(status).toHaveTextContent('Noch 5 Fragen offen.');
-
-    await answer(user, '1.1', 'Ja');
-    await answer(user, '1.2', 'Ja');
-    await answer(user, '2.1', 'Nein');
-    await answer(user, '2.2', 'Trifft nicht zu');
-    expect(status).toHaveTextContent('Noch 1 Frage offen.');
-    expect(status).not.toHaveTextContent('Reifegrad:');
-
-    await answer(user, '3.1', 'Ja');
-    expect(status).toHaveTextContent('Reifegrad: Einfach');
-    const next = screen.getByRole('heading', { level: 4, name: 'Nächster Schritt: Strukturiert' }).parentElement!;
-    expect(next).toHaveTextContent('Frage 2.1?');
-
-    await answer(user, '2.1', 'Ja');
-    expect(status).toHaveTextContent('Reifegrad: Intelligent');
-
-    await answer(user, '1.2', 'Nein');
-    expect(status).toHaveTextContent('Reifegrad: Nicht angewendet');
-
-    await user.click(screen.getByRole('button', { name: 'Antworten zurücksetzen' }));
-    expect(status).toHaveTextContent('Noch 5 Fragen offen.');
+    const { router } = renderApp('/de/themen/ai-audit');
+    await user.click((await screen.findAllByRole('link', { name: 'Selbsteinschätzung starten' }))[0]);
+    expect(router.state.location.pathname).toBe('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    expect(await screen.findByText('Selbsteinschätzung · Dimension 1 von 2')).toBeInTheDocument();
+    expect(steps().map((li) => li.textContent)).toEqual(['11. Strategie und WirtschaftlichkeitAktuell', '22. BetriebOffen']);
+    expect(steps()[0].querySelector('[aria-current="step"]')).not.toBeNull();
+    expect(screen.getAllByRole('radio')).toHaveLength(3);
+    expect(screen.queryByRole('radio', { checked: true })).not.toBeInTheDocument();
+    expect(screen.getByText('0 von 2 bewertet')).toBeInTheDocument();
   });
 
-  it('bietet „Trifft nicht zu“ nur für bedingte Fragen an', async () => {
+  it('zeigt die Prüffragen je Reifegrad nur als Lesehilfe ohne Antwortfelder', async () => {
     renderApp('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
-    await screen.findByRole('heading', { level: 2, name: 'Selbsteinschätzung' });
-    expect(screen.getAllByRole('radio', { name: 'Trifft nicht zu' })).toHaveLength(1);
+    const questions = await screen.findByRole('list', { name: 'Prüffragen zu „Strukturiert“' });
+    expect(within(questions).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['2.1 Frage 2.1?', '2.2 Frage 2.2?']);
+    expect(screen.getAllByRole('list', { name: /^Prüffragen zu/ })).toHaveLength(3);
+    // Nur die drei Reifegrade sind auswählbar; keine Ja/Nein-Felder, kein „Nicht angewendet“.
+    expect(screen.getAllByRole('radio')).toHaveLength(3);
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/Nicht angewendet|Trifft nicht zu|mit Ja oder Nein/);
   });
 
-  it('springt zur ersten offenen Frage', async () => {
+  it('erlaubt ohne Auswahl kein Weiter, nennt den Grund und wechselt bei der Auswahl allein nicht', async () => {
     const user = userEvent.setup();
-    renderApp('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
-    await screen.findByRole('heading', { level: 2, name: 'Selbsteinschätzung' });
-    await answer(user, '1.1', 'Ja');
-    await user.click(screen.getByRole('button', { name: 'Zur ersten offenen Frage' }));
-    expect(within(screen.getByRole('group', { name: '1.2 Frage 1.2?' })).getByRole('radio', { name: 'Ja' })).toHaveFocus();
+    const { router } = renderApp('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    const next = await screen.findByRole('button', { name: 'Weiter' });
+    expect(next).toHaveAttribute('aria-disabled', 'true');
+    expect(next).toHaveAccessibleDescription('Wählen Sie einen Reifegrad, um fortzufahren.');
+    await user.click(next);
+    expect(router.state.location.pathname).toBe('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    expect(radio('Einfach')).toHaveFocus();
+
+    await user.click(radio('Strukturiert'));
+    expect(radio('Strukturiert')).toBeChecked();
+    expect(router.state.location.pathname).toBe('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    expect(next).toHaveAttribute('aria-disabled', 'false');
+    expect(next).toHaveAccessibleDescription('Gewählt: Strukturiert');
   });
 
-  it('wirkt nur auf die Dimension, auf deren Seite geantwortet wurde', async () => {
+  it('führt mit Weiter und Zurück durch den Ablauf und erhält Bewertungen für Korrekturen', async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    await user.click(await screen.findByRole('radio', { name: 'Stufe 2 Strukturiert' }));
+    await user.click(screen.getByRole('button', { name: 'Weiter' }));
+    expect(router.state.location.pathname).toBe('/de/themen/ai-audit/betrieb');
+    expect(await screen.findByText('Selbsteinschätzung · Dimension 2 von 2')).toBeInTheDocument();
+    expect(steps().map((li) => li.textContent)).toEqual(['1. Strategie und WirtschaftlichkeitBewertet: Strukturiert', '22. BetriebAktuell']);
+    expect(screen.queryByRole('radio', { checked: true })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('link', { name: 'Zurück' }));
+    expect(await screen.findByText('Selbsteinschätzung · Dimension 1 von 2')).toBeInTheDocument();
+    expect(radio('Strukturiert')).toBeChecked();
+    await user.click(radio('Intelligent'));
+
+    await user.click(screen.getByRole('button', { name: 'Weiter' }));
+    await user.click(await screen.findByRole('radio', { name: 'Stufe 1 Einfach' }));
+    // Rücksprung über die Schrittliste und wieder vorwärts: Beide Bewertungen bleiben erhalten.
+    await user.click(within(screen.getByRole('navigation', { name: 'Ablauf der Selbsteinschätzung' })).getByRole('link', { name: /Strategie und Wirtschaftlichkeit/ }));
+    expect(await screen.findByText('Selbsteinschätzung · Dimension 1 von 2')).toBeInTheDocument();
+    expect(radio('Intelligent')).toBeChecked();
+    expect(screen.getByText('2 von 2 bewertet')).toBeInTheDocument();
+  });
+
+  it('verlinkt in der Schrittliste nur bewertete Dimensionen und die nächste offene', async () => {
+    renderApp('/de/themen/ai-audit/betrieb');
+    const [first, second] = await waitFor(() => steps());
+    expect(within(first).getByRole('link', { name: /Strategie und Wirtschaftlichkeit/ })).toHaveAttribute('href', '/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    expect(within(second).queryByRole('link')).not.toBeInTheDocument();
+    expect(first).toHaveTextContent('Offen');
+  });
+
+  it('zeigt die Auswertung erst, wenn alle Dimensionen bewertet sind', async () => {
     const user = userEvent.setup();
     const { router } = renderApp('/de/themen/ai-audit/betrieb');
-    await screen.findByRole('heading', { level: 1, name: 'Betrieb' });
-    for (const id of ['1.1', '2.1', '3.1']) await answer(user, id, 'Ja');
-    expect(screen.getByRole('status')).toHaveTextContent('Reifegrad: Intelligent');
+    await user.click(await screen.findByRole('radio', { name: 'Stufe 3 Intelligent' }));
+    const show = screen.getByRole('button', { name: 'Auswertung anzeigen' });
+    expect(show).toHaveAttribute('aria-disabled', 'true');
+    expect(show).toHaveAccessibleDescription('Für die Auswertung fehlen noch: Strategie und Wirtschaftlichkeit. Zur nächsten offenen Dimension');
+    await user.click(show);
+    expect(router.state.location.pathname).toBe('/de/themen/ai-audit/betrieb');
 
-    await router.navigate('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
-    await screen.findByRole('heading', { level: 1, name: 'Strategie und Wirtschaftlichkeit' });
-    expect(screen.getByRole('status')).toHaveTextContent('Noch 5 Fragen offen.');
-    expect(screen.queryByRole('radio', { checked: true })).not.toBeInTheDocument();
+    // Auch direkt aufgerufen zeigt die Auswertung ohne alle Bewertungen kein Ergebnis.
+    await router.navigate('/de/themen/ai-audit/auswertung');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Auswertung der Selbsteinschätzung' })).toBeInTheDocument();
+    expect(screen.getByText(/Bisher bewertet: 1 von 2/)).toBeInTheDocument();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: 'Selbsteinschätzung fortsetzen' }));
+    expect(router.state.location.pathname).toBe('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+
+    await user.click(await screen.findByRole('radio', { name: 'Stufe 1 Einfach' }));
+    await user.click(screen.getByRole('button', { name: 'Weiter' }));
+    await screen.findByText('Selbsteinschätzung · Dimension 2 von 2');
+    expect(radio('Intelligent')).toBeChecked();
+    await user.click(screen.getByRole('button', { name: 'Auswertung anzeigen' }));
+    expect(router.state.location.pathname).toBe('/de/themen/ai-audit/auswertung');
+    const rows = within(await screen.findByRole('table')).getAllByRole('row').slice(1);
+    expect(rows.map((r) => [within(r).getByRole('rowheader').textContent, within(r).getByRole('cell').firstElementChild!.firstElementChild!.textContent])).toEqual([
+      ['1. Strategie und Wirtschaftlichkeit', '1 – Einfach'],
+      ['2. Betrieb', '3 – Intelligent'],
+    ]);
+    // Nach vollständiger Bewertung führt auch die Schrittliste zur Auswertung (hier die aktuelle Seite).
+    expect(within(screen.getByRole('navigation', { name: 'Ablauf der Selbsteinschätzung' })).getByRole('link', { name: 'Auswertung anzeigen' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('ist per Tastatur bedienbar: Reifegrad mit Pfeiltasten wählen, mit Weiter fortfahren', async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    (await screen.findByRole('radio', { name: 'Stufe 1 Einfach' })).focus();
+    await user.keyboard(' ');
+    expect(radio('Einfach')).toBeChecked();
+    await user.keyboard('{ArrowDown}');
+    expect(radio('Strukturiert')).toBeChecked();
+    expect(router.state.location.pathname).toBe('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    screen.getByRole('button', { name: 'Weiter' }).focus();
+    await user.keyboard('{Enter}');
+    expect(router.state.location.pathname).toBe('/de/themen/ai-audit/betrieb');
+  });
+});
+
+describe('Ticket #114: Gesamtauswertung als Netzdiagramm', () => {
+  const rateAll = async (user: ReturnType<typeof userEvent.setup>, levels: [string, string]) => {
+    const { router } = renderApp('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
+    await user.click(await screen.findByRole('radio', { name: levels[0] }));
+    await user.click(screen.getByRole('button', { name: 'Weiter' }));
+    await user.click(await screen.findByRole('radio', { name: levels[1] }));
+    await user.click(screen.getByRole('button', { name: 'Auswertung anzeigen' }));
+    await screen.findByRole('heading', { level: 1, name: 'Auswertung der Selbsteinschätzung' });
+    return router;
+  };
+  const chart = () => screen.getByRole('img', { name: 'Netzdiagramm Ihrer selbst eingeschätzten Reifegrade' });
+  const dots = () => [...chart().querySelectorAll('.radar-dot')].map((d) => d.getAttribute('data-level'));
+  const axisLabels = () => [...chart().querySelectorAll('.radar-labels text')].map((t) => t.textContent);
+
+  it('zeigt je Dimension eine beschriftete Achse in Ablaufreihenfolge und beschreibt alle Werte', async () => {
+    await rateAll(userEvent.setup(), ['Stufe 2 Strukturiert', 'Stufe 3 Intelligent']);
+    expect(axisLabels()).toEqual(['1Strategie undWirtschaftlichkeit', '2Betrieb']);
+    expect(dots()).toEqual(['2', '3']);
+    expect(chart()).toHaveAccessibleDescription('1. Strategie und Wirtschaftlichkeit: 2 – Strukturiert; 2. Betrieb: 3 – Intelligent');
+    // Gemeinsame, beschriftete Skala 1 bis 3; kein Reifegrad 0
+    expect([...chart().querySelectorAll('.radar-scale text')].map((t) => t.textContent)).toEqual(['1 Einfach', '2 Strukturiert', '3 Intelligent']);
+    expect(chart().querySelectorAll('.radar-grid polygon')).toHaveLength(3);
+    // Textfassung, Kennzeichnung als Selbsteinschätzung und fachliche Einordnung aus #111
+    expect(screen.getByRole('table')).toHaveTextContent('2 – Strukturiert');
+    expect(screen.getByText(/Das ist Ihre Selbsteinschätzung/)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Nicht überall auf der höchsten Stufe' })).toBeInTheDocument();
+    expect(screen.getByText('Unterschiedliche Reifegrade sind normal.')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['alle Einfach', 'Stufe 1 Einfach', ['1', '1']],
+    ['alle Intelligent', 'Stufe 3 Intelligent', ['3', '3']],
+  ] as const)('stellt „%s“ exakt dar', async (_, level, expected) => {
+    await rateAll(userEvent.setup(), [level, level]);
+    expect(dots()).toEqual(expected);
+  });
+
+  it('zeigt nach einer Änderung die aktualisierten Werte', async () => {
+    const user = userEvent.setup();
+    const router = await rateAll(user, ['Stufe 1 Einfach', 'Stufe 2 Strukturiert']);
+    expect(dots()).toEqual(['1', '2']);
+    await user.click(screen.getByRole('link', { name: 'Ändern: Betrieb' }));
+    expect(router.state.location.pathname).toBe('/de/themen/ai-audit/betrieb');
+    await user.click(await screen.findByRole('radio', { name: 'Stufe 3 Intelligent' }));
+    await user.click(screen.getByRole('button', { name: 'Auswertung anzeigen' }));
+    await screen.findByRole('heading', { level: 1, name: 'Auswertung der Selbsteinschätzung' });
+    expect(dots()).toEqual(['1', '3']);
+    expect(chart()).toHaveAccessibleDescription(/2\. Betrieb: 3 – Intelligent/);
+  });
+
+  it('zeigt ohne vollständige Bewertung kein Diagramm', async () => {
+    renderApp('/de/themen/ai-audit/auswertung');
+    await screen.findByText(/Bisher bewertet: 0 von 2/);
+    expect(screen.queryByRole('img', { name: /Netzdiagramm/ })).not.toBeInTheDocument();
   });
 });
 
@@ -547,16 +719,16 @@ describe('Tickets #21 und #110: KI Readiness als eigener Navigationseintrag', ()
   );
 
   it.each([
-    ['/de/blog', 'Hauptnavigation', '/de/themen/ai-audit', 'AI Audit für Unternehmen'],
-    ['/en/blog', 'Main navigation', '/en/themen/ai-audit', 'AI Audit for Companies'],
+    ['/de/blog', 'Hauptnavigation', '/de/themen/ai-audit', 'KI Readiness'],
+    ['/en/blog', 'Main navigation', '/en/themen/ai-audit', 'AI Readiness'],
   ])('öffnet von %s die Audit-Übersicht in der gewählten Sprache', async (path, navName, target, heading) => {
     const user = userEvent.setup();
     const { router } = renderApp(path);
     await user.click(within(await mainNav(navName)).getByRole('link', { name: readinessLabel(path) }));
     expect(router.state.location.pathname).toBe(target);
     expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
-    const dimension = await screen.findByRole('link', { name: /Strategie und Wirtschaftlichkeit/ });
-    expect(dimension).toHaveAttribute('href', `${target}/strategie-und-wirtschaftlichkeit`);
+    const [start] = await screen.findAllByRole('link', { name: path.startsWith('/en') ? 'Start self-assessment' : 'Selbsteinschätzung starten' });
+    expect(start).toHaveAttribute('href', `${target}/strategie-und-wirtschaftlichkeit`);
   });
 
   it('führt im Themenmenü keinen Audit-Eintrag mehr, die übrigen Themen bleiben erreichbar', async () => {
@@ -596,13 +768,13 @@ describe('Tickets #21 und #110: KI Readiness als eigener Navigationseintrag', ()
     expect(within(nav).getByRole('link', { name: 'KI Readiness' })).not.toHaveAttribute('aria-current');
   });
 
-  it('erhält direkte Links und den Weg zu Dimensionen und Quiz', async () => {
+  it('erhält direkte Links und den Weg in die Selbsteinschätzung', async () => {
     const user = userEvent.setup();
     const { router } = renderApp('/de');
     await user.click(within(await mainNav()).getByRole('link', { name: 'KI Readiness' }));
-    await user.click(await screen.findByRole('link', { name: /Strategie und Wirtschaftlichkeit/ }));
+    await user.click((await screen.findAllByRole('link', { name: 'Selbsteinschätzung starten' }))[0]);
     expect(router.state.location.pathname).toBe('/de/themen/ai-audit/strategie-und-wirtschaftlichkeit');
-    expect(await screen.findByRole('heading', { name: /Selbsteinschätzung|Quiz/ })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: 'Reifegrad wählen' })).toBeInTheDocument();
   });
 
   it('ist per Tastatur erreichbar und bedienbar', async () => {
@@ -617,8 +789,8 @@ describe('Tickets #21 und #110: KI Readiness als eigener Navigationseintrag', ()
   });
 
   it.each([
-    ['/de/blog', 'Menü', '/de/themen/ai-audit', 'AI Audit für Unternehmen'],
-    ['/en/blog', 'Menu', '/en/themen/ai-audit', 'AI Audit for Companies'],
+    ['/de/blog', 'Menü', '/de/themen/ai-audit', 'KI Readiness'],
+    ['/en/blog', 'Menu', '/en/themen/ai-audit', 'AI Readiness'],
   ])('öffnet im mobilen Menü auf %s die Übersicht und schließt das Menü danach', async (path, menuLabel, target, heading) => {
     const user = userEvent.setup();
     const { router } = renderApp(path);

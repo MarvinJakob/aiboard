@@ -145,10 +145,9 @@ type AuditDimension struct {
 	Intro []string `json:"intro"`
 	Lang  Lang     `json:"lang"`
 
-	// Levels Reifegrade 1 bis 3. Ein Reifegrad ist erreicht, wenn alle seine Prüffragen und die aller
-	// darunterliegenden Reifegrade erfüllt sind. Ist Reifegrad 1 nicht erfüllt, gilt Reifegrad 0.
+	// Levels Reifegrade 1 bis 3, aus denen Nutzer genau einen wählen. Es gibt keine automatische Ableitung
+	// aus den Prüffragen und keinen Reifegrad 0 (Ticket #113).
 	Levels       []AuditLevel `json:"levels"`
-	NotApplied   AuditLevel   `json:"notApplied"`
 	Slug         string       `json:"slug"`
 	Summary      string       `json:"summary"`
 	Title        string       `json:"title"`
@@ -159,8 +158,11 @@ type AuditDimension struct {
 type AuditDimensionSummary struct {
 	// Category Einordnung der Dimension (organisatorisch, fachlich, technisch)
 	Category AuditCategory `json:"category"`
-	Lang     Lang          `json:"lang"`
-	Slug     string        `json:"slug"`
+
+	// Intro Absätze der Erklärung; die Übersicht zeigt sie aufklappbar (Ticket
+	Intro []string `json:"intro"`
+	Lang  Lang     `json:"lang"`
+	Slug  string   `json:"slug"`
 
 	// Summary Eine Zeile Beschreibung für die Übersicht
 	Summary string `json:"summary"`
@@ -174,7 +176,7 @@ type AuditLevel struct {
 	Level       int    `json:"level"`
 	Name        string `json:"name"`
 
-	// Questions Prüffragen (Ja/Nein). Reifegrad 0 hat keine.
+	// Questions Prüffragen dieses Reifegrads als Entscheidungshilfe
 	Questions []AuditQuestion `json:"questions"`
 }
 
@@ -191,9 +193,15 @@ type AuditLevelInfo struct {
 
 // AuditOverview defines model for AuditOverview.
 type AuditOverview struct {
-	Dimensions []AuditDimensionSummary `json:"dimensions"`
+	// Classification Fachliche Einordnung der Ergebnisse als Markdown (Ende von `guidance`). Die Gesamtauswertung zeigt
+	// sie neben dem Netzdiagramm (Ticket #114).
+	Classification string                  `json:"classification"`
+	Dimensions     []AuditDimensionSummary `json:"dimensions"`
 
-	// Intro Absätze der Einführung
+	// Guidance Anleitung und fachliche Einordnung als Markdown in der angegebenen Inhaltssprache
+	Guidance string `json:"guidance"`
+
+	// Intro Absätze der Einführung (Markdown)
 	Intro []string `json:"intro"`
 	Lang  Lang     `json:"lang"`
 
@@ -202,12 +210,8 @@ type AuditOverview struct {
 	Translations []Lang           `json:"translations"`
 }
 
-// AuditQuestion defines model for AuditQuestion.
+// AuditQuestion Prüffrage als Entscheidungshilfe; sie wird nicht einzeln beantwortet (Ticket
 type AuditQuestion struct {
-	// Conditional Gilt nur unter einer Voraussetzung (z. B. „Bei Agenten: …“). Darf mit „Trifft nicht zu“
-	// beantwortet werden und zählt dann als erfüllt.
-	Conditional bool `json:"conditional"`
-
 	// Id Reifegrad und laufende Nummer, z. B. `2.3`
 	Id   string `json:"id"`
 	Text string `json:"text"`

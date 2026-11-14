@@ -40,9 +40,12 @@ export function usePageFocus<T extends HTMLElement>() {
     if (firstKey === null) firstKey = location.key;
     if (location.key === firstKey || focusedKeys.has(location.key)) return;
     if ((location.state as NavState | null)?.keepPosition) return;
+    if (!ref.current) return;
+    ref.current.focus({ preventScroll: true });
     focusedKeys.add(location.key);
-    ref.current?.focus({ preventScroll: true });
-  }, [location.key, location.state]);
+    // Ohne Abhängigkeitsliste: Die H1 kann erst nach dem Laden der API-Daten erscheinen.
+    // Der Location-Key verhindert erneuten Fokus bei späteren Änderungen auf derselben Seite.
+  });
   return ref;
 }
 

@@ -137,10 +137,11 @@ func (s *apiServer) GetAudit(_ context.Context, req api.GetAuditRequestObject) (
 	for _, d := range o.Dimensions {
 		dims = append(dims, api.AuditDimensionSummary{
 			Slug: d.Slug, Lang: api.Lang(d.Lang), Title: d.Title, Summary: d.Summary, Category: api.AuditCategory(d.Category),
+			Intro: d.Intro,
 		})
 	}
 	return api.GetAudit200JSONResponse{
-		Lang: api.Lang(o.Lang), Translations: toLangs(o.Translations), Intro: o.Intro, Levels: levels, Dimensions: dims,
+		Lang: api.Lang(o.Lang), Translations: toLangs(o.Translations), Intro: o.Intro, Guidance: o.Guidance, Classification: o.Classification, Levels: levels, Dimensions: dims,
 	}, nil
 }
 
@@ -161,8 +162,7 @@ func (s *apiServer) GetAuditDimension(_ context.Context, req api.GetAuditDimensi
 	}
 	return api.GetAuditDimension200JSONResponse{
 		Slug: d.Slug, Lang: api.Lang(d.Lang), Title: d.Title, Summary: d.Summary, Category: api.AuditCategory(d.Category),
-		Translations: toLangs(d.Translations), Intro: d.Intro, Benefits: d.Benefits,
-		NotApplied: toAuditLevel(d.NotApplied), Levels: levels,
+		Translations: toLangs(d.Translations), Intro: d.Intro, Benefits: d.Benefits, Levels: levels,
 	}, nil
 }
 
@@ -173,7 +173,7 @@ func (s *apiServer) GetAuditDimension(_ context.Context, req api.GetAuditDimensi
 func toAuditLevel(l audit.Level) api.AuditLevel {
 	qs := make([]api.AuditQuestion, 0, len(l.Questions))
 	for _, q := range l.Questions {
-		qs = append(qs, api.AuditQuestion{Id: q.ID, Text: q.Text, Conditional: q.Conditional})
+		qs = append(qs, api.AuditQuestion{Id: q.ID, Text: q.Text})
 	}
 	return api.AuditLevel{Level: l.Level, Name: l.Name, Description: l.Description, Questions: qs}
 }

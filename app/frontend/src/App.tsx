@@ -2,10 +2,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Navigate, type RouteObject } from 'react-router';
 import { ApiError } from './api/client';
 import { LangLayout, Shell } from './components/Layout';
-import { AUDIT_TOPIC } from './lib/audit';
+import { AssessmentProvider } from './lib/assessment';
+import { AUDIT_TOPIC, RESULT_SLUG } from './lib/audit';
 import { DEFAULT_LANG, preferredLang } from './lib/lang';
 import { AiUses } from './pages/AiUses';
 import { AuditDimensionPage } from './pages/AuditDimension';
+import { AuditResultPage } from './pages/AuditResult';
 import { Blog } from './pages/Blog';
 import { Home } from './pages/Home';
 import { Legal } from './pages/Legal';
@@ -23,6 +25,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <Home /> },
       { path: 'themen/:slug', element: <TopicPage /> },
+      { path: `themen/${AUDIT_TOPIC}/${RESULT_SLUG}`, element: <AuditResultPage /> },
       { path: `themen/${AUDIT_TOPIC}/:dimension`, element: <AuditDimensionPage /> },
       { path: 'blog', element: <Blog /> },
       { path: 'blog/:slug', element: <PostPage /> },
@@ -62,5 +65,9 @@ export function createQueryClient() {
 }
 
 export function Providers({ client, children }: { client: QueryClient; children: React.ReactNode }) {
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={client}>
+      <AssessmentProvider>{children}</AssessmentProvider>
+    </QueryClientProvider>
+  );
 }

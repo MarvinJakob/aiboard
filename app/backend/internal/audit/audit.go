@@ -1,5 +1,6 @@
 // Package audit enthält die Inhalte des KI-Audits (Anforderungen 8 bis 10): Einführung, Dimensionen,
-// Reifegrade und Prüffragen. Fachliche Grundlage ist content/KI Audit.docx. Die Inhalte liegen
+// Reifegrade und Prüffragen. Grundlagen: content/KI Readiness.md und content/KI Audit.docx.
+// Die Zuordnung und Anpassungen für Ticket #111 stehen in docs/readiness-inhalte.md. Die Inhalte liegen
 // versioniert in content.json und werden in das Binary eingebettet
 // (docs/adr/0009-audit-inhalte-als-datei-im-repository.md).
 package audit
@@ -11,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"ki-web/backend/internal/service"
 )
@@ -18,8 +20,14 @@ import (
 // TopicSlug ist das Thema, unter dem die Audit-Übersicht und die Dimensionsseiten erscheinen.
 const TopicSlug = "ai-audit"
 
+// ResultSlug ist der Pfad der Gesamtauswertung unter dem Thema (Tickets #113, #114). Er teilt sich die
+// Ebene mit den Dimensionsseiten und ist deshalb als Dimensions-Slug verboten.
+const ResultSlug = "auswertung"
+
 // LevelCount ist die Zahl der Reifegrade je Dimension (Einfach, Strukturiert, Intelligent).
-// Dazu kommt Reifegrad 0 „Nicht angewendet“ ohne eigene Prüffragen.
+// content.json enthält aus der Fachquelle zusätzlich Reifegrad 0 „Nicht angewendet“ und die Kennzeichnung
+// bedingter Fragen. Beides wird seit Ticket #113 nicht mehr ausgeliefert: Nutzer wählen je Dimension bewusst
+// eine der drei Stufen, die Prüffragen dienen nur als Entscheidungshilfe und werden nicht beantwortet.
 const LevelCount = 3
 
 //go:embed content.json
@@ -50,28 +58,32 @@ type Overview struct {
 	Lang         service.Lang
 	Translations []service.Lang
 	Intro        []string
-	Levels       []LevelInfo // Reifegrade 1 bis 3
-	Dimensions   []DimensionSummary
+	Guidance     string // Markdown: Ablauf, Reifegrade und Einordnung; gleiche Sprache wie Intro
+	// Classification ist die fachliche Einordnung (Markdown) aus dem Ende der Anleitung. Die Gesamtauswertung
+	// zeigt sie für sich (Ticket #114); in Guidance bleibt sie enthalten, damit die Übersicht unverändert ist.
+	Classification string
+	Levels         []LevelInfo // Reifegrade 1 bis 3
+	Dimensions     []DimensionSummary
 }
 
-// DimensionSummary ist die Kurzform einer Dimension für die Übersicht.
+// DimensionSummary ist die Kurzform einer Dimension für die Übersicht. Die Erklärung (Intro) gehört
+// dazu, weil die Übersicht sie aufklappbar direkt zeigt (Ticket #112).
 type DimensionSummary struct {
 	Slug     string
 	Lang     service.Lang
 	Title    string
 	Summary  string
 	Category Category
+	Intro    []string
 }
 
-// Question ist eine Prüffrage. Bedingte Fragen gelten nur, wenn ihre Voraussetzung vorliegt
-// (z. B. „Bei Agenten: …“), und dürfen mit „Trifft nicht zu“ beantwortet werden.
+// Question ist eine Prüffrage, die bei der Wahl des Reifegrads als Entscheidungshilfe dient.
 type Question struct {
-	ID          string
-	Text        string
-	Conditional bool
+	ID   string
+	Text string
 }
 
-// Level ist ein Reifegrad einer Dimension. Reifegrad 0 hat keine Prüffragen.
+// Level ist ein Reifegrad (1 bis 3) einer Dimension mit seinen Prüffragen.
 type Level struct {
 	Level       int
 	Name        string
@@ -83,9 +95,7 @@ type Level struct {
 type Dimension struct {
 	DimensionSummary
 	Translations []service.Lang
-	Intro        []string
 	Benefits     []string
-	NotApplied   Level
 	Levels       []Level // Reifegrade 1 bis 3
 }
 
@@ -99,8 +109,11 @@ type fileFormat struct {
 }
 
 type overviewText struct {
-	Intro  []string        `json:"intro"`
-	Levels []levelInfoText `json:"levels"` // Reifegrade 0 bis 3
+	Intro    []string `json:"intro"`
+	Guidance []string `json:"guidance"`
+	// Classification steht in der Übersicht am Ende der Anleitung und in der Auswertung allein.
+	Classification []string        `json:"classification"`
+	Levels         []levelInfoText `json:"levels"` // Reifegrade 0 bis 3
 }
 
 type levelInfoText struct {
@@ -184,6 +197,12 @@ func validate(f fileFormat) error {
 		if len(o.Intro) == 0 || hasEmpty(o.Intro) {
 			fail("übersicht (%s): Einführung fehlt oder enthält leere Absätze", l)
 		}
+		if len(o.Guidance) == 0 || hasEmpty(o.Guidance) {
+			fail("übersicht (%s): Anleitung fehlt", l)
+		}
+		if len(o.Classification) == 0 || hasEmpty(o.Classification) {
+			fail("übersicht (%s): Einordnung fehlt", l)
+		}
 		if len(o.Levels) != LevelCount+1 {
 			fail("übersicht (%s): %d Reifegrade statt %d (0 bis %d)", l, len(o.Levels), LevelCount+1, LevelCount)
 		}
@@ -197,8 +216,8 @@ func validate(f fileFormat) error {
 	seen := map[string]bool{}
 	for i, d := range f.Dimensions {
 		where := fmt.Sprintf("dimension %d (%s)", i+1, d.Slug)
-		if !slugPattern.MatchString(d.Slug) {
-			fail("%s: ungültiger Slug", where)
+		if !slugPattern.MatchString(d.Slug) || d.Slug == ResultSlug {
+			fail("%s: ungültiger oder reservierter Slug", where)
 		}
 		if seen[d.Slug] {
 			fail("%s: Slug doppelt", where)
@@ -282,7 +301,11 @@ func sameQuestions(a, b dimensionText) bool {
 // Overview liefert die Audit-Übersicht in der gewünschten Sprache (sonst Deutsch).
 func (c *Catalog) Overview(lang service.Lang) Overview {
 	o, l, _ := pick(c.overview, lang)
-	out := Overview{Lang: l, Translations: langsOf(c.overview), Intro: o.Intro}
+	out := Overview{
+		Lang: l, Translations: langsOf(c.overview), Intro: o.Intro,
+		Guidance:       strings.Join(append(append([]string{}, o.Guidance...), o.Classification...), "\n\n"),
+		Classification: strings.Join(o.Classification, "\n\n"),
+	}
 	for i := 1; i < len(o.Levels); i++ {
 		out.Levels = append(out.Levels, LevelInfo{Level: i, Name: o.Levels[i].Name, Motto: o.Levels[i].Motto})
 	}
@@ -313,16 +336,12 @@ func (c *Catalog) Dimension(slug string, lang service.Lang) (Dimension, error) {
 		out := Dimension{
 			DimensionSummary: summary(d, lang),
 			Translations:     langsOf(d.Texts),
-			Intro:            t.Intro,
 			Benefits:         t.Benefits,
-			NotApplied:       Level{Level: 0, Name: names.Levels[0].Name, Description: t.NotApplied},
 		}
 		for i, lt := range t.Levels {
 			lv := Level{Level: i + 1, Name: names.Levels[i+1].Name, Description: lt.Description}
 			for j, q := range lt.Questions {
-				lv.Questions = append(lv.Questions, Question{
-					ID: fmt.Sprintf("%d.%d", i+1, j+1), Text: q.Text, Conditional: q.Conditional,
-				})
+				lv.Questions = append(lv.Questions, Question{ID: fmt.Sprintf("%d.%d", i+1, j+1), Text: q.Text})
 			}
 			out.Levels = append(out.Levels, lv)
 		}
@@ -333,7 +352,7 @@ func (c *Catalog) Dimension(slug string, lang service.Lang) (Dimension, error) {
 
 func summary(d dimensionEntry, lang service.Lang) DimensionSummary {
 	t, l, _ := pick(d.Texts, lang)
-	return DimensionSummary{Slug: d.Slug, Lang: l, Title: t.Title, Summary: t.Summary, Category: d.Category}
+	return DimensionSummary{Slug: d.Slug, Lang: l, Title: t.Title, Summary: t.Summary, Category: d.Category, Intro: t.Intro}
 }
 
 // pick wählt die gewünschte Sprache, sonst Deutsch, sonst jede weitere (wie bei Themen und Beiträgen).

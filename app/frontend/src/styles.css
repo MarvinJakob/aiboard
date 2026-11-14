@@ -245,13 +245,13 @@ svg { display: block; }
 .actions { margin-top: 28px; }
 
 /* Opake Inhaltsflächen: gemeinsame Form aller Karten */
-.post-row, .empty, .level-item, .level-card, .dimension-card, .quiz-level, .quiz-result,
+.post-row, .empty, .level-item,
 .profile-card, .profile-about, .consent, .landing .tasks, .landing .facts {
   border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow);
 }
 /* Verlinkte Karten heben sich beim Überfahren an */
-.post-row, .dimension-card { transition: border-color var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out); }
-.post-row:hover, .dimension-card:hover { border-color: var(--brand); transform: translateY(-3px); }
+.post-row { transition: border-color var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out); }
+.post-row:hover { border-color: var(--brand); transform: translateY(-3px); }
 
 /* Themengrafik (Platzhalter für die Bildsprache) */
 .art { position: relative; overflow: hidden; }
@@ -478,7 +478,8 @@ svg { display: block; }
 .topic-table table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 1rem; line-height: 1.55; }
 .topic-table th, .topic-table td { padding: 12px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); }
 .topic-table th { background: var(--fill); }
-/* Zellen nicht mitten im Wort umbrechen; die Tabelle scrollt stattdessen (Ticket #81). Rechtsbündige Zahlen bleiben einzeilig. */
+/* Zellen nicht mitten im Wort umbrechen; die Tabelle scrollt stattdessen (Ticket #81, #117). Gilt für Themenseiten und KI Readiness (ContentTable.tsx).
+   Überschreibt das vererbte overflow-wrap: anywhere von .topic-content und .audit-copy. Rechtsbündige Zahlen bleiben einzeilig. */
 .topic-table th, .topic-table td { overflow-wrap: normal; hyphens: auto; }
 .topic-table [style*="text-align: right"], .topic-table code { white-space: nowrap; }
 
@@ -491,7 +492,8 @@ svg { display: block; }
 /* ==========================================================================
    KI-Audit: Übersicht (Anforderung 8), Dimensionsseite (9) und Selbsteinschätzung (10)
    ========================================================================== */
-.audit-intro { display: grid; gap: 1em; max-width: 720px; margin-top: 18px; font-size: 1.0625rem; color: var(--text-2); }
+.audit-copy { max-width: 760px; margin-top: 24px; color: var(--text-2); overflow-wrap: anywhere; }
+.audit-copy > p:first-child { font-size: inherit; }
 .subhead { margin: 48px 0 16px; font-size: 1.3125rem; }
 .subhead-sub { margin: -8px 0 20px; }
 .level-list { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
@@ -502,67 +504,140 @@ svg { display: block; }
   display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 50%;
   background: var(--note-bg); color: var(--accent); font-size: .875rem; font-weight: 700; font-variant-numeric: tabular-nums;
 }
-.dimension-list { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
-.dimension-card { height: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 24px; text-decoration: none; }
-.dimension-card h4 { margin: 4px 0 0; font-size: 1.1875rem; }
-.dimension-card p { color: var(--text-2); font-size: .9375rem; }
-.card-link { margin-top: auto; padding-top: 8px; display: inline-flex; align-items: center; gap: 8px; color: var(--accent); font-weight: 650; font-size: .9375rem; }
-.card-link svg { width: 18px; height: 18px; transition: transform var(--dur-base) var(--ease-out); }
-.dimension-card:hover .card-link svg { transform: translateX(4px); }
+/* Aufklappbare Dimensionsliste (Ticket #112): eine Karte je Dimension, der ganze Kopf ist der Button. */
+.dim-accordion { list-style: none; padding: 0; display: grid; gap: 12px; max-width: 920px; }
+.dim-acc-item { border: 1px solid var(--border); border-radius: var(--radius-small); background: var(--surface); transition: border-color var(--dur-base) var(--ease-out); }
+.dim-acc-item:hover, .dim-acc-item[data-open] { border-color: var(--brand); }
+.dim-acc-heading { margin: 0; font-size: inherit; }
+.dim-acc-toggle {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px; width: 100%; min-height: 64px;
+  padding: 16px 20px; border: 0; border-radius: inherit; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.dim-acc-toggle:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.dim-acc-no {
+  display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--note-bg); color: var(--accent); font-size: .875rem; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.dim-acc-text { display: grid; gap: 2px; min-width: 0; overflow-wrap: break-word; hyphens: auto; }
+.dim-acc-title { font-size: 1.125rem; font-weight: 650; letter-spacing: -.02em; }
+.dim-acc-summary { color: var(--text-2); font-size: .9375rem; font-weight: 400; }
+.dim-acc-icon { display: inline-grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 50%; color: var(--accent); }
+.dim-acc-icon svg { width: 18px; height: 18px; transition: transform var(--dur-base) var(--ease-out); }
+.dim-acc-toggle[aria-expanded="true"] .dim-acc-icon svg { transform: rotate(180deg); }
+.dim-acc-panel { display: grid; justify-items: start; gap: 12px; padding: 0 20px 20px 68px; }
+.dim-acc-panel[hidden] { display: none; }
+.dim-acc-copy { max-width: 720px; line-height: 1.7; overflow-wrap: break-word; }
+.dim-acc-copy p + p { margin-top: .8em; }
 
 .dim-about { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr); gap: clamp(28px, 4vw, 64px); align-items: start; margin-top: clamp(48px, 6vw, 80px); }
 .dim-intro { margin-top: 0; }
-.benefits { position: sticky; top: calc(var(--header-h) + 16px); padding: 28px; border: 1px solid var(--border); border-left: 3px solid var(--brand); border-radius: var(--radius); background: var(--note-bg); }
+.benefits { padding: 28px; border: 1px solid var(--border); border-left: 3px solid var(--brand); border-radius: var(--radius); background: var(--note-bg); }
 .benefits h2 { font-size: 1.3125rem; letter-spacing: -.025em; }
 .benefit-list { list-style: none; padding: 0; margin-top: 16px; display: grid; gap: 14px; }
 .benefit-list li { display: grid; grid-template-columns: 24px 1fr; gap: 12px; line-height: 1.5; }
 .benefit-list svg { width: 22px; height: 22px; margin-top: 1px; color: var(--accent); }
-.level-cards { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.level-card { display: grid; align-content: start; gap: 10px; padding: 28px; }
-.level-card h3 { font-size: 1.375rem; }
-.level-card p:last-child { color: var(--text-2); font-size: .9375rem; }
-
-.quiz-sub, .quiz-privacy { max-width: 720px; }
-.quiz-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; margin-top: 28px; }
-.quiz { display: grid; gap: 20px; }
-.quiz-level { min-width: 0; margin: 0; padding: 24px 24px 8px; }
-.quiz-level > legend { float: left; width: 100%; display: flex; align-items: center; gap: 12px; padding: 0; margin-bottom: 8px; font-size: 1.25rem; font-weight: 650; letter-spacing: -.025em; }
-.quiz-list { clear: both; list-style: none; padding: 0; }
-.quiz-q { padding: 18px 0; border-top: 1px solid var(--border); scroll-margin-top: calc(var(--header-h) + 16px); }
-.quiz-q fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
-.quiz-q-text { float: left; width: 100%; display: flex; gap: 12px; padding: 0; font-weight: 550; line-height: 1.5; }
-.quiz-q-no { flex: none; min-width: 40px; color: var(--accent); font-weight: 650; font-variant-numeric: tabular-nums; }
-/* Fragetext neben der Nummer: Ohne min-width: 0 wäre er als Flex-Element mindestens so breit wie sein
-   längstes Wort und schöbe die Seite bei 320 px über den Rand (Bug #98). Trennung nach lang, sonst Umbruch im Wort. */
-.quiz-q-label { min-width: 0; overflow-wrap: break-word; hyphens: auto; }
-.quiz-hint { clear: both; margin: 6px 0 0 52px; padding-top: 4px; font-size: .875rem; color: var(--text-2); }
-.quiz-options { clear: both; display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0 52px; padding-top: 2px; }
-.quiz-option { position: relative; display: inline-flex; }
-.quiz-option input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
-.quiz-option span {
-  display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px;
-  border: 1px solid var(--border); border-radius: var(--pill); background: var(--fill); font-size: .9375rem; font-weight: 650;
-  transition: background-color var(--dur-fast) ease, border-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out);
+/* Geführte Selbsteinschätzung (Ticket #113): Schrittliste links, auf schmalen Bildschirmen kompakt darüber. */
+.assess-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: clamp(28px, 4vw, 56px); align-items: start; }
+.assess-main { min-width: 0; }
+.assess-head .notice { max-width: 640px; }
+/* Im Schritt ist die Spalte schmaler: Beschreibung und Nutzen untereinander statt nebeneinander. */
+.assess-main .dim-about { grid-template-columns: minmax(0, 1fr); gap: 24px; margin-top: 28px; }
+.assess-main .benefits { max-width: 760px; }
+.assess-steps { position: sticky; top: calc(var(--header-h) + 16px); padding: 20px; border: 1px solid var(--border); border-radius: var(--radius-small); background: var(--surface); }
+.assess-steps-title { font-size: 1rem; }
+.assess-steps-count { margin-top: 4px; color: var(--text-2); font-size: .8125rem; }
+.assess-step-list { list-style: none; padding: 0; margin-top: 14px; display: grid; gap: 4px; }
+.assess-step > a, .assess-step > span {
+  display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px;
+  border: 2px solid transparent; border-radius: 12px; color: var(--text); text-decoration: none;
 }
-.quiz-option:hover span { border-color: var(--brand); }
-.quiz-option:active span { transform: scale(.97); }
-.quiz-option input:checked + span { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--accent-text); }
-.quiz-option input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 3px; }
-.quiz-result { position: sticky; top: calc(var(--header-h) + 16px); display: grid; gap: 14px; padding: 24px; box-shadow: var(--shadow-raised); }
-.quiz-result h3 { font-size: 1.25rem; }
-.quiz-result [role="status"] { display: grid; gap: 12px; }
-.result-level { display: flex; align-items: center; gap: 12px; font-size: 1.375rem; font-weight: 700; letter-spacing: -.03em; line-height: 1.2; }
-.result-level .level-badge { width: 40px; height: 40px; border: 0; background: var(--accent-fill); color: var(--accent-text); font-size: 1.125rem; }
-.result-text { color: var(--text-2); font-size: .9375rem; }
-.result-next { display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid var(--border); }
-.result-next h4 { margin: 0; font-size: 1rem; }
-.result-next ul { list-style: none; padding: 0; display: grid; gap: 8px; font-size: .875rem; }
-.result-next li { display: flex; gap: 8px; }
-.result-next .quiz-q-no { min-width: 32px; }
-.result-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.result-actions .btn { min-height: 44px; padding: 10px 18px; }
-.progress { height: 8px; border-radius: var(--pill); background: var(--fill); overflow: hidden; }
-.progress span { display: block; height: 100%; border-radius: inherit; background: var(--accent-fill); transition: width var(--dur-base) var(--ease-out); }
+.assess-step > a:hover { background: var(--fill); }
+.assess-step > a:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+/* Ohne Farbe unterscheidbar: offen = gestrichelter Kreis mit Nummer, bewertet = Häkchen, aktuell = gefüllt mit Rahmen um den Eintrag */
+.assess-step-marker {
+  display: inline-grid; place-items: center; width: 30px; height: 30px; border: 1px dashed var(--text-2); border-radius: 50%;
+  color: var(--text-2); font-size: .8125rem; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.assess-step-marker svg { width: 16px; height: 16px; }
+.assess-step-text { display: grid; min-width: 0; }
+.assess-step-name { font-size: .875rem; font-weight: 600; line-height: 1.35; overflow-wrap: break-word; hyphens: auto; }
+.assess-step-status { font-size: .75rem; color: var(--text-2); }
+.assess-step[data-state="rated"] .assess-step-marker { border: 1px solid var(--accent); background: var(--note-bg); color: var(--accent); }
+.assess-step[data-state="current"] > span { border-color: var(--accent); background: var(--note-bg); }
+.assess-step[data-state="current"] .assess-step-marker { border: 1px solid var(--accent-fill); background: var(--accent-fill); color: var(--accent-text); }
+.assess-step[data-state="current"] .assess-step-status { color: var(--accent); font-weight: 650; }
+.assess-steps-result { margin-top: 8px; font-size: .9375rem; }
+.assess-steps-result[aria-current="page"] { color: var(--text); pointer-events: none; }
+
+.assess-choice { margin-top: clamp(40px, 5vw, 64px); }
+.assess-privacy { max-width: 720px; margin-top: 16px; }
+.choice-group { min-width: 0; margin: 24px 0 0; padding: 0; border: 0; }
+.choice-list { list-style: none; padding: 0; display: grid; gap: 16px; }
+.choice-card { border: 1px solid var(--border); border-radius: var(--radius-small); background: var(--surface); box-shadow: var(--shadow); transition: border-color var(--dur-fast) ease; }
+.choice-card:hover { border-color: var(--brand); }
+.choice-card[data-selected] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent), var(--shadow); background: var(--note-bg); }
+.choice-card:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 3px; }
+/* Der ganze Kopf ist die Klickfläche des Radiobuttons; das native Element liegt unsichtbar darüber. */
+.choice-head { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 20px 24px 8px; cursor: pointer; }
+.choice-head input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.choice-mark { display: inline-grid; place-items: center; width: 28px; height: 28px; border: 2px solid var(--text-2); border-radius: 50%; background: var(--surface); color: var(--accent-text); }
+.choice-card[data-selected] .choice-mark { border-color: var(--accent-fill); background: var(--accent-fill); }
+.choice-mark svg { width: 16px; height: 16px; }
+.choice-name { display: grid; gap: 2px; min-width: 0; }
+.choice-name .eyebrow { margin: 0; }
+.choice-name strong { font-size: 1.25rem; letter-spacing: -.02em; }
+.choice-state { padding: 4px 12px; border-radius: var(--pill); background: var(--accent-fill); color: var(--accent-text); font-size: .8125rem; font-weight: 700; }
+.choice-text { padding: 0 24px 0 66px; color: var(--text-2); font-size: .9375rem; line-height: 1.6; overflow-wrap: break-word; }
+.choice-questions { margin: 16px 24px 22px 66px; padding-top: 14px; border-top: 1px solid var(--border); }
+.choice-questions h3 { font-size: .9375rem; }
+.choice-questions ol { list-style: none; padding: 0; margin-top: 10px; display: grid; gap: 8px; font-size: .9375rem; line-height: 1.5; }
+.choice-questions li { display: flex; gap: 10px; }
+.q-no { flex: none; min-width: 32px; color: var(--accent); font-weight: 650; font-variant-numeric: tabular-nums; }
+/* Ohne min-width: 0 wäre der Text mindestens so breit wie sein längstes Wort (vgl. Bug #98). */
+.q-label { min-width: 0; overflow-wrap: break-word; hyphens: auto; }
+
+.assess-nav { display: grid; gap: 14px; margin-top: 32px; padding: 20px 24px; border: 1px solid var(--border); border-radius: var(--radius-small); background: var(--fill); }
+.assess-hint { color: var(--text-2); font-size: .9375rem; }
+.assess-hint[data-blocked] { padding-left: 12px; border-left: 3px solid var(--brand); color: var(--text); font-weight: 650; }
+.assess-hint a { color: var(--accent); font-weight: 650; }
+.assess-nav-buttons { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+/* aria-disabled statt disabled: Der Button bleibt fokussierbar und erklärt per aria-describedby, was fehlt. */
+.btn[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
+.btn-primary[aria-disabled="true"]:hover { background: var(--accent-fill); transform: none; }
+
+/* Gesamtauswertung (Ticket #114): eine Datenreihe in der Markenfarbe, Raster haarfein und zurückhaltend,
+   Text immer in Texttönen. Die Fläche ist nur ein Hauch (12 %), Punkte tragen einen Ring in Flächenfarbe. */
+.result-chart .section-title, .result-summary .section-title { font-size: clamp(1.5rem, 2.4vw, 2rem); }
+.radar-figure { margin: 20px 0 0; padding: 20px 12px; border: 1px solid var(--border); border-radius: var(--radius-small); background: var(--surface); }
+.radar { width: 100%; }
+.radar-canvas { position: relative; max-width: 100%; margin-inline: auto; }
+.radar-svg { display: block; overflow: visible; }
+.radar-grid polygon, .radar-grid line { fill: none; stroke: var(--border); stroke-width: 1; }
+.radar-scale text { fill: var(--text-2); font-size: 11px; font-weight: 600; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
+.radar-area { fill: var(--accent-fill); fill-opacity: .12; stroke: var(--accent-fill); stroke-width: 2; stroke-linejoin: round; }
+.radar-labels text { fill: var(--text); font-size: 13px; font-weight: 550; }
+.radar-label-no { font-weight: 750; fill: var(--accent); }
+.radar-hit { fill: transparent; }
+.radar-dot { fill: var(--accent-fill); stroke: var(--surface); stroke-width: 2; }
+.radar-points g:hover .radar-dot { r: 7; }
+.radar-tip {
+  position: absolute; z-index: 2; display: grid; gap: 2px; min-width: 160px; max-width: 220px; padding: 8px 12px; pointer-events: none;
+  transform: translate(-50%, calc(-100% - 14px)); border: 1px solid var(--border); border-radius: 12px;
+  background: var(--surface); box-shadow: var(--shadow-raised); color: var(--text); font-size: .8125rem;
+}
+.radar-tip span { color: var(--text-2); }
+.radar-caption { max-width: 720px; margin: 16px auto 0; color: var(--text-2); font-size: .875rem; line-height: 1.6; }
+.result-classification { margin-top: clamp(40px, 5vw, 64px); }
+.result-classification h2 { margin-top: 0; color: var(--text); }
+.result-incomplete { display: grid; justify-items: start; gap: 14px; margin-top: 28px; padding: 28px; text-align: left; }
+.result-incomplete ul { padding-left: 1.2em; }
+.result-table { width: 100%; margin-top: 20px; border-collapse: collapse; font-size: .9375rem; }
+.result-table th, .result-table td { padding: 12px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); overflow-wrap: break-word; hyphens: auto; }
+.result-table thead th { color: var(--text-2); font-size: .8125rem; font-weight: 650; }
+.result-table tbody th { font-weight: 600; }
+.result-table thead th:first-child, .result-table tbody th { width: 55%; }
+.result-level-cell { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; }
+.result-table .text-link { min-height: 0; }
 
 /* ==========================================================================
    Profil (Tickets #41, #60). Inhalt bleibt opak, die Navigation trägt das Glas.
@@ -676,6 +751,14 @@ svg { display: block; }
   .nav-btn { padding-inline: 11px; }
 }
 @media (max-width: 850px) {
+  .assess-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .assess-steps { position: static; padding: 14px 16px; }
+  .assess-step-list { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px; margin-top: 10px; }
+  .assess-step > a, .assess-step > span { grid-template-columns: minmax(0, 1fr); justify-items: center; padding: 2px 0; border: 0; background: none; }
+  .assess-step[data-state="current"] > span { background: none; }
+  .assess-step-marker { width: 28px; height: 28px; }
+  .assess-step[data-state="current"] .assess-step-marker { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
+  .assess-step-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .container { width: calc(100% - 48px); }
   .section, .site-footer { margin-top: 72px; }
   .landing .section { padding-top: 72px; }
@@ -686,8 +769,7 @@ svg { display: block; }
   .nav-btn { padding-inline: 10px; font-size: .8125rem; }
   .landing .what { grid-template-columns: minmax(0, 1fr); gap: 40px; }
   .landing .definition { position: static; }
-  .quiz-layout, .dim-about { grid-template-columns: minmax(0, 1fr); }
-  .quiz-result, .benefits { position: static; }
+  .dim-about { grid-template-columns: minmax(0, 1fr); }
   .profile-hero, .profile-section-head, .profile-about { gap: 32px; }
   .profile-portrait img { border-top-left-radius: 72px; }
   .profile-expertise { grid-template-columns: minmax(0, 1fr); }
@@ -750,9 +832,14 @@ svg { display: block; }
   .topic-hero { grid-template-columns: minmax(0, 1fr); }
   .topic-hero > .art { aspect-ratio: 16 / 9; }
   .article-art > .art { aspect-ratio: 16 / 10; border-radius: var(--radius); }
-  .level-list, .level-cards { grid-template-columns: minmax(0, 1fr); }
-  .quiz-level { padding: 20px 16px 4px; }
-  .quiz-hint, .quiz-options { margin-left: 0; }
+  .level-list { grid-template-columns: minmax(0, 1fr); }
+  .choice-head { gap: 10px; padding: 16px 16px 6px; }
+  .choice-text { padding: 0 16px; }
+  .choice-questions { margin: 14px 16px 18px; }
+  .assess-nav { padding: 16px; }
+  .assess-nav-buttons .btn { flex: 1 1 auto; }
+  .dim-acc-toggle { gap: 12px; padding: 14px 16px; }
+  .dim-acc-panel { padding: 0 16px 18px; }
 
   .profile-hero { grid-template-columns: minmax(0, 1fr); gap: 36px; padding-bottom: 36px; }
   .profile-hero .profile-tags { margin-bottom: 24px; }
@@ -829,7 +916,7 @@ svg { display: block; }
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
-  .btn:hover, .post-row:hover, .dimension-card:hover, .press:active:not(:disabled) { transform: none; }
+  .btn:hover, .post-row:hover, .press:active:not(:disabled) { transform: none; }
 }
 /* Opake Navigation bei reduzierter Transparenz, erhöhtem Kontrast und erzwungenen Farben. Die explizite dunkle
    Variante verhindert, dass die spezifischere Glasregel für den Dark Mode den Fallback übersteuert. */
@@ -840,9 +927,13 @@ svg { display: block; }
   :root, :root[data-theme="dark"] { --line: var(--muted); }
 }
 @media (forced-colors: active) {
-  .btn, .icon-btn, .chip-btn, .quiz-option span { border: 1px solid ButtonText; }
+  .radar-area { fill: none; stroke: CanvasText; }
+  .radar-dot { fill: CanvasText; }
+  .radar-grid polygon, .radar-grid line { stroke: GrayText; }
+  .btn, .icon-btn, .chip-btn, .choice-mark { border: 1px solid ButtonText; }
   .chip-btn[aria-selected="true"], .chip-btn[aria-pressed="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; }
-  .quiz-option input:checked + span { background: Highlight; color: HighlightText; }
+  .choice-card[data-selected] { outline: 3px solid Highlight; }
+  .choice-card[data-selected] .choice-mark { background: Highlight; color: HighlightText; }
   .nav-btn[aria-current="page"]::after, .nav-btn.is-active::after { background: CanvasText; }
   .profile-symbol { border: 1px solid ButtonText; }
 }
@@ -851,5 +942,5 @@ svg { display: block; }
   .site-header { position: static; }
   .menu-toggle, .nav-actions, .lang-switch, .popover, .consent-backdrop { display: none !important; }
   .home-hero { margin-top: 0; }
-  .post-row, .audit-banner, .dimension-card, .level-card { break-inside: avoid; }
+  .post-row, .audit-banner, .dim-acc-item, .choice-card { break-inside: avoid; }
 }

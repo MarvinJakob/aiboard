@@ -2,14 +2,38 @@
   "overview": {
     "de": {
       "intro": [
-        "Das KI-Audit zeigt, welche Fähigkeiten ein Unternehmen für den Einsatz von künstlicher Intelligenz mitbringt. Es betrachtet die Dimensionen, auf die es dabei ankommt: von Strategie und Wirtschaftlichkeit über Betrieb, Governance und Prozesse bis zu Technologie, Daten und Sicherheit.",
-        "Für jede Dimension gibt es eine Selbsteinschätzung mit Ja/Nein-Fragen. Daraus ergibt sich ein Reifegrad. Ein Reifegrad gilt nur, wenn alle darunterliegenden erfüllt sind. So sehen Sie, wo Ihr Unternehmen steht, wo blinde Flecken liegen und welcher Schritt als Nächstes ansteht: Die Fragen des nächsthöheren Reifegrads sind Ihre To-do-Liste."
+        "Einen Chatbot zu öffnen und eine Frage zu stellen, dauert wenige Sekunden. KI im Unternehmen professionell einzusetzen, ist eine andere Aufgabe. Dann reicht es nicht, dass ein Ergebnis gut klingt. Wir müssen auch klären: Welchen Nutzen soll die KI bringen? Wer kann mit ihr arbeiten? Welche Daten darf sie verwenden? Wer greift ein, wenn etwas schiefgeht? Und wie prüfen wir, ob ihre Ergebnisse stimmen?",
+        "Im Alltag beantworten wir diese Fragen oft nebenbei und unterschiedlich gründlich. Manche Bereiche haben wir im Blick, weil sie uns täglich begegnen. Andere fallen erst auf, wenn ein Problem entstanden ist: ein Vertrag, der die Nutzung bestimmter Daten nicht erlaubt. Ein Agent, den niemand anhalten kann. Eine Rechnung, mit der niemand gerechnet hat.",
+        "Die Selbsteinschätzung hilft uns bei zwei Dingen:",
+        "- **Die eigenen Fähigkeiten realistisch einschätzen.** Wir sehen, was wir beim Einsatz von KI bereits sicher beherrschen und wo wir uns noch auf einzelne Personen oder den Zufall verlassen.\n- **Strukturiert vorgehen.** Die acht Dimensionen decken die Bereiche ab, die wir für den professionellen Einsatz von KI im Unternehmen betrachten müssen. So übersehen wir keinen Bereich, nur weil er gerade nicht im Fokus steht.",
+        "Das Ergebnis ist keine Note und kein Zertifikat. Es ist eine ehrliche Bestandsaufnahme, die Transparenz über die eigenen Fähigkeiten schafft und Optimierungspotenzial aufdeckt."
+      ],
+      "guidance": [
+        "### So ist die Selbsteinschätzung aufgebaut",
+        "Wir betrachten einen klar abgegrenzten Bereich, zum Beispiel ein Unternehmen, ein Projekt, ein Team, eine Abteilung oder eine bestimmte KI-Anwendung. Für diesen Bereich wählen wir je Dimension genau einen Reifegrad: **Einfach**, **Strukturiert** oder **Intelligent**.",
+        "Die Prüffragen zu den Reifegraden dienen als Entscheidungshilfe. Wir lesen sie, beantworten sie aber nicht einzeln. Sie berechnen keine Bewertung: Entscheidend ist unsere bewusste Auswahl.",
+        "Wir schätzen nach dem ein, was sich tatsächlich zeigen lässt. Eine geplante Richtlinie oder eine besuchte Schulung zählt noch nicht. Entscheidend ist ein vorzeigbares Ergebnis.",
+        "Nach der Auswahl in allen acht Dimensionen betrachten wir die **Gesamtauswertung**. Sie zeigt die gewählten Reifegrade nebeneinander, damit wir Unterschiede und nächste Schritte erkennen. Es gibt keine zusätzliche Gesamtnote.",
+        "Die acht Dimensionen gliedern sich in drei Bereiche:",
+        "| Bereich | Dimensionen |\n| --- | --- |\n| Organisatorisch | Strategie und Wirtschaftlichkeit, Ressourcenplanung und Kompetenzen, Betrieb, Governance und Compliance |\n| Fachlich | Agenten und Prozesse |\n| Technisch | Technologie und Infrastruktur, Daten und Wissen, Sicherheit und Zuverlässigkeit |",
+        "### Was die Reifegrade unterscheidet",
+        "Die drei Reifegrade beschreiben nicht, wie viel KI wir nutzen, sondern wie verlässlich wir mit ihr umgehen.",
+        "**Einfach: Wir fangen an.** Es gibt ein erstes vorzeigbares Ergebnis. Jemand nutzt KI in einem echten Arbeitsvorgang, hat eine Rechtsfrage geklärt oder ein Werkzeug eingerichtet. Wie dabei vorgegangen wird, entscheidet die Person selbst.",
+        "**Von 1 zu 2: Wir machen es verbindlich.** Aus Einzelinitiative wird ein dokumentiertes Vorgehen. Zuständigkeiten, Kriterien und Abläufe sind festgelegt und für alle Beteiligten nachvollziehbar. Fällt eine Person aus, arbeiten andere auf derselben Grundlage weiter.",
+        "**Von 2 zu 3: Wir verbessern es gezielt.** Wir prüfen regelmäßig, ob unser Vorgehen wirkt. Erfahrungen, Störungen und neue Anforderungen verändern es. Eine Verbesserung zählt erst, wenn ihre Wirkung belegt ist, etwa durch weniger Nacharbeit oder kürzere Klärungszeiten.",
+        "Ein Beispiel aus der Dimension Daten und Wissen:",
+        "| Reifegrad | So sieht es aus |\n| --- | --- |\n| 1 – Einfach | Jemand lädt Dokumente in ein KI-Werkzeug hoch und entscheidet nach eigener Erfahrung, welche Quellen geeignet sind. |\n| 2 – Strukturiert | Die verwendeten Bestände sind erfasst und bewertet. Es ist festgelegt, welche Quelle verbindlich ist, wer sie pflegt und wer darauf zugreifen darf. |\n| 3 – Intelligent | Wiederkehrende Lücken und Widersprüche werden an ihrer Quelle behoben. Wir prüfen regelmäßig, ob unsere Qualitätskriterien noch zur Aufgabe passen. |"
+      ],
+      "classification": [
+        "### Nicht überall auf der höchsten Stufe",
+        "Es ist völlig in Ordnung, nicht in allen Dimensionen den höchsten Reifegrad zu erreichen. Unterschiedliche Reifegrade über die Dimensionen hinweg sind normal. Welcher Reifegrad sinnvoll ist, hängt vom Einsatz ab: Wer KI für erste Textentwürfe nutzt, braucht keinen ausgefeilten Notfallbetrieb. Wer einen Agenten selbstständig in Kundenprozessen handeln lässt, sollte bei Betrieb, Sicherheit und Governance deutlich weiter sein.",
+        "Die Selbsteinschätzung ist keine Bewertung. Sie schafft Transparenz: Wo stehen wir? Wo verlassen wir uns noch auf einzelne Personen? Und wo lohnt sich der nächste Schritt? So erkennen wir Optimierungspotenzial und entscheiden bewusst, welche Dimension wir als Nächstes angehen."
       ],
       "levels": [
         { "name": "Nicht angewendet", "motto": "Die Fähigkeit ist im betrachteten Bereich nicht vorhanden." },
-        { "name": "Einfach", "motto": "Es passiert etwas, aber jeder macht es anders. Der Erfolg hängt stark vom Zufall ab." },
-        { "name": "Strukturiert", "motto": "Es gibt ein definiertes Vorgehen, das gelebt wird. Der Erfolg hängt nicht mehr an einzelnen Personen." },
-        { "name": "Intelligent", "motto": "Wir lernen aus Fehlern und verbessern das Vorgehen. Die Prozesse passen sich der Wirklichkeit an." }
+        { "name": "Einfach", "motto": "Es passiert etwas, aber jeder macht es anders. Der Erfolg hängt stark von einzelnen Personen und vom Zufall ab." },
+        { "name": "Strukturiert", "motto": "Es gibt ein festgelegtes Vorgehen, das gelebt wird. Der Erfolg hängt nicht mehr an einzelnen Personen." },
+        { "name": "Intelligent", "motto": "Wir lernen aus Erfahrungen und Fehlern und verbessern unser Vorgehen nachweisbar." }
       ]
     }
   },
@@ -21,11 +45,9 @@
       "texts": {
         "de": {
           "title": "Strategie und Wirtschaftlichkeit",
-          "summary": "Welchen Nutzen KI bringen soll und unter welchen Bedingungen sich der Einsatz lohnt.",
+          "summary": "Wissen wir, wofür wir KI einsetzen und ob es sich lohnt?",
           "intro": [
-            "Die Dimension Strategie und Wirtschaftlichkeit beschreibt, welchen konkreten Nutzen ein Unternehmen mit künstlicher Intelligenz erreichen will und unter welchen Bedingungen sich der Einsatz lohnt. Erwartete Verbesserungen sind höhere Qualität, kürzere Bearbeitungszeiten, zusätzlicher Gewinn und geringere Risiken. Für jeden Anwendungsfall wird geklärt, wie dieser Nutzen entstehen soll und welche Einführungs- und Betriebskosten sowie Risiken damit verbunden sind.",
-            "Die Steuerung erfolgt über eine nachvollziehbare Priorisierung der KI-Vorhaben. Ihr erwarteter Wertbeitrag, die Umsetzbarkeit, der Ressourcenbedarf und die Risiken bestimmen, welche Vorhaben zuerst umgesetzt, fortgeführt oder beendet werden.",
-            "Überprüfbare Ziele machen den Erfolg messbar. Dazu werden je Vorhaben Ausgangswerte, Kennzahlen, Zielwerte, ein Termin und Verantwortlichkeiten festgelegt. Regelmäßige Vergleiche mit diesen Zielen zeigen, ob der erwartete Nutzen eintritt und die Kosten vertretbar bleiben."
+            "Hier geht es um den konkreten Nutzen: höhere Qualität, kürzere Bearbeitungszeiten, zusätzlicher Gewinn oder geringere Risiken. Für jeden Anwendungsfall klären wir, wie dieser Nutzen entsteht und welche Kosten und Risiken ihm gegenüberstehen. Eine nachvollziehbare Priorisierung entscheidet, welche Vorhaben wir starten, fortführen oder beenden. Messbare Ziele zeigen, ob der erwartete Nutzen tatsächlich eintritt."
           ],
           "benefits": [
             "Zeit und Budget fließen gezielt in KI-Vorhaben, die zu den Geschäftszielen beitragen und wirtschaftlich tragfähig sind.",
@@ -75,10 +97,9 @@
       "texts": {
         "de": {
           "title": "Ressourcenplanung und Kompetenzen",
-          "summary": "Ob ausreichend Menschen, Zeit und passende Fähigkeiten für die Arbeit mit KI verfügbar sind.",
+          "summary": "Haben wir die Menschen, die Zeit und das Wissen, um mit KI zu arbeiten?",
           "intro": [
-            "Die Dimension Ressourcenplanung und Kompetenzen beschreibt, ob für die Arbeit mit KI ausreichend Menschen, Zeit und passende Fähigkeiten verfügbar sind. Sie verbindet den Bedarf der Anwendungen mit der Personalplanung und einer gezielten Qualifizierung. Mitarbeitende müssen ihre Aufgaben mit KI ausführen können. Führungskräfte müssen den dafür nötigen Arbeitsaufwand und Lernbedarf einschätzen können.",
-            "Im Mittelpunkt stehen der tatsächliche Kompetenzstand und die Frage, wie Wissen im Unternehmen entsteht, weitergegeben und bei einem Wechsel von Personen erhalten wird. Eine besuchte Schulung allein belegt noch keine Fähigkeit. Entscheidend ist, ob das Gelernte an einer konkreten Aufgabe angewendet werden kann."
+            "Diese Dimension betrachtet, ob genügend Kapazität und passende Fähigkeiten vorhanden sind. Mitarbeitende müssen ihre Aufgaben mit KI erledigen können. Führungskräfte müssen Aufwand und Lernbedarf einschätzen können. Entscheidend ist nicht die besuchte Schulung, sondern ob das Gelernte an einer konkreten Aufgabe angewendet wird. Ebenso wichtig: Wissen wird geteilt und bleibt erhalten, wenn jemand das Team verlässt."
           ],
           "benefits": [
             "Die Umsetzung hängt weniger von einzelnen Beschäftigten ab, weil Wissen geteilt und bei einem Wechsel erhalten bleibt.",
@@ -127,11 +148,9 @@
       "texts": {
         "de": {
           "title": "Betrieb",
-          "summary": "Was nötig ist, damit KI-Anwendungen zuverlässig verfügbar sind, sicher arbeiten und wirtschaftlich laufen.",
+          "summary": "Läuft unsere KI-Anwendung auch dann zuverlässig, wenn niemand danebensitzt?",
           "intro": [
-            "Die Dimension Betrieb beschreibt, was ein Unternehmen sicherstellen muss, damit KI-Applikationen zuverlässig verfügbar sind, sicher arbeiten und wirtschaftlich betrieben werden können. Eine Automatisierung kann sich über mehrere Anwendungen und Dienstleister erstrecken. Deshalb braucht sie eine benannte Betriebsverantwortung für die gesamte Ausführung.",
-            "Für Support und Störungsbehandlung braucht es erreichbare Ansprechpartner, festgelegte Reaktionszeiten und klare Eskalationswege. Für Ausfälle und Fehlaktionen sind erprobte Verfahren zum Anhalten, zur menschlichen Übernahme, zum Notfallbetrieb und zur Wiederherstellung erforderlich.",
-            "Ein beherrschbarer Betrieb setzt voraus, dass Konfigurationen, Änderungen und ausgeführte Aktionen nachvollziehbar sind. Die Überwachung umfasst Verfügbarkeit, erfolgreiche Aufgabenerledigung und Ressourcenverbrauch. Eine zuordenbare Kostenübersicht macht laufende Aufwände und Verbrauchsspitzen sichtbar."
+            "Sobald wir KI dauerhaft nutzen, braucht sie Betreuung. Dazu gehören eine benannte Betriebsverantwortung, erreichbare Ansprechpartner und klare Eskalationswege, auch wenn mehrere Anwendungen und Dienstleister beteiligt sind. Für Ausfälle und Fehlaktionen braucht es erprobte Wege, um den Ablauf anzuhalten, ihn von Hand zu übernehmen und wieder aufzunehmen. Überwachung und eine zuordenbare Kostenübersicht machen Störungen und Verbrauchsspitzen sichtbar."
           ],
           "benefits": [
             "KI-Anwendungen sind zuverlässig verfügbar, weil Betriebsverantwortung, Support und Eskalationswege auch über Applikations- und Dienstleistergrenzen hinweg geregelt sind.",
@@ -191,11 +210,9 @@
       "texts": {
         "de": {
           "title": "Governance und Compliance",
-          "summary": "Rechtliche und vertragliche Anforderungen an KI erkennen und in verbindliche Vorgaben übersetzen.",
+          "summary": "Wissen wir, unter welchen rechtlichen und vertraglichen Bedingungen wir KI einsetzen dürfen?",
           "intro": [
-            "Die Dimension Governance und Compliance beschreibt, wie die durch einen KI-Einsatz entstehenden oder veränderten rechtlichen und vertraglichen Anforderungen ermittelt und in verbindliche Vorgaben übersetzt werden. Ausgangspunkt ist der konkrete Anwendungsfall: Welchen Zweck erfüllt die KI, welche Daten verarbeitet sie und wie werden ihre Ergebnisse verwendet? Bestehende Compliance-Verfahren bilden die Grundlage und werden um die Besonderheiten des KI-Einsatzes ergänzt.",
-            "Im Mittelpunkt stehen die rechtliche Einordnung der Anwendung, die Rolle des Unternehmens sowie die Nutzungsrechte an Daten, Modellen und Ergebnissen. Je nach Einsatz sind insbesondere der EU AI Act, der Datenschutz, Urheber- und Nutzungsrechte, Anbieterbedingungen sowie branchenspezifische Vorgaben zu berücksichtigen.",
-            "Entscheidend ist, dass diese Bedingungen im Arbeitsalltag berücksichtigt und aktuell gehalten werden. Änderungen am Einsatzzweck, an der Datenverwendung oder an den rechtlichen und vertraglichen Rahmenbedingungen geben Anlass für eine erneute Bewertung."
+            "Ausgangspunkt ist der konkrete Anwendungsfall: Welchen Zweck erfüllt die KI, welche Daten verarbeitet sie und wie verwenden wir ihre Ergebnisse? Daraus ergeben sich je nach Einsatz Anforderungen, etwa aus dem EU AI Act, dem Datenschutz, dem Urheberrecht oder den Bedingungen der Anbieter. Bestehende Compliance-Verfahren bilden die Grundlage und werden um die Besonderheiten von KI ergänzt. Ändern sich Zweck, Daten oder Verträge, prüfen wir erneut."
           ],
           "benefits": [
             "Sie wissen je Anwendung, unter welchen Bedingungen sie eingesetzt werden darf und welche Informations-, Dokumentations- und Nachweispflichten gelten.",
@@ -244,10 +261,9 @@
       "texts": {
         "de": {
           "title": "Agenten und Prozesse",
-          "summary": "Wie KI und Agenten in Arbeitsabläufe eingebunden werden und diese verbessern.",
+          "summary": "Ist KI sinnvoll in unsere Arbeitsabläufe eingebunden?",
           "intro": [
-            "Die Dimension Agenten und Prozesse beschreibt, wie Unternehmen KI in ihre Arbeitsabläufe einbinden und diese dadurch verbessern oder neu gestalten. KI macht Wissen verfügbar, unterstützt Entscheidungen und übernimmt Aufgaben bis hin zur selbstständigen Ausführung durch Agenten. Dabei wird geprüft, welche bisherigen Prozessschritte weiterhin sinnvoll sind, verändert werden oder entfallen können.",
-            "Mit zunehmender Autonomie und höherem Risiko steigen die Anforderungen an menschliche Aufsicht und Eingriffsmöglichkeiten. Der Prozess legt fest, wann Menschen Ergebnisse prüfen, Entscheidungen treffen oder den Ablauf unterbrechen müssen. Da neue Modellversionen das Verhalten einer KI verändern können, werden ihre Auswirkungen vor der Übernahme geprüft. Klare Verantwortlichkeiten, geregelte Übergaben und geeignete Ersatzabläufe sichern die Verlässlichkeit des Gesamtprozesses."
+            "KI kann Wissen verfügbar machen, Entscheidungen unterstützen und Aufgaben bis hin zur selbstständigen Ausführung durch Agenten übernehmen. Den größten Nutzen bringt das, wenn wir den Ablauf dabei neu durchdenken, statt KI nur an bestehende Schritte anzuhängen. Je mehr die KI selbstständig erledigt und je höher das Risiko ist, desto klarer muss geregelt sein, wann Menschen prüfen, entscheiden oder eingreifen. Ersatzabläufe halten den Prozess am Laufen, wenn die KI ausfällt oder ungeeignete Ergebnisse liefert."
           ],
           "benefits": [
             "Arbeitsabläufe werden gezielt verbessert oder neu gestaltet, statt KI nur an bestehende Schritte anzuhängen.",
@@ -297,10 +313,9 @@
       "texts": {
         "de": {
           "title": "Technologie und Infrastruktur",
-          "summary": "Eine geeignete technische Grundlage für KI auswählen, bereitstellen und in die IT integrieren.",
+          "summary": "Haben wir eine technische Grundlage, auf der wir weitere KI-Anwendungen aufbauen können?",
           "intro": [
-            "Die Dimension Technologie und Infrastruktur beschreibt, wie Unternehmen eine geeignete technische Grundlage für ihre KI-Anwendungen auswählen, bereitstellen und in die bestehende IT integrieren. Dazu gehören KI-Dienste und Modelle, Plattformen, Werkzeuge, Schnittstellen sowie die benötigten Rechen- und Speicherkapazitäten. Ob eine fertige Lösung genutzt, angepasst oder selbst entwickelt wird, richtet sich nach den Anforderungen des Anwendungsfalls.",
-            "Architektur, Konfigurationen und technische Abhängigkeiten müssen nachvollziehbar sein, und die Bereitstellung soll sich durch andere Personen wiederholen lassen. Die technische Grundlage soll weitere Anwendungen und Änderungen mit überschaubarem Aufwand ermöglichen. Dafür werden Komponenten wiederverwendet und kritische Anbieter- oder Modellabhängigkeiten mit einem praktikablen Ausstiegsweg berücksichtigt."
+            "Dazu gehören Modelle und KI-Dienste, Plattformen, Werkzeuge, Schnittstellen sowie Rechen- und Speicherkapazität. Ob wir eine fertige Lösung nutzen, anpassen oder selbst entwickeln, hängt vom Anwendungsfall ab. Wichtig ist, dass Aufbau und Abhängigkeiten nachvollziehbar sind und andere Personen die Bereitstellung wiederholen können. Ein praktikabler Ausstiegsweg verhindert, dass wir von einem einzelnen Anbieter oder Modell abhängig werden."
           ],
           "benefits": [
             "Weitere KI-Anwendungen und Änderungen lassen sich auf derselben technischen Grundlage mit überschaubarem Aufwand umsetzen.",
@@ -350,11 +365,9 @@
       "texts": {
         "de": {
           "title": "Daten und Wissen",
-          "summary": "Ob die benötigten Daten und Wissensbestände verfügbar, geeignet und zuverlässig nutzbar sind.",
+          "summary": "Findet die KI die Informationen, die sie für ihre Aufgabe braucht, und sind diese verlässlich?",
           "intro": [
-            "Die Dimension Daten und Wissen beschreibt, ob die für eine KI-Anwendung benötigten Daten und Wissensbestände verfügbar, fachlich geeignet und zuverlässig nutzbar sind. Sie umfasst strukturierte Daten, Dokumente und dokumentiertes Fachwissen für Training, Bewertung und die Bereitstellung von Kontext.",
-            "Die Bestände müssen die vorgesehenen Fälle ausreichend abdecken und hinsichtlich Richtigkeit, Vollständigkeit, Aktualität und Widersprüchen bewertet sein. Für die Nutzung von Unternehmenswissen müssen maßgebliche Aussagen auffindbar und mit ihrem fachlichen Zusammenhang verfügbar sein, einschließlich Angaben zu Herkunft, Version und Gültigkeit.",
-            "Verantwortlichkeiten und Verfahren regeln Auswahl, Prüfung und Pflege der Bestände. Ein Berechtigungskonzept legt fest, welche Personen und Anwendungen auf welche Bestände zugreifen dürfen – auch bei Kopien, Suchindizes und weiteren abgeleiteten Beständen."
+            "KI arbeitet nur so gut wie die Daten, Dokumente und das Fachwissen, die sie erhält. Die Bestände müssen die vorgesehenen Fälle abdecken und richtig, vollständig, aktuell und widerspruchsfrei sein. Herkunft, Version und Gültigkeit sollten nachvollziehbar sein, damit wir ein Ergebnis hinterfragen können. Ein Berechtigungskonzept regelt, wer worauf zugreifen darf, auch bei Kopien und Suchindizes."
           ],
           "benefits": [
             "KI-Anwendungen arbeiten mit geeigneten, aktuellen und widerspruchsfreien Beständen, die die vorgesehenen Fälle abdecken.",
@@ -403,11 +416,9 @@
       "texts": {
         "de": {
           "title": "Sicherheit und Zuverlässigkeit",
-          "summary": "Technische Risiken von KI-Anwendungen begrenzen und verlässliches Verhalten nachweisen.",
+          "summary": "Können wir nachweisen, dass unsere KI-Anwendung verlässlich und sicher arbeitet?",
           "intro": [
-            "Die Dimension Sicherheit und Zuverlässigkeit beschreibt, wie ein Unternehmen technische Risiken seiner KI-Anwendungen begrenzt und deren verlässliches Verhalten nachweist. Betrachtet wird die gesamte Anwendung einschließlich angebundener Datenquellen und Werkzeuge. Neben der Ergebnisqualität werden Performance, Verfügbarkeit und Robustheit bei Störungen festgelegt und geprüft.",
-            "Datensicherheit umfasst den Schutz von Eingaben, Wissensbeständen und Ausgaben vor unberechtigtem Zugriff, Manipulation, Verlust und unbeabsichtigter Weitergabe. Zugriffsrechte und Aktionsgrenzen müssen technisch durchgesetzt werden, auch wenn das Modell fehlerhafte oder manipulierte Ausgaben erzeugt. Bei generativer KI sind insbesondere eingeschleuste Anweisungen, sogenannte Prompt Injection, zu berücksichtigen.",
-            "Für jede Anwendung wird festgelegt, welche Fehler nicht akzeptabel sind und wann Ergebnisse zur menschlichen Prüfung weitergeleitet oder Folgeaktionen blockiert werden müssen. Bei Unsicherheit, Zeitüberschreitungen oder Ausfällen soll die Anwendung einen definierten sicheren Zustand erreichen."
+            "Betrachtet wird die gesamte Anwendung einschließlich angebundener Datenquellen und Werkzeuge. Wir legen fest, welche Ergebnisqualität, Verfügbarkeit und Robustheit nötig sind, und prüfen sie mit realistischen Normal-, Grenz-, Fehler- und Angriffsfällen. Zugriffsrechte und Aktionsgrenzen setzen wir technisch durch und nicht nur über Anweisungen an das Modell, etwa zum Schutz vor eingeschleusten Anweisungen (Prompt Injection). Bei Unsicherheit, Zeitüberschreitung oder Ausfall wechselt die Anwendung in einen festgelegten sicheren Zustand."
           ],
           "benefits": [
             "Messbare Zielwerte und realistische Normal-, Grenz- und Ausfalltests zeigen, unter welchen Bedingungen die Anwendung verlässlich eingesetzt werden kann.",

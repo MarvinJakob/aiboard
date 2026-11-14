@@ -130,7 +130,7 @@ func TestHealth(t *testing.T) {
 func TestTopicsAreSeeded(t *testing.T) {
 	srv, _ := newServer(t, false)
 	list := getJSON[api.TopicList](t, srv, "/api/topics?lang=de", 200)
-	want := []string{"KI in der Softwareentwicklung", "AI Audit für Unternehmen", "KI in Data Analytics", "Modelle und Kosten: Wie finde ich das beste Preis-/Leistungsverhältnis?"}
+	want := []string{"KI in der Softwareentwicklung", "KI Readiness", "KI in Data Analytics", "Modelle und Kosten: Wie finde ich das beste Preis-/Leistungsverhältnis?"}
 	if len(list.Items) != len(want) {
 		t.Fatalf("%d Themen, erwartet %d", len(list.Items), len(want))
 	}
@@ -449,7 +449,7 @@ func TestMetaTags(t *testing.T) {
 	}
 
 	_, body = get(t, srv, "/de/themen/ai-audit")
-	if !strings.Contains(body, "<title>AI Audit für Unternehmen · KI Perspektiven</title>") {
+	if !strings.Contains(body, "<title>KI Readiness · KI Perspektiven</title>") {
 		t.Errorf("Themen-Titel fehlt:\n%s", body)
 	}
 }
@@ -517,8 +517,22 @@ func TestAuditOverview(t *testing.T) {
 	if o.Lang != "de" || len(o.Intro) == 0 || len(o.Dimensions) != 8 {
 		t.Fatalf("übersicht: lang=%s intro=%d dimensionen=%d", o.Lang, len(o.Intro), len(o.Dimensions))
 	}
+	if !strings.Contains(o.Guidance, "Gesamtauswertung") || !strings.Contains(o.Guidance, "Entscheidungshilfe") {
+		t.Fatalf("Readiness-Anleitung fehlt: %s", o.Guidance)
+	}
+	// Ticket #114: Die Einordnung kommt für die Auswertung einzeln und steht weiter am Ende der Anleitung.
+	if !strings.HasPrefix(o.Classification, "### Nicht überall auf der höchsten Stufe") || !strings.HasSuffix(o.Guidance, o.Classification) {
+		t.Fatalf("Einordnung: %q", o.Classification)
+	}
 	if d := o.Dimensions[0]; d.Slug != "strategie-und-wirtschaftlichkeit" || d.Title != "Strategie und Wirtschaftlichkeit" || d.Category != "organizational" {
 		t.Fatalf("erste dimension: %+v", d)
+	}
+	// Ticket #112: Die Übersicht liefert die Erklärung jeder Dimension mit, identisch zur Dimensionsseite.
+	for _, d := range o.Dimensions {
+		full := getJSON[api.AuditDimension](t, srv, "/api/audit/dimensions/"+d.Slug, 200)
+		if len(d.Intro) == 0 || strings.Join(d.Intro, "\n") != strings.Join(full.Intro, "\n") {
+			t.Fatalf("erklärung %s: %v", d.Slug, d.Intro)
+		}
 	}
 	names := []string{}
 	for _, l := range o.Levels {
@@ -528,7 +542,7 @@ func TestAuditOverview(t *testing.T) {
 		t.Fatalf("reifegrade: %v", names)
 	}
 	// Ohne englische Fassung liefert das Backend Deutsch und nennt die Sprache.
-	if en := getJSON[api.AuditOverview](t, srv, "/api/audit?lang=en", 200); en.Lang != "de" || len(en.Translations) != 1 {
+	if en := getJSON[api.AuditOverview](t, srv, "/api/audit?lang=en", 200); en.Lang != "de" || len(en.Translations) != 1 || en.Guidance != o.Guidance {
 		t.Fatalf("rückfall: lang=%s translations=%v", en.Lang, en.Translations)
 	}
 	getJSON[api.Error](t, srv, "/api/audit?lang=fr", 400)
@@ -541,15 +555,15 @@ func TestAuditDimension(t *testing.T) {
 	if d.Title != "Strategie und Wirtschaftlichkeit" || len(d.Benefits) < 2 || len(d.Intro) == 0 {
 		t.Fatalf("dimension: %+v", d)
 	}
-	if len(d.Levels) != 3 || d.Levels[0].Name != "Einfach" || d.Levels[2].Name != "Intelligent" || d.NotApplied.Level != 0 {
+	if len(d.Levels) != 3 || d.Levels[0].Name != "Einfach" || d.Levels[2].Name != "Intelligent" || d.Levels[0].Level != 1 {
 		t.Fatalf("reifegrade: %+v", d.Levels)
 	}
-	if q := d.Levels[0].Questions[0]; q.Id != "1.1" || q.Text == "" || q.Conditional {
+	if q := d.Levels[0].Questions[0]; q.Id != "1.1" || q.Text == "" {
 		t.Fatalf("erste frage: %+v", q)
 	}
-	b := getJSON[api.AuditDimension](t, srv, "/api/audit/dimensions/betrieb", 200)
-	if !b.Levels[0].Questions[2].Conditional {
-		t.Fatal("bedingte frage nicht gekennzeichnet")
+	// Ticket #113: Reifegrad 0 und „Trifft nicht zu“ gehören zum abgelösten Ja/Nein-Fragebogen.
+	if _, body := get(t, srv, "/api/audit/dimensions/betrieb"); strings.Contains(body, "notApplied") || strings.Contains(body, "conditional") || strings.Contains(body, "Nicht angewendet") {
+		t.Fatalf("veraltete felder ausgeliefert: %s", body)
 	}
 	getJSON[api.Error](t, srv, "/api/audit/dimensions/gibt-es-nicht", 404)
 	getJSON[api.Error](t, srv, "/api/audit/dimensions/betrieb?lang=xx", 400)
@@ -563,6 +577,8 @@ func TestAuditPages(t *testing.T) {
 		"/de/themen/ai-audit/gibt-es-nicht":                    404,
 		"/de/themen/softwareentwicklung/betrieb":               404,
 		"/de/themen/ai-audit/betrieb/mehr":                     404,
+		"/de/themen/ai-audit/auswertung":                       200,
+		"/en/themen/ai-audit/auswertung":                       200,
 	} {
 		if resp, _ := get(t, srv, path); resp.StatusCode != want {
 			t.Errorf("%s: %d, erwartet %d", path, resp.StatusCode, want)
@@ -588,5 +604,36 @@ func TestAuditPages(t *testing.T) {
 	}
 	if strings.Contains(sitemap, "<loc>https://example.test/en/themen/ai-audit/betrieb</loc>") {
 		t.Error("nicht übersetzte dimensionsseite mit englischer URL in der sitemap")
+	}
+
+	// Ticket #113: Die Auswertung zeigt nur die eigene Auswahl und wird nicht indexiert.
+	// Bug #126: Titel und Beschreibung lauten wie im Frontend, damit der Seitentitel nach dem Laden nicht wechselt.
+	for _, tc := range []struct{ lang, title, description string }{
+		{"de", "Auswertung der Selbsteinschätzung", "Die gewählten Reifegrade aller Dimensionen der KI-Readiness-Selbsteinschätzung."},
+		{"en", "Self-assessment results", "The chosen maturity levels of all dimensions of the AI readiness self-assessment."},
+	} {
+		_, result := get(t, srv, "/"+tc.lang+"/themen/ai-audit/auswertung")
+		for _, want := range []string{
+			"<title>" + tc.title + " · KI Perspektiven</title>",
+			`<meta property="og:title" content="` + tc.title + ` · KI Perspektiven">`,
+			`<meta name="description" content="` + tc.description + `">`,
+			`<meta name="robots" content="noindex">`,
+		} {
+			if !strings.Contains(result, want) {
+				t.Errorf("auswertung (%s): fehlt %s", tc.lang, want)
+			}
+		}
+		source, err := os.ReadFile("../../../frontend/src/i18n/" + tc.lang + ".ts")
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, want := range []string{"resultTitle: '" + tc.title + "'", "resultMeta: '" + tc.description + "'"} {
+			if !strings.Contains(string(source), want) {
+				t.Errorf("Frontend weicht ab, erwartet in %s.ts: %s", tc.lang, want)
+			}
+		}
+	}
+	if strings.Contains(sitemap, "/auswertung") {
+		t.Error("auswertung in der sitemap")
 	}
 }

@@ -13,8 +13,8 @@ const topicData: Record<string, Record<L, Omit<Topic, 'lang' | 'postCount' | 'sl
     en: { title: 'AI in Software Development', label: 'Software Development', summary: 'How to guide AI assistants with Markdown rules, access permissions, tests and reviews.', intro: 'Files such as `AGENTS.md` give AI assistants goals, workflows and boundaries. However, the model can misunderstand or disregard these rules. Here you can learn how to write verifiable rules, tie approvals to actions and enforce boundaries through technical controls.' },
   },
   'ai-audit': {
-    de: { title: 'AI Audit für Unternehmen', label: 'AI Audit', summary: 'Kurz Audit', intro: 'Einführung Audit' },
-    en: { title: 'AI Audit for Companies', label: 'AI Audit', summary: 'Short audit', intro: 'Intro audit' },
+    de: { title: 'KI Readiness', label: 'AI Audit', summary: 'Kurz Audit', intro: 'Einführung Audit' },
+    en: { title: 'AI Readiness', label: 'AI Audit', summary: 'Short audit', intro: 'Intro audit' },
   },
   'data-analytics': {
     de: { title: 'KI in Data Analytics', label: 'Data Analytics', summary: 'Wie aus einer schnellen KI-Antwort eine belastbare Analyse wird: Kennzahlen klären, Ergebnisse prüfen.', intro: 'KI beantwortet Datenfragen in Alltagssprache, schreibt Analysecode und unterstützt Prognosen. Belastbar werden die Ergebnisse erst, wenn Kennzahlen eindeutig definiert sind und Antworten mit den Quelldaten abgeglichen werden. Diese Seite zeigt Einsatzfelder, Grenzen und einen Pilot.' },
@@ -88,9 +88,10 @@ function summary(p: FakePost, lang: L): PostSummary {
 }
 
 // Audit-Inhalte liegen nur auf Deutsch vor (wie im Backend).
-const LEVEL_NAMES = ['Nicht angewendet', 'Einfach', 'Strukturiert', 'Intelligent'];
+// Index = Reifegrad; einen Reifegrad 0 gibt es seit Ticket #113 nicht mehr.
+const LEVEL_NAMES = ['', 'Einfach', 'Strukturiert', 'Intelligent'];
 
-const question = (id: string, conditional = false): AuditQuestion => ({ id, text: `Frage ${id}?`, conditional });
+const question = (id: string): AuditQuestion => ({ id, text: `Frage ${id}?` });
 
 export const AUDIT_DIMENSIONS: AuditDimension[] = [
   {
@@ -102,10 +103,9 @@ export const AUDIT_DIMENSIONS: AuditDimension[] = [
     translations: ['de'],
     intro: ['Einführung Strategie'],
     benefits: ['Vorteil Budget', 'Vorteil Priorisierung'],
-    notApplied: { level: 0, name: LEVEL_NAMES[0], description: 'Beschreibung Strategie 0', questions: [] },
     levels: [
       { level: 1, name: LEVEL_NAMES[1], description: 'Beschreibung Strategie 1', questions: [question('1.1'), question('1.2')] },
-      { level: 2, name: LEVEL_NAMES[2], description: 'Beschreibung Strategie 2', questions: [question('2.1'), question('2.2', true)] },
+      { level: 2, name: LEVEL_NAMES[2], description: 'Beschreibung Strategie 2', questions: [question('2.1'), question('2.2')] },
       { level: 3, name: LEVEL_NAMES[3], description: 'Beschreibung Strategie 3', questions: [question('3.1')] },
     ],
   },
@@ -118,7 +118,6 @@ export const AUDIT_DIMENSIONS: AuditDimension[] = [
     translations: ['de'],
     intro: ['Einführung Betrieb'],
     benefits: ['Vorteil Verfügbarkeit', 'Vorteil Kosten'],
-    notApplied: { level: 0, name: LEVEL_NAMES[0], description: 'Beschreibung Betrieb 0', questions: [] },
     levels: [
       { level: 1, name: LEVEL_NAMES[1], description: 'Beschreibung Betrieb 1', questions: [question('1.1')] },
       { level: 2, name: LEVEL_NAMES[2], description: 'Beschreibung Betrieb 2', questions: [question('2.1')] },
@@ -127,13 +126,17 @@ export const AUDIT_DIMENSIONS: AuditDimension[] = [
   },
 ];
 
+const CLASSIFICATION = '### Nicht überall auf der höchsten Stufe\n\nUnterschiedliche Reifegrade sind normal.';
+
 function auditOverview(): AuditOverview {
   return {
     lang: 'de',
     translations: ['de'],
     intro: ['Das KI-Audit zeigt, welche Fähigkeiten vorhanden sind.'],
+    guidance: `### So ist die Selbsteinschätzung aufgebaut\n\nJe Dimension einen Reifegrad wählen.\n\n${CLASSIFICATION}`,
+    classification: CLASSIFICATION,
     levels: [1, 2, 3].map((level) => ({ level, name: LEVEL_NAMES[level], motto: `Leitsatz ${level}` })),
-    dimensions: AUDIT_DIMENSIONS.map(({ slug, lang, title, summary, category }) => ({ slug, lang, title, summary, category })),
+    dimensions: AUDIT_DIMENSIONS.map(({ slug, lang, title, summary, category, intro }) => ({ slug, lang, title, summary, category, intro })),
   };
 }
 
