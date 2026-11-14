@@ -86,6 +86,7 @@ export const en: Messages = {
     toOverview: 'Back to overview',
     next: 'Next',
     showResult: 'Show results',
+    // Title and description match backend/internal/web/meta.go (bug #126).
     resultTitle: 'Self-assessment results',
     resultMeta: 'The chosen maturity levels of all dimensions of the AI readiness self-assessment.',
     resultCrumb: 'Results',

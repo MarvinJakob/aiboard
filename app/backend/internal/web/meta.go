@@ -88,7 +88,9 @@ func render(index []byte, m Meta) ([]byte, error) {
 }
 
 // texts enthält die Seitentitel und Beschreibungen für Seiten ohne Datenbankinhalt.
-// Die Startseitentexte stehen gleichlautend in frontend/src/i18n/home.ts (title, description); ein Test prüft das.
+// Die Startseitentexte stehen gleichlautend in frontend/src/i18n/home.ts (title, description), die Texte der
+// Readiness-Auswertung in frontend/src/i18n/{de,en}.ts (assess.resultTitle, assess.resultMeta). Tests prüfen das,
+// damit der Seitentitel nach dem Laden nicht wechselt (Bug #126).
 var texts = map[service.Lang]map[string]string{
 	service.DE: {
 		"profile.title":         "Marvin Jakob – Profil",
@@ -103,8 +105,8 @@ var texts = map[service.Lang]map[string]string{
 		"imprint.desc":          "Impressum von " + SiteName + ".",
 		"privacy.title":         "Datenschutz",
 		"privacy.desc":          "Datenschutzerklärung von " + SiteName + ".",
-		"readinessResult.title": "KI Readiness: Auswertung",
-		"readinessResult.desc":  "Gesamtauswertung der KI-Readiness-Selbsteinschätzung: die gewählten Reifegrade aller Dimensionen.",
+		"readinessResult.title": "Auswertung der Selbsteinschätzung",
+		"readinessResult.desc":  "Die gewählten Reifegrade aller Dimensionen der KI-Readiness-Selbsteinschätzung.",
 		"notFound.title":        "Seite nicht gefunden",
 		"notFound.desc":         "Diese Seite gibt es nicht oder sie ist nicht öffentlich.",
 	},
@@ -121,8 +123,8 @@ var texts = map[service.Lang]map[string]string{
 		"imprint.desc":          "Legal notice of " + SiteName + ".",
 		"privacy.title":         "Privacy",
 		"privacy.desc":          "Privacy policy of " + SiteName + ".",
-		"readinessResult.title": "AI Readiness: results",
-		"readinessResult.desc":  "Overall results of the AI readiness self-assessment: the chosen maturity levels of all dimensions.",
+		"readinessResult.title": "Self-assessment results",
+		"readinessResult.desc":  "The chosen maturity levels of all dimensions of the AI readiness self-assessment.",
 		"notFound.title":        "Page not found",
 		"notFound.desc":         "This page does not exist or is not public.",
 	},

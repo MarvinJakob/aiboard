@@ -603,10 +603,30 @@ func TestAuditPages(t *testing.T) {
 	}
 
 	// Ticket #113: Die Auswertung zeigt nur die eigene Auswahl und wird nicht indexiert.
-	_, result := get(t, srv, "/de/themen/ai-audit/auswertung")
-	for _, want := range []string{"<title>KI Readiness: Auswertung · KI Perspektiven</title>", `<meta name="robots" content="noindex">`} {
-		if !strings.Contains(result, want) {
-			t.Errorf("auswertung: fehlt %s", want)
+	// Bug #126: Titel und Beschreibung lauten wie im Frontend, damit der Seitentitel nach dem Laden nicht wechselt.
+	for _, tc := range []struct{ lang, title, description string }{
+		{"de", "Auswertung der Selbsteinschätzung", "Die gewählten Reifegrade aller Dimensionen der KI-Readiness-Selbsteinschätzung."},
+		{"en", "Self-assessment results", "The chosen maturity levels of all dimensions of the AI readiness self-assessment."},
+	} {
+		_, result := get(t, srv, "/"+tc.lang+"/themen/ai-audit/auswertung")
+		for _, want := range []string{
+			"<title>" + tc.title + " · KI Perspektiven</title>",
+			`<meta property="og:title" content="` + tc.title + ` · KI Perspektiven">`,
+			`<meta name="description" content="` + tc.description + `">`,
+			`<meta name="robots" content="noindex">`,
+		} {
+			if !strings.Contains(result, want) {
+				t.Errorf("auswertung (%s): fehlt %s", tc.lang, want)
+			}
+		}
+		source, err := os.ReadFile("../../../frontend/src/i18n/" + tc.lang + ".ts")
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, want := range []string{"resultTitle: '" + tc.title + "'", "resultMeta: '" + tc.description + "'"} {
+			if !strings.Contains(string(source), want) {
+				t.Errorf("Frontend weicht ab, erwartet in %s.ts: %s", tc.lang, want)
+			}
 		}
 	}
 	if strings.Contains(sitemap, "/auswertung") {

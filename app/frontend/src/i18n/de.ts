@@ -84,6 +84,7 @@ export const de = {
     toOverview: 'Zur Übersicht',
     next: 'Weiter',
     showResult: 'Auswertung anzeigen',
+    // Titel und Beschreibung stehen serverseitig gleichlautend in backend/internal/web/meta.go (Bug #126).
     resultTitle: 'Auswertung der Selbsteinschätzung',
     resultMeta: 'Die gewählten Reifegrade aller Dimensionen der KI-Readiness-Selbsteinschätzung.',
     resultCrumb: 'Auswertung',
