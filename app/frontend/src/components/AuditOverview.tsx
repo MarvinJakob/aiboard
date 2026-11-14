@@ -6,6 +6,7 @@ import { AUDIT_TOPIC, auditPath } from '../lib/audit';
 import { useLang } from '../lib/lang';
 import { topicColor } from '../lib/topicStyle';
 import { Icon } from './Icon';
+import { ContentTable } from './ContentTable';
 import { TranslationNotice } from './Status';
 
 /**
@@ -66,9 +67,7 @@ export function AuditOverview() {
       </ol>
 
       <div className="audit-copy prose" lang={contentLang}>
-        <Markdown skipHtml remarkPlugins={[remarkGfm]} components={{
-          table: ({ children }) => <div className="readiness-table"><table>{children}</table></div>,
-        }}>{o.guidance}</Markdown>
+        <Markdown skipHtml remarkPlugins={[remarkGfm]} components={{ table: ContentTable }}>{o.guidance}</Markdown>
       </div>
 
       <h3 className="subhead">{t('audit.dimensionsTitle')}</h3>

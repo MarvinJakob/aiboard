@@ -50,7 +50,14 @@ describe('Ticket #111: verbindliche Readiness-Inhalte', () => {
     expect(region).toHaveTextContent('Entscheidungshilfe');
     expect(region).toHaveTextContent('Gesamtauswertung');
     expect(region).not.toHaveTextContent(/Ja\/Nein|alle Fragen.*beantwort|Nicht angewendet/);
-    expect(within(region).getAllByRole('table')).toHaveLength(2);
+    const tables = within(region).getAllByRole('table');
+    expect(tables).toHaveLength(2);
+    // Bug #117: gleicher Tabellencontainer wie auf Themenseiten, damit Zellen nicht mitten im Wort umbrechen und breite Tabellen per Tastatur scrollbar sind.
+    for (const table of tables) {
+      expect(table.parentElement).toHaveClass('topic-table');
+      expect(table.parentElement).toHaveAttribute('tabindex', '0');
+      expect(table.parentElement).toHaveAttribute('aria-label', lang === 'de' ? 'Tabelle im Themeninhalt, horizontal scrollbar' : 'Topic content table, scroll horizontally');
+    }
     expect(within(region).getAllByRole('link')).toHaveLength(8);
     const intro = within(region).getByText(copy.intro[0]);
     const firstDimension = within(region).getByRole('link', { name: /Strategie und Wirtschaftlichkeit/ });

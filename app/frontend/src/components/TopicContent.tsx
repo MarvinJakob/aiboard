@@ -5,6 +5,7 @@ import type { Link, Root, RootContent, Text } from 'mdast';
 import { jumpTo } from '../lib/jump';
 import { useLang } from '../lib/lang';
 import type { getTopicContent } from '../lib/topicContent';
+import { ContentTable } from './ContentTable';
 import { TranslationNotice } from './Status';
 
 const sourceId = (number: number) => `topic-source-${number}`;
@@ -76,7 +77,7 @@ export function TopicContent({ content }: { content: NonNullable<ReturnType<type
               {children}
             </a>
           ),
-          table: ({ children }) => <div className="topic-table" role="region" aria-label={t('topic.table')} tabIndex={0}><table>{children}</table></div>,
+          table: ContentTable,
           li: ({ children, className, id, tabIndex }) => (
             <li className={className} id={id} tabIndex={tabIndex}>
               {className?.includes('task-list-item') ? <label>{children}</label> : children}

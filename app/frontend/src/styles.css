@@ -539,7 +539,8 @@ svg { display: block; }
 .topic-table table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 1rem; line-height: 1.55; }
 .topic-table th, .topic-table td { padding: 12px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); }
 .topic-table th { background: var(--fill); }
-/* Zellen nicht mitten im Wort umbrechen; die Tabelle scrollt stattdessen (Ticket #81). Rechtsbündige Zahlen bleiben einzeilig. */
+/* Zellen nicht mitten im Wort umbrechen; die Tabelle scrollt stattdessen (Ticket #81, #117). Gilt für Themenseiten und KI Readiness (ContentTable.tsx).
+   Überschreibt das vererbte overflow-wrap: anywhere von .topic-content und .audit-copy. Rechtsbündige Zahlen bleiben einzeilig. */
 .topic-table th, .topic-table td { overflow-wrap: normal; hyphens: auto; }
 .topic-table [style*="text-align: right"], .topic-table code { white-space: nowrap; }
 
@@ -554,10 +555,6 @@ svg { display: block; }
    ========================================================================== */
 .audit-copy { max-width: 760px; margin-top: 24px; color: var(--text-2); overflow-wrap: anywhere; }
 .audit-copy > p:first-child { font-size: inherit; }
-.readiness-table { margin: 1.4em 0; }
-.readiness-table table { width: 100%; border-collapse: collapse; font-size: 1rem; line-height: 1.55; }
-.readiness-table th, .readiness-table td { padding: 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); hyphens: auto; }
-.readiness-table th { background: var(--fill); }
 .subhead { margin: 48px 0 16px; font-size: 1.3125rem; }
 .subhead-sub { margin: -8px 0 20px; }
 .level-list { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }

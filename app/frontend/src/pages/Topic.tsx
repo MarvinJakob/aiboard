@@ -17,7 +17,7 @@ const breakAfterSlash = (text: string) =>
 
 /**
  * Themenseite mit Titel, Einführung und zugeordneten veröffentlichten Beiträgen (Anforderung 3).
- * Das Thema „AI Audit für Unternehmen“ zeigt zusätzlich die Audit-Übersicht (Anforderung 8).
+ * Das Thema `ai-audit` (KI Readiness) zeigt zusätzlich die Audit-Übersicht (Anforderung 8).
  */
 export function TopicPage() {
   const { slug = '' } = useParams();
