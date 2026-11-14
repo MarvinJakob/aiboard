@@ -7,7 +7,7 @@ export const de = {
     home: 'Start',
     topics: 'Themen',
     blog: 'Blog',
-    audit: 'AI Audit',
+    audit: 'KI Readiness',
     profile: 'Profil',
     lang: 'Sprache',
     account: 'Anmeldung für die Redaktion',

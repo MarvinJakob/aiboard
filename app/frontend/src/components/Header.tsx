@@ -23,7 +23,8 @@ export function Header() {
   const inBlog = pathname.startsWith(`/${lang}/blog`);
   const profilePath = href(lang, '/profil');
   const inProfile = pathname === profilePath || pathname === `${profilePath}/`;
-  // Das AI Audit ist ein eigener Navigationsbereich (Ticket #21), seine Seiten bleiben unter /themen/ai-audit.
+  // KI Readiness (früher „AI Audit“) ist ein eigener Navigationsbereich (Tickets #21, #110). Übersicht,
+  // Selbsteinschätzung und Auswertung bleiben unter /themen/ai-audit und markieren ihn als aktiv.
   const auditRoot = auditPath(lang);
   const inAudit = pathname === auditRoot || pathname.startsWith(`${auditRoot}/`);
   const inTopic = pathname.startsWith(`/${lang}/themen/`) && !inAudit;
